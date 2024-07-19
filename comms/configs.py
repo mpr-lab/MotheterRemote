@@ -4,8 +4,8 @@ Please update this file with the correct information for your setup before tryin
 
 """Info about the host computer. This should be a computer with a static IP."""
 host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
-host_name = "skyeworster"  # host server's username
-host_addr = "10.10.41.171"  # ip or ddns for host computer
+host_name = "sworster"  # host server's username
+host_addr = "131.229.80.80"  # ip or ddns for host computer
 
 
 """Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one attached to the sensor device."""
