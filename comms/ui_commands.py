@@ -463,12 +463,13 @@ def _select_reading_type() -> str:
 
 def _select_arm_cal_command() -> str:
     """Sends an arm calibration command"""
-    mode = _parse(
-        "1 = arm light calibration\n\
+    print(
+        "Commands:\n\
+        1 = arm light calibration\n\
         2 = arm dark calibration\n\
-        3 = disarm calibration\n\
-        Select an option: "
+        3 = disarm calibration"
     )
+    mode = _parse("Select an option: ")
     match mode.lower():
         case "1":
             return _arm_light_cal()
