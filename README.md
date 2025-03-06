@@ -144,7 +144,7 @@ SUBSYSTEM=="tty", ATTRS{idProduct}=="55d3", ATTRS{idVendor}=="1a86", ATTRS{ID_SE
 
 Save your changes and exit. Load these changes with `sudo udevadm trigger`, and check that it worked with `ls -l /dev/tty*`
 
-If it worked, `/dev/ttyUSB_SQMsensor` will show up in light blue. If it didn’t work, go back to that file you wrote and check for typos (like `ATRS` instead of `ATTRS` or `=+` instead of `==`).
+If it worked, `/dev/ttyUSB_SQMsensor` will show up in light blue. If it didn’t work, go back to that file you wrote and check for typos (like `ATRS` instead of `ATTRS` or `=+` instead of `==`). It's also possible that the subsystem isn't `tty`, if your device is connected through some other interface (an additional PCI board, etc).
 
 ### Py3SQM
 
