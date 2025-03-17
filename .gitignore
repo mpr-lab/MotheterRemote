@@ -10,5 +10,4 @@ package-lock.json
 .DS_Store
 abstract*
 todo.md
-info.md
 modem/api_key.json
