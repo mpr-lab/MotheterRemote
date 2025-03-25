@@ -5,14 +5,14 @@ Please update this file with the correct information for your setup before tryin
 """Info about the host computer. This should be a computer with a static IP."""
 host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
 host_name = "sworster"  # host server's username
-host_addr = "131.229.80.80"  # ip or ddns for host computer
+host_addr = "10.10.36.68"  # ip or ddns for host computer
 
 
 """Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one attached to the sensor device."""
-rpi_name = "rp3"  # the username, not the hostname
+rpi_name = "rp"  # the username, not the hostname
 rpi_repo = "~/MotheterRemote/comms"  # path to this repo directory
-rpi_data_path = "/var/tmp/sqm_macleish/"  # where sensor stores its data (NOT in repo)
-rpi_addr = "10.10.9.11"  # ip or ddns address
+rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
+rpi_addr = "10.10.32.91"  # ip or ddns address
 
 
 """main RPi's radio connection, if applicable"""
@@ -22,7 +22,7 @@ R_BAUD = 115200  # baud rate
 
 """Info about accessory RPi, if it exists"""
 acc_repo = "~/MotheterRemote/comms"  # path to this repo directory
-acc_data_path = "/var/tmp/sqm_macleish/"  # where sensor stores its data (NOT in repo)
+acc_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
 acc_lora_port = "/dev/ttyUSB_LORA"  # accessory RPi's LoRa port
 
 
