@@ -2,6 +2,7 @@
 Runs on an accessory RPi that communicates to the main RPi using LoRa radio. This RPi must be directly connected to the sensor.
 """
 
+import datetime
 import time
 import serial
 import threading
@@ -54,6 +55,7 @@ class Ser:
         self.sensor = threading.Thread(target=self._listen_sensor)  #  sensor listener
         self.radio.start()
         self.sensor.start()
+        self.backlog: list[tuple[str, datetime.datetime]] = []
 
     def _listen_radio(self) -> None:
         """Get incoming radio messages, send them to device"""
@@ -71,9 +73,52 @@ class Ser:
                     if "rsync" in m:
                         self._rsync(m)  # deal with rsync
                     else:
+                        self.backlog.append((m, datetime.datetime.now()))
                         self.device.rpi_to_client(m)  # send command
             except Exception as e:
                 print(e)
+
+    def _get_pair(self, resp: str) -> str:
+        # sensor response prefix, corresponding message prefix
+        pairs: dict[str, str] = {
+            "r,": "rx",
+            "i,": "ix",
+            "c,": "cx",
+            "zA": "zcal",
+            "zB": "zcal",
+            "zD": "zcal",
+            "I,": "Ix",
+            "z,": "zcal",
+            "s,": "sx",
+            "S,": "S,",
+            "L0": "L0x",
+            "L1": "L1x",
+            "L3": "L3x",
+            "L4": "L4x",
+            "L5": "L5x",
+            "LM": "LMx",
+            "LI": "LIx",
+            "LC": "LCx",
+            "Lc": "LCx",
+            "La": "Lax",
+        }
+
+        response_prefix = resp[0:2]
+        message_prefix = pairs.get(response_prefix)  # get original message prefix
+
+        if message_prefix == None:  # if not there, ignore
+            return ""
+
+        # loop through received, un-responded messages
+        for i in range(0, len(self.backlog)):
+            if self.backlog[i][1] == datetime.datetime.now() - datetime.timedelta(
+                seconds=60
+            ):
+                self.backlog.pop(i)  # erase old requests (one minute)
+            elif self.backlog[i][0].startswith(message_prefix):
+                self.backlog.pop(i)
+                return resp
+        return ""
 
     def _listen_sensor(self) -> None:
         """Get incoming sensor messages, send them over radio"""
@@ -83,7 +128,9 @@ class Ser:
             resp = self.device.client_to_rpi()  # get response from device
             if len(resp) != 0:  # if response has data
                 p(f"Received from sensor: {resp}")
-                self._send(resp)
+                m = EOL.join(resp)
+                if self._get_pair(m) != "":
+                    self._send(m)
 
     def _send(self, msg: str | list[str] = "test") -> None:
         """Send sensor responses to parent over radio
