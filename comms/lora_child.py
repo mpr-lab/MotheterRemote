@@ -104,9 +104,12 @@ class Ser:
         }
 
         response_prefix = resp[0:2]
+        p(f"response prefix {response_prefix}")
         message_prefix = pairs.get(response_prefix)  # get original message prefix
+        p(f"message prefix {message_prefix}")
 
         if message_prefix == None:  # if not there, ignore
+            p("return")
             return ""
 
         # loop through received, un-responded messages
@@ -114,8 +117,10 @@ class Ser:
             if self.backlog[i][1] == datetime.datetime.now() - datetime.timedelta(
                 seconds=60
             ):
+                p(f"backlogged request {self.backlog[i]} is old")
                 self.backlog.pop(i)  # erase old requests (one minute)
             elif self.backlog[i][0].startswith(message_prefix):
+                p(f"should respond to {self.backlog[i]} with {resp}")
                 self.backlog.pop(i)
                 return resp
         return ""
