@@ -215,7 +215,6 @@ def main():
     print(len(my_pid.splitlines()))
     if len(my_pid.splitlines()) > 1:
         print("Already running rpi_wifi.py, exiting")
-        exit()
 
     p("\n\n")
 
