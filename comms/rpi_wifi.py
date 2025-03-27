@@ -207,14 +207,14 @@ def main():
     """When program is run, creates server for Wifi connection from host, creates socket to send to host, sets up connection to lora radio or sensor."""
     import subprocess
 
-    cmd = ["pgrep -f rpi_wifi.py"]
+    cmd = ["ps -ef | grep rpi_wifi.py"]
     process = subprocess.Popen(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     my_pid = process.communicate()[0]
     print(my_pid.splitlines())
     print(len(my_pid.splitlines()))
-    if len(my_pid.splitlines()) > 1:
+    if len(my_pid.splitlines()) > 2:
         print("Already running rpi_wifi.py, exiting")
         exit()
 
