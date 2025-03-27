@@ -2,6 +2,7 @@
 Handles WiFi communication for the RPi. Forwards messages from host to radio/sensor, and from radio/sensor back to host.
 """
 
+from operator import le
 import socket
 import time
 import threading
@@ -206,13 +207,13 @@ def main():
     """When program is run, creates server for Wifi connection from host, creates socket to send to host, sets up connection to lora radio or sensor."""
     import subprocess
 
-    cmd = ["pgrep -f .*python.*rpi_wifi.py"]
+    cmd = ["pgrep -f rpi_wifi.py"]
     process = subprocess.Popen(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     my_pid = process.communicate()[0]
     print(my_pid.splitlines())
-
+    print(len(my_pid.splitlines()))
     if len(my_pid.splitlines()) > 1:
         print("Already running rpi_wifi.py, exiting")
         # exit()
