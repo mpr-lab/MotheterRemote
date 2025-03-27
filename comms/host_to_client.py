@@ -85,8 +85,10 @@ class Server:
             print(f"Sent: {s}")
         except Exception as e:
             if str(e) == "[Errno 61] Connection refused":
-                print("Client RPi is not running rpi_wifi.py")
-                print("Use START to establish connection.")
+                print(
+                    "Client RPi is not running rpi_wifi.py\n\
+        Use START to establish connection."
+                )
             else:
                 print(e)  # print error without halting
                 print("Client RPi might not be running rpi_wifi.py")
@@ -196,6 +198,7 @@ def _status() -> None:
         Activity on RPi will appear on this terminal."
         )
         conn.send_to_rpi("status")
+        time.sleep(long_s)
     except:
         print(
             f"Thread to RPi: DOES NOT EXIST.\n\
@@ -216,14 +219,13 @@ def _ui_loop() -> None:
                 continue
             case "start":
                 _start_listener()
-                time.sleep(long_s)
+                time.sleep(mid_s)
                 continue
             case "kill":
                 _kill_listener()
                 continue
             case "status":
                 _status()
-                time.sleep(mid_s)
                 continue
             case "exit" | "quit" | "q":
                 print("Ending program")
