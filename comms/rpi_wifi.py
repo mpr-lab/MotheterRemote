@@ -211,11 +211,11 @@ def main():
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     my_pid = process.communicate()[0]
-    print(my_pid)
+    print(my_pid.splitlines())
 
     if len(my_pid.splitlines()) > 1:
         print("Already running rpi_wifi.py, exiting")
-        exit()
+        # exit()
 
     p("\n\n")
 
