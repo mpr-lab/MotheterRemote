@@ -201,6 +201,15 @@ def _status() -> None:
         )
 
 
+def _mute() -> None:
+    try:
+        rpi_thread.is_alive()
+        rpi_thread.join()
+        print(rpi_thread.is_alive())
+    except:
+        print("RPi thread does not exist.")
+
+
 def _ui_loop() -> None:
     """User input loop"""
     global conn, allow_ui
@@ -219,6 +228,9 @@ def _ui_loop() -> None:
             case "kill":
                 _kill_listener()
                 continue
+            case "mute":
+                _mute()
+                continue
             case "status":
                 _status()
                 time.sleep(mid_s)
@@ -232,6 +244,7 @@ def _ui_loop() -> None:
                     rsync | sync: get all recorded data from sensor\n\
                     start: starts the program running on the RPi\n\
                     kill: stop the program running on the RPi\n\
+                    mute: silences thread from RPi\n\
                     status: view the status of the entire system\n\
                     exit | quit | q: stop this program\n\
                     help: print this help menu"

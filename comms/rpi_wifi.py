@@ -204,6 +204,18 @@ def p(s: str) -> None:
 
 def main():
     """When program is run, creates server for Wifi connection from host, creates socket to send to host, sets up connection to lora radio or sensor."""
+    import subprocess
+
+    cmd = ["pgrep -f .*python.*rpi_wifi.py"]
+    process = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    my_pid = process.communicate()[0]
+
+    if len(my_pid.splitlines()) > 0:
+        print("Already running rpi_wifi.py, exiting")
+        exit()
+
     p("\n\n")
 
     global output, conn
