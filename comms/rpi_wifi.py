@@ -192,6 +192,14 @@ def _status() -> None:
         {loop_thread.name}"
     )
 
+    global output
+    if isinstance(output, lora_parent.Radio):
+        print("Connected to radio. Testing connection:")
+    else:
+        print("Connected to sensor. Testing connection:")
+
+    output.rpi_to_client("rx")
+
 
 def p(s: str) -> None:
     """Flushes buffer and prints. Enables print in threads
