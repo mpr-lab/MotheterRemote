@@ -38,9 +38,6 @@ long_s = configs.long_s
 mid_s = configs.mid_s
 short_s = configs.short_s
 
-# only change this for debugging
-remote_start = configs.remote_start
-
 # global
 allow_ui: bool = False  # whether ready to ask for user input
 output: object
@@ -87,12 +84,12 @@ class Server:
             sock.sendall(f"{s}".encode(utf8))  # send everything
             print(f"Sent: {s}")
         except Exception as e:
-            print(e)  # print error without halting
-            print("Client RPi might not be running rpi_wifi.py")
-            if remote_start:
-                _start_listener()  # force RPi to run rpi_wifi.py
-                time.sleep(long_s)  # give time for program to start before continuing
+            if str(e) == "[Errno 61] Connection refused":
+                print("Client RPi is not running rpi_wifi.py")
+                print("Use START to establish connection.")
             else:
+                print(e)  # print error without halting
+                print("Client RPi might not be running rpi_wifi.py")
                 print("Wait approx. 1 minute before trying again.")
         finally:
             sock.close()  # die
@@ -190,26 +187,18 @@ def _status() -> None:
         {loop_thread.name}"
     )
 
+    global conn
     global rpi_thread
     try:
-        if rpi_thread.is_alive():
-            print(f"RPi server: ALIVE")
-        else:
-            print(f"RPi server: DEAD")
-            print("")
-
-        global conn
-        conn.send_to_rpi("status")
-
+        rpi_thread.is_alive()
         print(
-            f"\
-        IP {rpi_addr}\n\
-        Port {rpi_server}\n\
-        RPi name {rpi_name}\n\
-        {rpi_thread.name}"
+            f"Thread to RPi server exists.\nActivity on RPi will appear on this terminal."
         )
+        conn.send_to_rpi("status")
     except:
-        print("RPi thread: DOES NOT EXIST")
+        print(
+            "Thread to RPi server DOES NOT EXIST.\nActivity on RPi will NOT appear on this terminal."
+        )
 
 
 def _ui_loop() -> None:
