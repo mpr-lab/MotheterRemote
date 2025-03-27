@@ -147,6 +147,10 @@ def _print_formatted(s: str) -> None:
     allow_ui = True  # allow next user input
 
 
+def _status():
+    pass
+
+
 def _ui_loop() -> None:
     """User input loop"""
     global conn, allow_ui
@@ -161,6 +165,8 @@ def _ui_loop() -> None:
             case "kill":
                 _kill_listener()
                 continue
+            case "status":
+                _status()
             case "exit" | "quit" | "q":
                 print("Ending program")
                 exit()
@@ -169,6 +175,7 @@ def _ui_loop() -> None:
                     ui: user interface to generate commands\n\
                     rsync | sync: get all recorded data from sensor\n\
                     kill: stop the program running on the RPi\n\
+                    status: view the status of the entire system\n\
                     exit | quit | q: stop this program\n\
                     help: print this help menu"
                 print(s.replace("    ", " "))
