@@ -192,12 +192,14 @@ def _status() -> None:
     try:
         rpi_thread.is_alive()
         print(
-            f"Thread to RPi server exists.\nActivity on RPi will appear on this terminal."
+            f"Thread to RPi: EXISTS\n\
+        Activity on RPi will appear on this terminal."
         )
         conn.send_to_rpi("status")
     except:
         print(
-            "Thread to RPi server DOES NOT EXIST.\nActivity on RPi will NOT appear on this terminal."
+            f"Thread to RPi: DOES NOT EXIST.\n\
+        Activity on RPi will NOT appear on this terminal."
         )
 
 
