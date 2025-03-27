@@ -212,7 +212,7 @@ def main():
     )
     my_pid = process.communicate()[0]
 
-    if len(my_pid.splitlines()) > 0:
+    if len(my_pid.splitlines()) > 1:
         print("Already running rpi_wifi.py, exiting")
         exit()
 
