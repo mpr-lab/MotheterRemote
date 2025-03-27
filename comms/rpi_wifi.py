@@ -157,6 +157,7 @@ def _device_search() -> None:
 
 
 def _status() -> None:
+    time.sleep(short_s)
     # is the rpi server (this computer) running?
     global server_thread
     try:

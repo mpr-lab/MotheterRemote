@@ -232,6 +232,7 @@ def _ui_loop() -> None:
                 continue
             case "status":
                 _status()
+                time.sleep(mid_s)
                 continue
             case "exit" | "quit" | "q":
                 print("Ending program")
