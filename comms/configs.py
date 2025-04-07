@@ -62,3 +62,8 @@ hex = "hex"  # encoding method for SQM-LE sensor ONLY
 long_s = 5  # time to wait for long tasks (eg. killing and resetting programs)
 mid_s = 1  # time to wait for mid-length tasks (eg. between taking readings)
 short_s = 0.1  # time to wait for short tasks (eg. between sending messages in a series)
+
+
+"""NFC stuff"""
+bird_recording_source = "~/BirdRecordings"
+bird_recording_dest = "~/BirdRecordings"
