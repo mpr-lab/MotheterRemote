@@ -38,9 +38,9 @@ SITE location
 -------------
 """
 
-_observatory_name = "Hanoi"  # "MacLeish"
-_observatory_latitude = 21  # 20.449155
-_observatory_longitude = 100  # 100.679323
+_observatory_name = "MacLeish"
+_observatory_latitude = 42.4475
+_observatory_longitude = -72.681
 _observatory_altitude = 52
 _observatory_horizon = 10  # If Sun is below this altitude, the program will take data
 
@@ -55,7 +55,7 @@ _data_supplier = (
 )
 _device_addr = "/dev/ttyUSB_SQMsensor"  # Default IP address of the ethernet device (if not automatically found)
 _measures_to_promediate = 1  # Take the mean of N measures
-_delay_between_measures = 30  # Delay between two measures. In seconds.
+_delay_between_measures = 60  # Delay between two measures. In seconds.
 _cache_measures = 1  # Get X measures before writing on screen/file
 _plot_each = 1  # Call the plot function each X measures.
 
