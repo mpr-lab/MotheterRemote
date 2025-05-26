@@ -82,10 +82,30 @@ We also want to view the metric on the routing table. `route -n` lets us see all
 
 Next, we need to ensure this change carries over if the Raspberry Pi is rebooted; we'll do this with a simple cronjob. Run `crontab -e` and add `@reboot sudo ifmetric wlan0 50` in a new line. Test that this works by restarting the Pi and running `route -n`.
 
-### autossh
+### Tailscale
 
-Autossh is a utility that attempts to keep an ssh tunnel alive indefinitely. It has a few arguments and options of its own, but at its core it simply maintains any valid ssh command.
+Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device.
 
-Install it with `sudo apt install autossh`.
+Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan.
+
+On your computer, go to [the Tailscale download page](https://tailscale.com/download) and get the app. Up to a hundred devices can be added for free, so don't worry about having too many devices online.
+
+The Raspberry Pi probably runs Raspbian Bullseye, so [follow the instructions](https://tailscale.com/download/linux/rpi-bullseye), which are also copied below:
+
+```bash
+sudo apt-get install apt-transport-https
+
+curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg > /dev/null
+curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+
+sudo apt-get update
+sudo apt-get install tailscale
+```
+
+Run `sudo tailscale up`, and go to the link it gives you to log in. You can go to this link from another device, if you don't want to deal with using a web browser on a headless Pi.
+
+On the tailscale browser console, you can see the IP addresses of all connected devices. You can ssh to them via those IP addresses (`ssh pi@100.88.15.3`), or just with the computer's name (`ssh pi@pi`). It really is that easy!
+
+The crontab `@hourly sudo tailscale up` will keep the connection active. I don't recommend running it on your personal computer, but it should be fine on the RPi and a dedicated work machine.
 
 ## Code setup
