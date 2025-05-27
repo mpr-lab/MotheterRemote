@@ -3,7 +3,7 @@
 There are three sections in this document:
 
 - [Hardware](#hardware) explains how to set up the cellular modem.
-- [Software setup](#software-setup) tests that the modem works properly and that the computer is `ssh` compatible.
+- [Software setup](#software-setup) tests that the modem works properly and is SSH-compatible.
 - [Code setup](#code-setup) covers how to implement the actual code in this project.
 
 If using the same equipment we used, start with the [Hardware](#hardware) section. If your equipment is different in some way and you need troubleshooting advice, start there as well. If you already have a Linux box with internet access, skip to the [Software setup](#software-setup) section.
@@ -26,6 +26,8 @@ Always follow the instructions and documentation provided with your hardware, us
 The specific model of Raspberry Pi isn't particularly relevant; we just need a box that runs Linux and can connect to some compatible modem.
 
 SIM plans vary drastically worldwide; choose a provider and plan that cover your area of operation and that are compatible with your modem. This tutorial was designed for GPRS (2.5G), but other cellular protocols should work fine (5G may be overkill).
+
+Regardless of your setup, it is recommended to [set a fixed port name](README.md/#fixed-usb-port-names) (for example, `ttyUSB_modem`).
 
 ### Sixfab HAT
 
@@ -72,7 +74,9 @@ This section assumes you have a working cellular modem on either `usb0` or `eth1
 
 If you've just set up the modem, it might have the highest priority; this eats up data incredibly quickly. Check which service is being used with this absolutely bonkers one-liner:
 
-`ip route get 8.8.8.8 | sed -n 's/.*dev \([^\ ]*\).*/\1/p'`
+```bash
+ip route get 8.8.8.8 | sed -n 's/.*dev \([^\ ]*\).*/\1/p'
+```
 
 It should be `wlan0` (WiFi). If it's something else (such as `usb0`), do `sudo ip link set usb0 down` as a quick fix (and `sudo ip link set usb0 up` to bring it online again later).
 
@@ -104,11 +108,11 @@ sudo apt-get install tailscale
 
 Run `sudo tailscale up`, and go to the link it gives you to log in. You can go to this link from another device, if you don't want to deal with using a web browser on a headless Pi.
 
-On the tailscale browser console, you can see the IP addresses of all connected devices. You can ssh to them via those IP addresses (`ssh pi@100.88.15.3`), or just with the computer's name (`ssh pi@pi`). It really is that easy!
+On the tailscale browser console, you can see the IP addresses of all connected devices. You can SSH to them via those IP addresses (`ssh pi@100.88.15.3`), or just with the computer's name (`ssh pi@pi`). It really is that easy!
 
 The crontab `@hourly sudo tailscale up` will keep the connection active. I don't recommend running it on your personal computer, but it should be fine on the RPi and a dedicated work machine.
 
-Because we don't want to reauthenticate the remote devices, we'll disable key expiry. On the admin console browser page, click the three dots next to the RPi and select `Disable key expiry`.
+Because we don't want to reauthenticate the remote devices, we'll set the keys to last forever. On the admin console browser page, click the three dots next to the RPi and select `Disable key expiry`.
 
 With Tailscale running, you should be able to connect to the RPi even if WiFi is disabled. SSH into the RPi and turn off its WiFi with `sudo ifconfig wlan0 down`. Wait a few seconds, then try `ifconfig`. If you get any response back, then you're still connected. Run `ip route get 8.8.8.8 | sed -n 's/.*dev \([^\ ]*\).*/\1/p'` to check that it's using the modem. Congrats, you've set up and connected to an RPi using only cellular! You can keep WiFi off to do further cellular testing, or reenable it with `sudo ifconfig wlan0 up`.
 

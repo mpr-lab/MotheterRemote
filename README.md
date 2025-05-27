@@ -2,12 +2,12 @@
 
 The Motheter project records images and SQM light sensor readings at field stations to track moth populations. This repository aims to simplify the data collection process by allowing remote access to the light sensor data. This version does not include the ability to transfer image data.
 
-There are two options for the sensor setup:
+There are several options for the sensor setup:
 
 - A host computer connects to an RPi over WiFi, which is directly connected to the SQM sensor.
 - A host computer connects to an RPi over WiFi, which uses a radio module to communicate with the RPi that's connected to the SQM sensor.
-
-Cellular compatibility has not yet been implemented. Existing code could be adapted for Ethernet, but this has not been tested.
+- A host computer connects over VPN to a cellular-enabled RPi, which is connected to the SQM sensor.
+- A host computer connects to an RPi over Ethernet, which is connected to the SQM sensor.
 
 All code relating to SQM sensor communication was copied from the Py3SQM project and has been extensively modified (bastardized). If you find yourself needing to debug or rework anything in that area, I recommend checking that project for assistance.
 
@@ -30,9 +30,7 @@ To prevent your host/RPi IP address from changing, you can either request a stat
 - `/scripts/runrpi.sh`: bash script to automatically run the RPi program (rpi_wifi)
 - - `/scripts/runsensor.sh`: bash script to automatically run the sensor module (Py3SQM)
 
-## Setup
-
-### Set up the OS
+## Set up the OS
 
 General setup instructions can be found [here](https://www.raspberrypi.com/documentation/computers/getting-started.html), but there are a few specific steps you'll need to follow for this project.
 
@@ -46,25 +44,27 @@ In the **Services menu**, enable SSH with password authentication, then save you
 
 Connect your RPi to power using the provided power cable. Connect a mouse and keyboard with USB cables, and connect a monitor with a microHDMI cable. You should now be able to use the RPi as a computer!
 
-### Connection Options
+## Connection Options
 
-Your host computer needs a reliable connection to the RPi. The two options to achieve this are Ethernet and WiFi. Ethernet hasn't been thoroughly tested for this project, so WiFi is recommended. For either connection option, setting up SSH key sharing is strongly recommended.
+While cellular is a viable connection option, it's important to get everything else running and stable before introducing a modem. Follow the rest of the instructions in this document to set up the RPi on WiFi, without radios. When this setup is fully functional, [begin following the cellular instructions here](cellular.md).
 
-#### Ethernet
+Ethernet hasn't been thoroughly tested for this project, so WiFi or cellular are recommended. However, everything past the initial connection setup should be identical to WiFi.
 
-If your device will be connected to the host computer via Ethernet, follow the instructions in this section. Otherwise, continue to the WiFi section below.
+For any connection option, setting up SSH key sharing is strongly recommended.
+
+### Ethernet
 
 Plug an Ethernet cable into your device, then find the network connection icon on the taskbar (when connected to WiFi, this looks like a fan. When connected to Ethernet, it looks like two arrows). Mousing over this icon will show your IP address(es), and clicking on it will show you the available LAN networks. Select **Advanced Options > Connection Information** to view more information about all active connections.
 
 Connect your computer to Ethernet. It's important to note that your computer will try to use one connection by default for everything, so you can't easily use Ethernet to connect to the RPi and WiFi for everything else. In your computer's network settings, change the service order to put the Ethernet LAN first, ahead of any wireless options; alternatively, you can turn off WiFi just to test the Ethernet connection. Do the same on the RPi (it's easier to just disable WiFi in this case).
 
-In a terminal, run the command `ssh rp1@rp1.local` and provide RPi's password to log in. You can now run commands on the RPi. Use Ctrl-D to exit the RPi.
+In a terminal, run the command `ssh rp1@rp1.local` and provide RPi's password to log in. You can now run commands on the RPi. Use `Ctrl-D` to exit the RPi.
 
-#### WiFi
+### WiFi
 
-Mouse over the WiFi symbol on the RPi to view its IP. On your computer, run the command `ssh rp1@<IP>` and provide RPi's password to log in. You can now run commands on the RPi. Use Ctrl-D to exit the RPi.
+Mouse over the WiFi symbol on the RPi to view its IP. On your computer, run the command `ssh rp1@<IP>` and provide RPi's password to log in. You can now run commands on the RPi. Use `Ctrl-D` to exit the RPi.
 
-#### SSH Key Sharing
+### SSH Key Sharing
 
 If we want to use SSH for automated communication, we don't want our programs to sit around and wait for us to put the password in. We can make this automatic by creating and sharing an SSH key pair.
 
@@ -73,26 +73,30 @@ Your computer should already have an SSH key. You can check this by running `ls 
 Run the command `ls -al ~/.ssh`. There should be a file called `id_ed_25519` (it might be called something different, like DSA, RSA, or ECDSA depending on which encryption scheme was used to generate it). Copy this SSH key to the RPi with the command:
 
 ```bash
-ssh-copy-id -i ~/.ssh/id_ed25519 rp1@rp1.local
+ssh-copy-id -i ~/.ssh/id_ed25519 rp1@<IP>
 ```
 
-Now try `ssh rp1@rp1.local again`; you shouldn't have to use the RPi's password to log in. You can repeat this process in reverse to make your computer accessible via the RPi, although you may have to change the remote login settings on your computer to allow incoming SSH connections.
+Now try `ssh rp1@<IP> again`; you shouldn't have to use the RPi's password to log in. You can repeat this process in reverse to make your computer accessible via the RPi, although you may have to change the remote login settings on your computer to allow incoming SSH connections.
 
 If you get an error saying the remote host identification has changed, you need to remove any existing keys that might be associated with your RPi (this is why your computers should all be named differently: it's a pain to redo SSH keys between three computers all named "rpi"). Run the following command to remove it:
 
 ```bash
-ssh-keygen -R rp1.local
+ssh-keygen -R <IP>
 ```
 
-### Connecting to the Sensor
+### Optional: Tailscale
+
+Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device. Tailscale is only required for cellular connections but may be useful in WiFi setups as well, because it lets you maintain a static IP address. [To set up Tailscale, follow this section of the cellular document](cellular.md#tailscale).
+
+## Connecting to the Sensor
 
 In the RPi's start menu, go to **Preferences > Raspberry Pi Configuration**. In the **System** tab, enable Auto Login. In the **Interfaces** tab enable the serial port and serial console (you can enable everything else while you're at it; it won't hurt). In the **Display** tab, turn screen blanking off.
 
-#### Fixed USB port names
+### Fixed USB port names
 
 We need to make sure we can always connect to the sensor, even if the RPi reboots or it gets plugged into a different USB port.
 
-##### Simplified version
+#### Simplified version
 
 Unplug and replug the sensor, then run `dmesg`. The last batch of messages should be about a FTDI USB Serial Device; record its `idVendor` and `idProduct`. Run the command `sudo nano /etc/udev/rules.d/10-usb-serial.rules`. Write the following line with the device's attributes:
 
@@ -102,7 +106,7 @@ SUBSYSTEM=="tty", ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", SYMLINK+="t
 
 Save and exit, then run `sudo udevadm trigger`, and check with `ls -l /dev/ttyUSB*`.
 
-##### Longer educational version
+#### Longer educational version
 
 Open a terminal and run the command `dmesg`. It prints all diagnostic messages, which there are a ton of because things have been happening to your RPi since it booted up. To clear these messages, run `sudo dmesg -c`, which prints all the messages and then clears them. Running `dmesg` now shouldn’t print anything.
 
@@ -119,8 +123,7 @@ Repeat this process for all of your USB equipment, including your sensor (but no
 
 Note that plugging things into different USB ports can change the USB number, so don't worry if there's overlap in that column.
 
-The `idVendor` and `idProduct` are coded into each device and can't be changed. If you have two `tty` devices with the same `idVendor` and `idProduct` values (such as two LoRa radios), you'll need to use other attributes to distinguish them. Run the command
-`udevadm info --name=/dev/<tty_port> --attribute-walk` for both devices. Write down the `ID_USB_SERIAL_SHORT` value for each and use them as attributes in the next step.
+The `idVendor` and `idProduct` are coded into each device and can't be changed. If you have two `tty` devices with the same `idVendor` and `idProduct` values (such as two LoRa radios), you'll need to use other attributes to distinguish them.
 
 Now we get to actually write our rules for the ports. Run the command:
 
@@ -135,7 +138,7 @@ SUBSYSTEM=="tty", ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", SYMLINK+="t
 SUBSYSTEM=="tty", ATTRS{idProduct}=="55d3", ATTRS{idVendor}=="1a86", SYMLINK+="ttyUSB_LORA"
 ```
 
-If you have multiple versions of the same device, you can add them as shown:
+If you have multiple versions of the same device, you'll need to differentiate them using another attribute; `serial` is usually a good choice. Run the command `udevadm info --name=/dev/<tty_port> --attribute-walk | serial` for both devices (or run it without `| serial` to pick your own attribute). Write down the `serial` value for each (the longest or most complicated one), and use them as attributes in the udev rules:
 
 ```bash
 SUBSYSTEM=="tty", ATTRS{idProduct}=="55d3", ATTRS{idVendor}=="1a86", ATTRS{ID_SERIAL_SHORT}=="578E023173", SYMLINK+="ttyUSB_LORA0"
@@ -146,7 +149,7 @@ Save your changes and exit. Load these changes with `sudo udevadm trigger`, and 
 
 If it worked, `/dev/ttyUSB_SQMsensor` will show up in light blue. If it didn’t work, go back to that file you wrote and check for typos (like `ATRS` instead of `ATTRS` or `=+` instead of `==`). It's also possible that the subsystem isn't `tty`, if your device is connected through some other interface (an additional PCI board, etc).
 
-### Py3SQM
+## Py3SQM
 
 The Py3SQM module is what we'll use to actually collect data. It's included in the MotheterRemote repo, so you don't need to install it separately. Run the following commands to install a few dependencies:
 
@@ -177,7 +180,7 @@ Read the `README.txt` to get a sense of what this all does. Then start following
 
 To run the module, navigate to the Py3SQM directory and run ```python -m pysqm```.
 
-#### Fresh install
+### Fresh install
 
 You can also work from a separate installation of Py3SQM.
 
@@ -190,7 +193,7 @@ if isinstance(x,list):
     x = np.array(x)
 ```
 
-#### Troubleshooting
+### Troubleshooting
 
 Note that some combinations of longitude and local/computer timezone can cause unexpected behaviors. Running it during the day (or giving it a position/timezone that implies it’s day) will make it wait until night, which is useless for testing.
 
@@ -200,7 +203,7 @@ You might also see `“Warning, < 10 points in astronomical night, using the who
 
 If you’re still getting errors about missing packages or python versions, wipe the SD card and start from the beginning. Seriously, it’s easier than messing with versions of Python and pip.
 
-### Setting up the MotheterRemote repository
+## Setting up the MotheterRemote repository
 
 Clone this repository into your home directory so that the repo will be accessible via `~/MotheterRemote`.
 
@@ -208,18 +211,18 @@ Clone this repository into your home directory so that the repo will be accessib
 git clone https://github.com/mpr-lab/MotheterRemote
 ```
 
-#### Change the configs file
+### Change the configs file
 
 You'll need to edit the `configs` file with the appropriate data for your setup. Change the info for the host computer, main RPi, radio RPi (if applicable), sensor, and socket connection. It's not recommended to change values in the text formatting, timing, and miscellaneous sections.
 
-#### Set up cronjobs
+### Set up cronjobs
 
 We'll need to set up new cron jobs for the Raspberry Pi (or both, if using a radio setup). Read the `scripts/cronjobs.txt` file to see which jobs to add where. In a terminal, type `crontab -e` to add a new cron job.
 
-##### Troubleshooting cron jobs
+#### Troubleshooting cron jobs
 
 If you try to perform a git merge (like `git pull`) and your edits include changes to the shell scripts, git may require you to commit or stash your changes before merging. The simplest way to resolve this is `git reset --hard`. **Warning: this will discard any uncommitted changes on the RPi.** I recommend making all code changes on a non-RPi computer for this reason, as you'll never need to keep track of what to save.
 
-### Running the repository
+## Running the repository
 
 There's no need to run anything on the RPis directly, as those programs will run automatically. Simply run `host_to_client.py` on the host computer.
