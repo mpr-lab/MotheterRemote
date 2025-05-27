@@ -108,4 +108,8 @@ On the tailscale browser console, you can see the IP addresses of all connected 
 
 The crontab `@hourly sudo tailscale up` will keep the connection active. I don't recommend running it on your personal computer, but it should be fine on the RPi and a dedicated work machine.
 
+Because we don't want to reauthenticate the remote devices, we'll disable key expiry. On the admin console browser page, click the three dots next to the RPi and select `Disable key expiry`.
+
+With Tailscale running, you should be able to connect to the RPi even if WiFi is disabled. SSH into the RPi and turn off its WiFi with `sudo ifconfig wlan0 down`. Wait a few seconds, then try `ifconfig`. If you get any response back, then you're still connected. Run `ip route get 8.8.8.8 | sed -n 's/.*dev \([^\ ]*\).*/\1/p'` to check that it's using the modem. Congrats, you've set up and connected to an RPi using only cellular! You can keep WiFi off to do further cellular testing, or reenable it with `sudo ifconfig wlan0 up`.
+
 ## Code setup
