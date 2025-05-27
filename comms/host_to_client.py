@@ -38,12 +38,14 @@ long_s = configs.long_s
 mid_s = configs.mid_s
 short_s = configs.short_s
 
-# only change this for debugging
-remote_start = configs.remote_start
-
 # global
 allow_ui: bool = False  # whether ready to ask for user input
 output: object
+
+# threads
+server_thread: threading.Thread
+rpi_thread: threading.Thread
+loop_thread: threading.Thread
 
 
 class Server:
@@ -63,6 +65,7 @@ class Server:
             self.server.server_close()
 
         # run server in designated thread
+        global server_thread
         server_thread = threading.Thread(target=self.server.serve_forever)
         server_thread.daemon = True  # Exit server thread when main thread terminates
         server_thread.start()
@@ -81,12 +84,14 @@ class Server:
             sock.sendall(f"{s}".encode(utf8))  # send everything
             print(f"Sent: {s}")
         except Exception as e:
-            print(e)  # print error without halting
-            print("Client RPi might not be running rpi_wifi.py")
-            if remote_start:
-                _start_listener()  # force RPi to run rpi_wifi.py
-                time.sleep(long_s)  # give time for program to start before continuing
+            if str(e) == "[Errno 61] Connection refused":
+                print(
+                    "Client RPi is not running rpi_wifi.py\n\
+        Use START to establish connection."
+                )
             else:
+                print(e)  # print error without halting
+                print("Client RPi might not be running rpi_wifi.py")
                 print("Wait approx. 1 minute before trying again.")
         finally:
             sock.close()  # die
@@ -123,8 +128,10 @@ def _start_listener() -> None:
     # & lets process run the the background
     s = [f"ssh {rpi_name}@{rpi_addr} 'cd {rpi_repo}; nohup python3 rpi_wifi.py' &"]
     print("Sending command to RPi:", s)
-    to_kill = threading.Thread(target=os.system, args=s)  # run in dedicated thread
-    to_kill.start()
+
+    global rpi_thread
+    rpi_thread = threading.Thread(target=os.system, args=s)  # run in dedicated thread
+    rpi_thread.start()
 
 
 def _kill_listener() -> None:
@@ -147,6 +154,58 @@ def _print_formatted(s: str) -> None:
     allow_ui = True  # allow next user input
 
 
+def _status() -> None:
+    # is the host server (this computer) running?
+    global server_thread
+    try:
+        server_thread.is_alive()
+    except:
+        print("Host server thread not created. This shouldn't be possible.")
+        exit()
+    if server_thread.is_alive():
+        print(f"Host server: ALIVE")
+    else:
+        print(f"Host server: DEAD")
+    print(
+        f"\
+        IP {host_addr}\n\
+        Port {host_server}\n\
+        Host name {configs.host_name}\n\
+        {server_thread.name}"
+    )
+
+    global loop_thread
+    try:
+        loop_thread.is_alive()
+    except:
+        print("Host UI loop thread not created. This shouldn't be possible.")
+        exit()
+    if loop_thread.is_alive():
+        print(f"Host UI loop: ALIVE")
+    else:
+        print(f"Host UI loop: DEAD")
+    print(
+        f"\
+        {loop_thread.name}"
+    )
+
+    global conn
+    global rpi_thread
+    try:
+        rpi_thread.is_alive()
+        print(
+            f"Thread to RPi: EXISTS\n\
+        Activity on RPi will appear on this terminal."
+        )
+        conn.send_to_rpi("status")
+        time.sleep(long_s)
+    except:
+        print(
+            f"Thread to RPi: DOES NOT EXIST.\n\
+        Activity on RPi will NOT appear on this terminal."
+        )
+
+
 def _ui_loop() -> None:
     """User input loop"""
     global conn, allow_ui
@@ -158,8 +217,15 @@ def _ui_loop() -> None:
             case "rsync" | "sync":
                 _rsync()
                 continue
+            case "start":
+                _start_listener()
+                time.sleep(mid_s)
+                continue
             case "kill":
                 _kill_listener()
+                continue
+            case "status":
+                _status()
                 continue
             case "exit" | "quit" | "q":
                 print("Ending program")
@@ -168,7 +234,9 @@ def _ui_loop() -> None:
                 s = "Commands:\n\
                     ui: user interface to generate commands\n\
                     rsync | sync: get all recorded data from sensor\n\
+                    start: starts the program running on the RPi\n\
                     kill: stop the program running on the RPi\n\
+                    status: view the status of the entire system\n\
                     exit | quit | q: stop this program\n\
                     help: print this help menu"
                 print(s.replace("    ", " "))
@@ -195,8 +263,9 @@ def main() -> None:
     global conn, output
     conn = Server()  # start TCP server
 
-    l = threading.Thread(target=_ui_loop)  # user input loop
-    l.start()
+    global loop_thread
+    loop_thread = threading.Thread(target=_ui_loop)  # user input loop
+    loop_thread.start()
 
 
 if __name__ == "__main__":

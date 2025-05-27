@@ -37,6 +37,10 @@ short_s = configs.short_s
 # global
 output: lora_parent.Radio | sensor.SQMLE | sensor.SQMLU
 
+# threads
+server_thread: threading.Thread
+loop_thread: threading.Thread
+
 
 class Server:
     """Socket server for incoming communications from host"""
@@ -51,6 +55,7 @@ class Server:
         )
 
         # run server in designated thread
+        global server_thread
         server_thread = threading.Thread(target=self.server.serve_forever)
         server_thread.daemon = True  # Exit server thread when main thread terminates
         server_thread.start()
@@ -94,6 +99,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         p(
             f"Received from {self.client_address[0]} in {threading.current_thread().name}: {self.data}"
         )
+        if self.data == "status":
+            _status()
+            return
         global output
         try:
             output.rpi_to_client(self.data)  # forward message to radio/sensor
@@ -148,6 +156,51 @@ def _device_search() -> None:
     p("No radio or sensor found. Please check connection!")
 
 
+def _status() -> None:
+    time.sleep(short_s)
+    # is the rpi server (this computer) running?
+    global server_thread
+    try:
+        server_thread.is_alive()
+    except:
+        p("RPi server thread not created. This shouldn't be possible.")
+        exit()
+    if server_thread.is_alive():
+        p(f"RPi server: ALIVE")
+    else:
+        p(f"RPi server: DEAD")
+    p(
+        f"\
+        IP {rpi_addr}\n\
+        Port {rpi_server}\n\
+        Host name {configs.rpi_name}\n\
+        {server_thread.name}"
+    )
+
+    global loop_thread
+    try:
+        loop_thread.is_alive()
+    except:
+        p("RPi listener loop thread not created. This shouldn't be possible.")
+        exit()
+    if loop_thread.is_alive():
+        p(f"RPi listener loop: ALIVE")
+    else:
+        p(f"RPi listener loop: DEAD")
+    p(
+        f"\
+        {loop_thread.name}"
+    )
+
+    global output
+    if isinstance(output, lora_parent.Radio):
+        print("Connected to radio. Testing connection:")
+    else:
+        print("Connected to sensor. Testing connection:")
+
+    output.rpi_to_client("rx")
+
+
 def p(s: str) -> None:
     """Flushes buffer and prints. Enables print in threads
 
@@ -159,14 +212,27 @@ def p(s: str) -> None:
 
 def main():
     """When program is run, creates server for Wifi connection from host, creates socket to send to host, sets up connection to lora radio or sensor."""
+    import subprocess
+
+    cmd = ["ps -ef | grep [r]pi_wifi.py"]
+    process = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    my_pid = process.communicate()[0]
+
+    if len(my_pid.splitlines()) > 2:
+        print("Already running rpi_wifi.py, exiting")
+        exit()
+
     p("\n\n")
 
     global output, conn
 
     _device_search()
 
-    l = threading.Thread(target=_loop)
-    l.start()
+    global loop_thread
+    loop_thread = threading.Thread(target=_loop)
+    loop_thread.start()
 
     conn = Server()  # start TCP server
 

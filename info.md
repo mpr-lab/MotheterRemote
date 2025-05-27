@@ -1,23 +1,5 @@
 # Sixfab setup
 
-google account
-robsonbiomonitoring @ gmail.com
-password: mothsaresupercool
-birthday: Jan 1 2000
-
-had to use a phone to set it up, so i used my cell
-
-used it to set up a sixfab account
-
-Device name: RobsonCellularRPi
-Type: plastic SIM
-Fleet: Default Networks - 100 MB Limit (Monthly)
-APN: super
-S/N: PS0048117905QHK
-UUID: SS7fdf0bd992274d7da6d6093160d23dc6
-ICCID: 89883070000048117905
-SID: HS8cebacae878c6a16f1bf5dce43d81b30
-
 used $25 coupon that came with box, code G289D3 (capitalization matters)
 we have another box, so could get $50 total
 
@@ -71,7 +53,7 @@ for all of these, you have to have it active on both rpis.
 
 arrow key down to serial port setup, and hit enter. type `a`, which puts your cursor in the "serial device" field (/dev/modem by default). change it to whatever the LORA radio module is on (/dev/ttyUSB_LORA if set up correctly, see readme or do `ls -l /dev/tty*`). hit enter to confirm, then enter to return to the main menu. then go to "exit" to get the main minicom cli interface.
 
-do ctrl-a then hit z (after releasing ctrl-a). all minicom commands will be visible, and you can type the letter associated with the command to run it. do "e" to get echo turned on, so you can read whatever gets sent. if you do commands without the Z help screen, preface it with ctrl-a. so ctrl-a then e toggles the echo setting, etc. ctrl-a x to exit.
+do ctrl-a then hit z (after releasing ctrl-a). all minicom commands will be visible, and you can type the letter associated with the command to run it. do "e" to get echo turned on, so you can read whatever gets sent (you can also read incoming messages if you are so inclined). if you do commands without the Z help screen, preface it with ctrl-a. so ctrl-a then e toggles the echo. setting, etc. ctrl-a x to exit.
 
 ### and now kermit, yay
 
