@@ -50,7 +50,7 @@ While cellular is a viable connection option, it's important to get everything e
 
 Ethernet hasn't been thoroughly tested for this project, so WiFi or cellular are recommended. However, everything past the initial connection setup should be identical to WiFi.
 
-For any connection option, setting up SSH key sharing is strongly recommended.
+For any connection option, setting up SSH key sharing and Tailscale is strongly recommended.
 
 ### Ethernet
 
