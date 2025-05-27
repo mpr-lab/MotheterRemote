@@ -32,7 +32,7 @@ To prevent your host/RPi IP address from changing, you can either request a stat
 
 ## Set up the OS
 
-General setup instructions can be found [here](https://www.raspberrypi.com/documentation/computers/getting-started.html), but there are a few specific steps you'll need to follow for this project.
+General setup instructions [can be found here](https://www.raspberrypi.com/documentation/computers/getting-started.html), but there are a few specific steps you'll need to follow for this project.
 
 Go to [the Raspberry Pi OS page](https://www.raspberrypi.com/software/) and download the imager that corresponds to your computer's operating system. Install the imager and try running it. Clicking on **Storage** should show an empty window, because we haven't given it a volume to write to yet.
 
