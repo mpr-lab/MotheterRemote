@@ -1,18 +1,24 @@
 """
 Please update this file with the correct information for your setup before trying to run anything.
+If using the GUI please run readConfigs.py located in /GUI to update config.properties
 """
 
 """Info about the host computer. This should be a computer with a static IP."""
 host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
 host_name = "sworster"  # host server's username
 host_addr = "10.10.45.94"  # ip or ddns for host computer
+# host_name = "buddy"  # host server's username
+# host_addr = "buddy-surface"  # ip or ddns for host computer
 
 
-"""Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one attached to the sensor device."""
+"""Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one 
+attached to the sensor device."""
 rpi_name = "pi"  # the username, not the hostname
 rpi_repo = "~/MotheterRemote/comms"  # path to this repo directory
 rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
 rpi_addr = "10.10.32.91"  # ip or ddns address
+# rpi_data_path = "/var/tmp/sqm_macleish/"  # where sensor stores its data (NOT in repo)
+# rpi_addr = "pi"  # ip or ddns address
 
 
 """main RPi's radio connection, if applicable"""
