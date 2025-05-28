@@ -102,7 +102,8 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
     pass
 
-
+# TODO: check to make sure that new code workds in command line still ( i think it does )
+#  Review new code with Skye and make sure they approve :>
 # class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 #     """overwrites BaseRequestHandler with custom handler"""
 #
@@ -120,6 +121,8 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 #             f"Received from {self.client_address[0]} in {cur_thread.name}: {self.data}"
 #         )
 #         _print_formatted(self.data)  # print formatted data to terminal
+
+
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     """Handles incoming TCP requests from the GUI or other clients."""
 
