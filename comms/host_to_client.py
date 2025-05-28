@@ -103,23 +103,67 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
 
+# class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
+#     """overwrites BaseRequestHandler with custom handler"""
+#
+#     def handle(self):
+#         """custom request handler for TCP threaded server"""
+#         # ensure request is socket
+#         if not isinstance(self.request, socket.socket):
+#             print("ThreadedTCPRequestHandler: self.request not socket")
+#             return
+#
+#         # when request comes in, decode and format it
+#         self.data = self.request.recv(msg_len).decode(utf8).strip()
+#         cur_thread = threading.current_thread()
+#         print(
+#             f"Received from {self.client_address[0]} in {cur_thread.name}: {self.data}"
+#         )
+#         _print_formatted(self.data)  # print formatted data to terminal
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
-    """overwrites BaseRequestHandler with custom handler"""
+    """Handles incoming TCP requests from the GUI or other clients."""
 
+    # Check that the request is coming from a socket
     def handle(self):
-        """custom request handler for TCP threaded server"""
-        # ensure request is socket
         if not isinstance(self.request, socket.socket):
-            print("ThreadedTCPRequestHandler: self.request not socket")
             return
 
-        # when request comes in, decode and format it
-        self.data = self.request.recv(msg_len).decode(utf8).strip()
-        cur_thread = threading.current_thread()
-        print(
-            f"Received from {self.client_address[0]} in {cur_thread.name}: {self.data}"
-        )
-        _print_formatted(self.data)  # print formatted data to terminal
+        # Receive the incoming message (max length defined in configs)
+        data = self.request.recv(msg_len).decode(utf8).strip()
+        print(f"Command from GUI: {data}")
+
+        # Match the received message to a command and act accordingly
+        match data:
+            case "ui":
+                # Match the received message to a command and act accordingly
+                cmd = ui_commands.command_menu()
+                conn.send_to_rpi(cmd) # Forward the generated command to the RPi
+                self.request.sendall(b"UI command sent.\n") # Respond back to the GUI
+
+            case "rsync" | "sync":
+                # Perform rsync to pull data from the RPi to the host
+                _rsync()
+                self.request.sendall(b"Started rsync.\n")
+
+            case "kill":
+                # Send SSH command to the RPi to kill the running process
+                _kill_listener()
+                self.request.sendall(b"Kill command sent.\n")
+
+            case "help":
+                # Provide a help message listing valid commands
+                help_msg = (
+                    "Commands:\n"
+                    "  ui   – open device UI\n"
+                    "  rsync|sync – copy data from sensor\n"
+                    "  kill – stop rpi_wifi.py on the Pi\n"
+                    "  help – this text\n"
+                )
+                self.request.sendall(help_msg.encode(utf8))
+            case _:
+                # Default case: treat message as a raw command to send to the RPi
+                conn.send_to_rpi(data)
+                self.request.sendall(f"Sent command to RPi: {data}\n".encode(utf8)) # Send confirmation message back to GUI
 
 
 def _start_listener() -> None:
