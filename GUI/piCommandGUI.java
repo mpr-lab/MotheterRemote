@@ -11,11 +11,11 @@ public class piCommandGUI extends JFrame {
     /* ---------- GUI components ---------- */
     private final JTextField inputField;
     private final JTextArea  console;
-    private final JButton    statusButton, sendButton, rsyncButton, killButton,
+    private final JButton    statusButton, startButton, sendButton, rsyncButton, killButton,
             uiButton, helpButton, clearButton;
 
     /* ---------- Connection parameters (update to match configs.py) ---------- */
-    private static final String HOST = "buddy-surface";  // hostname or IP of the *host* computer
+    private static String HOST;  // hostname or IP of the *host* computer
     private static final int    PORT = 12345;    // must match configs.host_server
 
     /* ---------- Constructor sets up the GUI ---------- */
@@ -43,6 +43,7 @@ public class piCommandGUI extends JFrame {
 
         // ---- Pre-built command buttons ----
         statusButton = new JButton("status");
+        startButton = new JButton("start");
         rsyncButton = new JButton("rsync");
         killButton  = new JButton("kill");
         uiButton    = new JButton("ui");
@@ -50,6 +51,7 @@ public class piCommandGUI extends JFrame {
         clearButton = new JButton("Clear");
 
         statusButton.addActionListener(e -> sendCommand("status"));
+        startButton.addActionListener(e -> sendCommand("start"));
         rsyncButton.addActionListener(e -> sendCommand("rsync"));
         killButton .addActionListener(e -> sendCommand("kill"));
         uiButton   .addActionListener(e -> sendCommand("ui"));
@@ -58,6 +60,7 @@ public class piCommandGUI extends JFrame {
 
         JPanel commandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         commandPanel.add(statusButton);
+        commandPanel.add(startButton);
         commandPanel.add(rsyncButton);
         commandPanel.add(killButton);
         commandPanel.add(uiButton);
@@ -79,6 +82,29 @@ public class piCommandGUI extends JFrame {
         inputField.addActionListener(e -> sendCommand(inputField.getText()));
     }
 
+    private static String showHostDialog() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JLabel label = new JLabel("Enter host IP or hostname:");
+        JTextField field = new JTextField(20);
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+
+        int result = JOptionPane.showConfirmDialog(
+                null, panel, "Set Host Address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            String input = field.getText().trim();
+            if (!input.isEmpty()) {
+                return input;
+            } else {
+                JOptionPane.showMessageDialog(null, "Host address cannot be empty.");
+                return showHostDialog(); // retry
+            }
+        } else {
+            System.exit(0); // Exit if cancelled
+            return null; // unreachable
+        }
+    }
     /**
      * Opens a socket, sends the command, then streams back any text from the host.
      * Diagnostic printouts go to stdout so you can watch the terminal too.
@@ -174,6 +200,7 @@ public class piCommandGUI extends JFrame {
 //    }
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            HOST = showHostDialog(); // Prompt for host address
             piCommandGUI gui = new piCommandGUI();
             gui.setVisible(true);
 
