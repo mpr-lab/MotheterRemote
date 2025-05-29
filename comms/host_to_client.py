@@ -133,7 +133,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
         # Receive the incoming message (max length defined in configs)
         data = self.request.recv(msg_len).decode(utf8).strip()
-        print(f"Command from GUI: {data}")
+        print(f"{data}")
 
         # Match the received message to a command and act accordingly
         match data:
