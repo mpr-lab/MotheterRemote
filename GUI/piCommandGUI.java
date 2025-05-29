@@ -11,7 +11,7 @@ public class piCommandGUI extends JFrame {
     /* ---------- GUI components ---------- */
     private final JTextField inputField;
     private final JTextArea  console;
-    private final JButton    sendButton, rsyncButton, killButton,
+    private final JButton    statusButton, sendButton, rsyncButton, killButton,
             uiButton, helpButton, clearButton;
 
     /* ---------- Connection parameters (update to match configs.py) ---------- */
@@ -42,14 +42,14 @@ public class piCommandGUI extends JFrame {
         add(inputPanel, BorderLayout.SOUTH);
 
         // ---- Pre-built command buttons ----
-//        statusButton = new JButton("status");
+        statusButton = new JButton("status");
         rsyncButton = new JButton("rsync");
         killButton  = new JButton("kill");
         uiButton    = new JButton("ui");
         helpButton  = new JButton("help");
         clearButton = new JButton("Clear");
 
-//        statusButton.addActionListener(e -> sendCommand("status"));
+        statusButton.addActionListener(e -> sendCommand("status"));
         rsyncButton.addActionListener(e -> sendCommand("rsync"));
         killButton .addActionListener(e -> sendCommand("kill"));
         uiButton   .addActionListener(e -> sendCommand("ui"));
@@ -57,13 +57,23 @@ public class piCommandGUI extends JFrame {
         clearButton.addActionListener(e -> console.setText(""));
 
         JPanel commandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-//        commandPanel.add(statusButton);
+        commandPanel.add(statusButton);
         commandPanel.add(rsyncButton);
         commandPanel.add(killButton);
         commandPanel.add(uiButton);
         commandPanel.add(helpButton);
         commandPanel.add(clearButton);
         add(commandPanel, BorderLayout.NORTH);
+
+//        //kill python process when window closes
+//        addWindowListener(new WindowAdapter() {
+//            public void windowClosing(WindowEvent e) {
+//                if (pythonProcess != null) {
+//                    pythonProcess.destroy();
+//                }
+//            }
+//        });
+
 
         /* Allow Enter key in the text field to trigger sendCommand() */
         inputField.addActionListener(e -> sendCommand(inputField.getText()));
@@ -78,7 +88,7 @@ public class piCommandGUI extends JFrame {
         if (command == null || command.isEmpty()) return;
 
 //        System.out.println("DEBUG: Preparing to send -> " + command);
-        console.append("> " + command + "\n");  // echo to GUI console
+        console.append("\n> " + command + "\n");  // echo to GUI console
 
         /* Try-with-resources ensures socket closes automatically */
         try (Socket socket = new Socket(HOST, PORT);
@@ -119,14 +129,13 @@ public class piCommandGUI extends JFrame {
 
     private static void startPythonBackend(piCommandGUI guiInstance) {
         try {
-            String scriptPath = "../comms/host_to_client.py"; // adjust path
+            String scriptPath = "../comms/host_to_client.py";  // Replace with actual path
 
-            ProcessBuilder pb = new ProcessBuilder("python3", scriptPath);
-            pb.redirectErrorStream(true); // combine stdout and stderr
-
+            ProcessBuilder pb = new ProcessBuilder("python3", "-u", scriptPath);
+            pb.redirectErrorStream(true); // combine stderr with stdout
             pythonProcess = pb.start();
 
-            // Read Python output and forward it to the GUI console
+            // Thread to read from the Python backend continuously
             new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(pythonProcess.getInputStream()))) {
@@ -135,16 +144,15 @@ public class piCommandGUI extends JFrame {
                         guiInstance.appendToConsole("[PY] " + line);
                     }
                 } catch (IOException e) {
-                    guiInstance.appendToConsole("[ERROR reading backend output]: " + e.getMessage());
+                    guiInstance.appendToConsole("[PY ERR] " + e.getMessage());
                 }
             }).start();
 
-            System.out.println("Started Python backend.");
-
         } catch (IOException e) {
-            System.err.println("Failed to start Python backend: " + e.getMessage());
+            guiInstance.appendToConsole("[Startup Error]: " + e.getMessage());
         }
     }
+
 
     public void appendToConsole(String text) {
         SwingUtilities.invokeLater(() -> {
