@@ -7,6 +7,7 @@ import threading
 import socketserver
 import socket
 import time
+import importlib
 
 # python module imports
 import ui_commands
@@ -143,20 +144,14 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 _start_listener()
             case "ui":
                 # Match the received message to a command and act accordingly
-                cmd = ui_commands.command_menu()
-                conn.send_to_rpi(cmd) # Forward the generated command to the RPi
-                # self.request.sendall(b"UI command sent.\n") # Respond back to the GUI
-
+                data = ui_commands.command_menu()
+                conn.send_to_rpi(data)  # Forward the generated command to the RPi
             case "rsync" | "sync":
                 # Perform rsync to pull data from the RPi to the host
                 _rsync()
-                # self.request.sendall(b"Started rsync.\n")
-
             case "kill":
                 # Send SSH command to the RPi to kill the running process
                 _kill_listener()
-                # self.request.sendall(b"Kill command sent.\n")
-
             case "help":
                 # Provide a help message listing valid commands
                 help_msg = (
@@ -167,11 +162,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     "  help – this text\n"
                 )
                 self.request.sendall(help_msg.encode(utf8))
+            case "reload-config":
+                importlib.reload(configs)
             case _:
                 # Default case: treat message as a raw command to send to the RPi
                 conn.send_to_rpi(data)
-                # self.request.sendall(f"Sent command to RPi: {data}\n".encode(utf8)) # Send confirmation message back to GUI
-
 
 def _start_listener() -> None:
     """Sends command to prompt RPi to start listening"""
@@ -317,7 +312,6 @@ def main() -> None:
     global loop_thread
     loop_thread = threading.Thread(target=_ui_loop)  # user input loop
     loop_thread.start()
-
 
 if __name__ == "__main__":
     main()

@@ -1,10 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.net.Socket;
 
 /**
- * Simple Swing GUI that sends single-line commands to a Python host server
+ * Swing GUI that sends single-line commands to a Python host server
  * and prints any response in a console window.
  */
 public class piCommandGUI extends JFrame {
@@ -16,7 +19,7 @@ public class piCommandGUI extends JFrame {
 
     /* ---------- Connection parameters (update to match configs.py) ---------- */
     private static String HOST;  // hostname or IP of the *host* computer
-    private static final int    PORT = 12345;    // must match configs.host_server
+    private static final int PORT = 12345;    // must match configs.host_server
 
     /* ---------- Constructor sets up the GUI ---------- */
     public piCommandGUI() {
@@ -68,43 +71,103 @@ public class piCommandGUI extends JFrame {
         commandPanel.add(clearButton);
         add(commandPanel, BorderLayout.NORTH);
 
-//        //kill python process when window closes
-//        addWindowListener(new WindowAdapter() {
-//            public void windowClosing(WindowEvent e) {
-//                if (pythonProcess != null) {
-//                    pythonProcess.destroy();
-//                }
-//            }
-//        });
-
 
         /* Allow Enter key in the text field to trigger sendCommand() */
         inputField.addActionListener(e -> sendCommand(inputField.getText()));
     }
 
-    private static String showHostDialog() {
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
-        JLabel label = new JLabel("Enter host IP or hostname:");
-        JTextField field = new JTextField(20);
-        panel.add(label, BorderLayout.NORTH);
-        panel.add(field, BorderLayout.CENTER);
+    /* Java will overwrite these two lines in configs.py              */
+    /*   host_name = "buddy"                                          */
+    /*   host_addr = "buddy-surface"                                  */
+    /* so keep the assignment format EXACTLY the same in that file.   */
 
-        int result = JOptionPane.showConfirmDialog(
-                null, panel, "Set Host Address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+    // -------- helper record to bring back two strings -------------
+    private record HostInfo(String addr, String name) {}
+
+    /* ---------- Start-up dialog that asks for BOTH fields ---- */
+    private void showConfigDialog() {
+        JTextField hostNameField = new JTextField(HOST); // use current HOST as default
+        JTextField hostAddrField = new JTextField(HOST); // assuming HOST = host_addr
+
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Host Name (host_name):"));
+        panel.add(hostNameField);
+        panel.add(new JLabel("Host Address (host_addr):"));
+        panel.add(hostAddrField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Enter Host Info",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
-            String input = field.getText().trim();
-            if (!input.isEmpty()) {
-                return input;
+            String newHostName = hostNameField.getText().trim();
+            String newHostAddr = hostAddrField.getText().trim();
+
+            if (!newHostAddr.isEmpty() && !newHostName.isEmpty()) {
+                updateConfigsPy(newHostName, newHostAddr);  // update the Python configs.py
+                HOST = newHostAddr;                         // update Java-side host IP
+                console.append("Updated host_name and host_addr in configs.py\n");
+
+                // ⬇️ Tell Python server to reload the configs
+                sendCommand("reload-config");
             } else {
-                JOptionPane.showMessageDialog(null, "Host address cannot be empty.");
-                return showHostDialog(); // retry
+                console.append("Error: Host name or address was empty.\n");
             }
-        } else {
-            System.exit(0); // Exit if cancelled
-            return null; // unreachable
         }
     }
+
+
+    /* ---------- Write new values into configs.py -------------- */
+    private void updateConfigsPy(String newHostName, String newHostAddr) {
+        try {
+            File file = new File("../comms/configs.py");  // adjust path if needed
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            StringBuilder content = new StringBuilder();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().startsWith("host_name ="))
+                    line = "host_name = \"" + newHostName + "\"";
+                else if (line.trim().startsWith("host_addr ="))
+                    line = "host_addr = \"" + newHostAddr + "\"";
+                content.append(line).append("\n");
+            }
+            reader.close();
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write(content.toString());
+            writer.close();
+
+        } catch (IOException e) {
+            console.append("Error updating configs.py: " + e.getMessage() + "\n");
+        }
+    }
+
+
+//    //TODO: update configs.py automatically using this
+//    private static String showHostDialog() {
+//        JPanel panel = new JPanel(new BorderLayout(5, 5));
+//        JLabel label = new JLabel("Enter host IP or hostname:");
+//        JTextField field = new JTextField(20);
+//        panel.add(label, BorderLayout.NORTH);
+//        panel.add(field, BorderLayout.CENTER);
+//
+//        int result = JOptionPane.showConfirmDialog(
+//                null, panel, "Set Host Address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+//
+//        if (result == JOptionPane.OK_OPTION) {
+//            String input = field.getText().trim();
+//            if (!input.isEmpty()) {
+//                return input;
+//            } else {
+//                JOptionPane.showMessageDialog(null, "Host address cannot be empty.");
+//                return showHostDialog(); // retry
+//            }
+//        } else {
+//            System.exit(0); // Exit if cancelled
+//            return null; // unreachable
+//        }
+//    }
+
     /**
      * Opens a socket, sends the command, then streams back any text from the host.
      * Diagnostic printouts go to stdout so you can watch the terminal too.
@@ -113,28 +176,26 @@ public class piCommandGUI extends JFrame {
 
         if (command == null || command.isEmpty()) return;
 
-//        System.out.println("DEBUG: Preparing to send -> " + command);
+        System.out.println("DEBUG: Preparing to send -> " + command);
         console.append("\n> " + command + "\n");  // echo to GUI console
 
         /* Try-with-resources ensures socket closes automatically */
         try (Socket socket = new Socket(HOST, PORT);
              OutputStream   out   = socket.getOutputStream();
              BufferedReader inBuf = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
-//            System.out.println("DEBUG: Connected to " + HOST + ":" + PORT);
+            System.out.println("DEBUG: Connected to " + HOST + ":" + PORT);
 
             /* Send the command terminated by newline (matches Python side) */
             out.write((command + "\n").getBytes("UTF-8"));
             out.flush();
-//            System.out.println("DEBUG: Command bytes flushed to socket");
+            System.out.println("DEBUG: Command bytes flushed to socket");
 
             /* Read any response line-by-line until the server closes the socket */
             String line;
             while ((line = inBuf.readLine()) != null) {
                 console.append(line + "\n");
             }
-
-//            System.out.println("DEBUG: Server closed connection normally");
+            System.out.println("DEBUG: Server closed connection normally");
 
         } catch (IOException ex) {
             /* Most common failure points:
@@ -152,7 +213,6 @@ public class piCommandGUI extends JFrame {
     }
 
     private static Process pythonProcess;
-
     private static void startPythonBackend(piCommandGUI guiInstance) {
         try {
             String scriptPath = "../comms/host_to_client.py";  // Replace with actual path
@@ -187,26 +247,40 @@ public class piCommandGUI extends JFrame {
     }
 
 
-
-
-    /* ---------- Main entry point ---------- */
 //    public static void main(String[] args) {
-//        /* Launch on Swing event thread */
+//        /* Ask the user for the new config values */
+//        info = showConfigDialog();
+//
+//        /* Update them in configs.py  (adjust relative/absolute path) */
+//        Path cfgFile = Paths.get("../coms/configs.py");
+//        updateConfigsPy(cfgFile, info);
+//
+//        /* 3. Align the Java HOST variable to the freshly entered address */
+//        HOST = info.addr;   // <<< ensures socket connects to correct place
+//
 //        SwingUtilities.invokeLater(() -> {
-//            System.out.println("DEBUG: Launching GUI …");
 //            piCommandGUI gui = new piCommandGUI();
 //            gui.setVisible(true);
+//
+//            startPythonBackend(gui);  // Start Python backend after GUI is up
 //        });
 //    }
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            HOST = showHostDialog(); // Prompt for host address
-            piCommandGUI gui = new piCommandGUI();
-            gui.setVisible(true);
+public static void main(String[] args) {
+    SwingUtilities.invokeLater(() -> {
+        piCommandGUI gui = new piCommandGUI();
 
-            startPythonBackend(gui);  // Start Python backend after GUI is up
-        });
-    }
+        // Show config dialog BEFORE GUI becomes visible
+        gui.showConfigDialog();  // sets HOST and updates configs.py
+
+        // Start the Python backend process
+        gui.setVisible(true);
+        startPythonBackend(gui);  // already defined method
+
+        // Now show the GUI window
+        gui.setVisible(true);
+    });
+}
+
 
 
 
