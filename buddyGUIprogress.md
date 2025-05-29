@@ -3,7 +3,8 @@
 ## why java?
 
 ## rough prototype
-Implemented a GUI that runs the python backend silently --> had buttons for each command and printed text from the terminal into a text are
+implemented a GUI that runs the python backend silently --> had buttons for each command and printed text from the terminal into a text are
+
 Need to make this better because it is just a glorified terminal
 
 Just to keep a copy of the original GUI prototype:
@@ -253,7 +254,7 @@ public static void main(String[] args) {
 - **tabs for each function**
   - _**Command Center**_
   - _**Settings:** update host settings or different RPi's maybe?_
-  - _**Data Sync:** view data from rsync?_
+  - _**Viewing data:** view data from rsync?_
 - **real-time status updates?**
 - **filter log by type**
     - _errors_
@@ -262,3 +263,24 @@ public static void main(String[] args) {
 - **progress bar for rsync**
 
 ## prototype 2
+### Implemented Tabs:
+##### Command Center
+* you can use the buttons to send commands (hover to see what buttons do)
+* serial monitor located at the bottom of the GUI panel
+  * need a better way to display data...
+
+##### Settings
+* update host and rpi name + address
+
+
+##### Data Sync
+* not sure if files actually can be viewed from it....
+
+## ?
+how to make status update regularly
+
+how to package the gui into an executable
+
+## Packaging
+* [JSmooth](https://jsmooth.sourceforge.net/)
+* [Jar2exe](https://www.jar2exe.com/)
