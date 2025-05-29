@@ -121,8 +121,8 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 #             f"Received from {self.client_address[0]} in {cur_thread.name}: {self.data}"
 #         )
 #         _print_formatted(self.data)  # print formatted data to terminal
-
-
+#
+#
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     """Handles incoming TCP requests from the GUI or other clients."""
 
@@ -137,6 +137,10 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
         # Match the received message to a command and act accordingly
         match data:
+            case "status":
+                _status()
+            case "start":
+                _start_listener()
             case "ui":
                 # Match the received message to a command and act accordingly
                 cmd = ui_commands.command_menu()
