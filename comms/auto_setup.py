@@ -97,27 +97,21 @@ if system == "Windows":
     query = "ipconfig"
     try:
         interfaces = subprocess.check_output(query, shell=True).decode()
-        print(interfaces)
     except Exception as e:
         print(f"WINDOWS could not list network interfaces:\n{e}", file=sys.stderr)
         quit()
 
-    print(interfaces)
-    ar = interfaces.split("\n")
-    stripped = [i.rstrip() for i in ar]
+    stripped = [i.rstrip() for i in interfaces.split("\n")]
 
-    print(stripped)
     intf = ""
     for i in stripped:
         if len(i) == 0:
             continue
         if not i[0].isspace():
             intf = i.strip(":")
-            print(intf)
         if "IPv4" in i:
             ip = i.strip().split(" ")[-1]
             intf_dict[intf] = ip
-            print(ip)
 
 
 print(intf_dict)
