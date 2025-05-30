@@ -418,7 +418,12 @@ public class piCommandGUI extends JFrame {
             return null;
         }
 
-        long seconds = switch(unit){ case 1->t*60; case 2->t*3600; default->t; };
+        long seconds = switch(unit){
+            case 1->t*60;
+            case 2->t*3600;
+            default->t;
+        };
+
         String withZeros = String.format("%010d", seconds);
         return "p"+withZeros+"x";
     }
@@ -454,25 +459,45 @@ public class piCommandGUI extends JFrame {
     private String promptLightOffset() {          // zcal5<value>x
         String v = JOptionPane.showInputDialog(this, "Light offset (mag/arcsec²):");
         if(v==null) return null;
-        try{ Double.parseDouble(v);}catch(Exception e){ return null; }
+        try{
+            Double.parseDouble(v);
+        }catch(Exception e){
+            return null;
+        }
+
         return "zcal5"+String.format("%08.2f", Double.parseDouble(v)).replace(' ','0')+"x";
     }
     private String promptLightTemp() {            // zcal6<value>x
         String v = JOptionPane.showInputDialog(this, "Light temperature (°C):");
         if(v==null) return null;
-        try{ Double.parseDouble(v);}catch(Exception e){ return null; }
+        try{
+            Double.parseDouble(v);
+        }catch(Exception e){
+            return null;
+        }
+
         return "zcal6"+String.format("%03.1f", Double.parseDouble(v)).replace(' ','0')+"x";
     }
     private String promptDarkPeriod(){            // zcal7<value>x
         String v = JOptionPane.showInputDialog(this, "Dark-period (s):");
         if(v==null) return null;
-        try{ Double.parseDouble(v);}catch(Exception e){ return null; }
+        try{
+            Double.parseDouble(v);
+        }catch(Exception e){
+            return null;
+        }
+
         return "zcal7"+String.format("%07.3f", Double.parseDouble(v)).replace(' ','0')+"x";
     }
     private String promptDarkTemp(){              // zcal8<value>x
         String v = JOptionPane.showInputDialog(this, "Dark temperature (°C):");
         if(v==null) return null;
-        try{ Double.parseDouble(v);}catch(Exception e){ return null; }
+        try{
+            Double.parseDouble(v);
+        }catch(Exception e){
+            return null;
+        }
+
         return "zcal8"+String.format("%03.1f", Double.parseDouble(v)).replace(' ','0')+"x";
     }
 
