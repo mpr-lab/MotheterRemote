@@ -1,6 +1,29 @@
 # buddy's GUI development notes
 
 ## why java?
+### Cross-Platform Compatibility
+Runs on Windows, macOS, and Linux without needing to rewrite the UI code.
+
+Ideal when the GUI needs to be used from different machines or OSes to control the Raspberry Pi.
+
+### strong UI toolkit with swing
+Swing provides a rich set of widgets (buttons, tabs, text areas, dialogs, etc.) that are sufficient for the needs of:
+* Command buttons 
+* Real-time logs 
+* File listing and settings forms
+
+### robust multithreading
+built-in concurrency makes it easier to handle:
+* Socket communication in the background
+* Live logging and GUI updates
+* Async command responses (e.g., status updates)
+
+### maintainable and Modular
+GUI logic is separated from backend logic (handled in Python), allowing easier development and debugging on both ends.
+
+### widely known/easy accessible
+java is commonly taught and widely used, so it's easier for other developers to maintain or extend.
+It avoids forcing the user to install and configure a web server, browser-based interface, and is taught in Smith's CS curriculum so avoids having to learn a new language.
 
 ---
 ## rough prototype
@@ -274,11 +297,44 @@ public static void main(String[] args) {
 ##### Settings
 * update host and rpi name + address
 
-
 ##### Data Sync
 * not sure if files actually can be viewed from it....
 
 
+---
+## prototype 3 (with sensor command center)
+##### Command Center &rarr; RPi Command Center
+* now only has 4 commands (`start`, `status`, `kill`, `rsync`)
+* the `help` command was replaced with tooltips, going to change help button to be its own tab that explains how to use the GUI rather than listing all the commands
+
+##### Sensor Command Center
+* handles everything that the `ui` command did now with an graphical interface rather than in the terminal
+* drop down menu to change the category of which command you want to run (based on the structure in `ui_commands.py`)
+* a separate "screen" for each option in the dropdown with buttons to run commands in their respective categories
+* uses helper functions to actually run the commands
+* If a command requires user input, a popup appears to enter information
+  * maybe adding a popup/second popup for every command to confirm that that is the command you want to send? and something other than the log that shows that the command was either sent/not sent
+
+##### Data Sync
+* should just open the file location in file explorer/finder or whatever (don't make my own file explorer interface)
+
+##### Settings
+* everything is the same,, a way to update your settings
+
+
+### how to improve?
+- **real-time status updates?** !!!
+- **filter log by type** (or color coding?)
+    - _errors_
+    - _info_
+    - _etc?_
+- **progress bar for rsync**
+- **Revamping the load in screen**
+    - _adding auto get ip info and stuff_
+    - _dropdown to switch between connection type_
+    - _known pis? if multiple pis, a dropdown to switch between them_
+    - also updating settings page to account for all that
+- **Better way to display feedback from terminal**
 ---
 ## ?
 how to make status update regularly
@@ -339,15 +395,32 @@ which when called with `configs` basically reloads the whole library effectively
 #### started revamping GUI
 added tabs for specific functions in the GUI
 
-**_TODO_**:
+\
+\
+\
+_**TODO**_ - - - - - - - -
 - fix UI Button... why does it break everything
 - figure out if rsync works
 
 ---
 ### 5/30/2025
-Started to tackle the UI errors, %rarr; decided to turn the whole `ui_command.py` file into its own GUI of sorts and bonk that into its own tab:
+Started to tackle the UI errors, &rarr; decided to turn the whole `ui_command.py` file into its own GUI of sorts and bonk that into its own tab:
 * proposed structure of sensor UI tab:
   * dropdown menu for each category
   * buttons within each dropdown
   * when user input needed, a popup appears
   * tooltips
+
+For the UI tab I had to make separate helper functions for every command... is there a better way to tackle this? (prop ya lol)
+
+Started making documentation for the GUI,, still need to in depth explanation how all the methods work.
+Also started adding javadoc comments to the GUI and overall polishing/making code easier to read &rarr; probably would be good to comment a little more...
+
+I want to add a help/about button that has some of the documentation/how to use the GUI just in case the user needs help?? also there must be a better way to display the status and whatever whatever that comes out of the terminal.
+
+\
+\
+\
+_**TODO**_ - - - - - - - - 
+* Next work day: work on adding the help button,, use the weekend to brainstorm what would be a good way to display status data
+* Start thinking about how to implement Skye's auto ip yoink script so that we can bypass the whole input host_addr and host_name thing and think about wifi/ethernet/cellular dropdown thingy.
