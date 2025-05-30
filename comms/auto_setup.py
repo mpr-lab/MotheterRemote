@@ -107,6 +107,8 @@ if system == "Windows":
     print(ar)
     intf = ""
     for i in ar:
+        if len(i) == 0:
+            continue
         if not i[0].isspace():
             intf = i.strip(":")
             print(intf)
