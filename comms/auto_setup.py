@@ -1,3 +1,4 @@
+from curses.ascii import isspace
 import platform
 import sys
 import subprocess
@@ -92,5 +93,24 @@ if system == "Darwin":
             )
             quit()
         intf_dict[intf] = ip
+
+if system == "Windows":
+    query = "ipconfig"
+    try:
+        interfaces = subprocess.check_output(query, shell=True).decode()
+    except Exception as e:
+        print(f"WINDOWS could not list network interfaces:\n{e}", file=sys.stderr)
+        quit()
+
+    print(interfaces)
+    ar = interfaces.split("\n")
+    intf = ""
+    for i in ar:
+        if not i[0].isspace():
+            intf = i.strip(":")
+        if "IPv4" in i:
+            ip = i.strip().split(" ")[-1]
+            intf_dict[intf] = ip
+
 
 print(intf_dict)
