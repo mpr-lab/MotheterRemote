@@ -49,7 +49,7 @@ else:
     except Exception as e:
         print(f"WINDOWS COMPUTER name could not be auto-filled:\n{e}", file=sys.stderr)
 
-intf_dict: dict[str, str] = {}
+intf_dict = {}
 
 if system == "Linux":
     query = "ip -o link show | awk -F': ' '{print $2}'"
