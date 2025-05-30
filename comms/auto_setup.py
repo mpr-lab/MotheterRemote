@@ -53,20 +53,44 @@ intf_dict: dict[str, str] = {}
 
 if system == "Linux":
     query = "ip -o link show | awk -F': ' '{print $2}'"
-    interfaces = subprocess.check_output(query, shell=True).decode().strip().split("\n")
+    try:
+        interfaces = (
+            subprocess.check_output(query, shell=True).decode().strip().split("\n")
+        )
+    except Exception as e:
+        print(f"LINUX could not list network interfaces:\n{e}", file=sys.stderr)
+        quit()
 
     for intf in interfaces:
         command = "ifconfig " + intf + " | grep 'inet' | head -n 1| awk '{print $2}'"
-        ip = subprocess.check_output(command, shell=True).decode().strip()
+        try:
+            ip = subprocess.check_output(command, shell=True).decode().strip()
+        except Exception as e:
+            print(
+                f"LINUX could not find IP for interface {intf}:\n{e}", file=sys.stderr
+            )
+            quit()
         intf_dict[intf] = ip
 
 if system == "Darwin":
     query = "networksetup -listallhardwareports | grep Device | awk '{print $2}'"
-    interfaces = subprocess.check_output(query, shell=True).decode().strip().split("\n")
+    try:
+        interfaces = (
+            subprocess.check_output(query, shell=True).decode().strip().split("\n")
+        )
+    except Exception as e:
+        print(f"MacOS could not list network interfaces:\n{e}", file=sys.stderr)
+        quit()
 
     for intf in interfaces:
         command = "ifconfig " + intf + " | grep 'inet ' | awk '{print $2}'"
-        ip = subprocess.check_output(command, shell=True).decode().strip()
+        try:
+            ip = subprocess.check_output(command, shell=True).decode().strip()
+        except Exception as e:
+            print(
+                f"MacOS could not find IP for interface {intf}:\n{e}", file=sys.stderr
+            )
+            quit()
         intf_dict[intf] = ip
 
 print(intf_dict)
