@@ -1,4 +1,3 @@
-from curses.ascii import isspace
 import platform
 import sys
 import subprocess
