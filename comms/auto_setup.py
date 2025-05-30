@@ -104,7 +104,7 @@ if system == "Windows":
 
     print(interfaces)
     ar = interfaces.split("\n")
-    stripped = [i.strip() for i in ar]
+    stripped = [i.rstrip() for i in ar]
 
     print(stripped)
     intf = ""
