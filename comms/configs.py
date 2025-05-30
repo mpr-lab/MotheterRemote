@@ -3,15 +3,20 @@ Please update this file with the correct information for your setup before tryin
 If using the GUI please run readConfigs.py located in /GUI to update config.properties
 """
 
+# connection type to first RPi.
+# options are: ethernet, wifi, wifi_tailscale, cellular_tailscale
+connection_type = "wifi_tailscale"
+
+
 """Info about the host computer. This should be a computer with a static IP."""
 host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
-host_name = "buddy"
-host_addr = "buddy-surface"
-# host_name = "buddy"  # host server's username
-# host_addr = "buddy-surface"  # ip or ddns for host computer
 
+import auto_setup
 
-"""Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one 
+host_name = auto_setup.host_name  # host server's username, auto-filled
+host_addr = auto_setup.host_addr  # ip or ddns for host computer, auto-filled
+
+"""Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one
 attached to the sensor device."""
 rpi_name = "pi"
 rpi_repo = "~/MotheterRemote/comms"  # path to this repo directory

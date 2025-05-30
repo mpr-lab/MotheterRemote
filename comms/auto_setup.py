@@ -1,0 +1,72 @@
+import platform
+import sys
+import subprocess
+
+# connection type to first RPi.
+# options are: ethernet, wifi, wifi_tailscale, cellular_tailscale
+connection_type = "wifi_tailscale"
+
+system = platform.system()
+if system in ["Linux", "SunOS", "Darwin"]:
+    unix = True
+elif system == "Windows":
+    unix = False
+else:
+    print("Operating system cannot be determined!", file=sys.stderr)
+    quit()
+
+if unix:
+    try:
+        host_name = subprocess.check_output("whoami", shell=True).decode().strip()
+    except Exception as e:
+        print(f"UNIX USER name could not be auto-filled:\n{e}", file=sys.stderr)
+
+    try:
+        host_addr = (
+            subprocess.check_output("hostname", shell=True)
+            .decode()
+            .strip()
+            .strip(".local")
+        )
+    except Exception as e:
+        print(f"UNIX COMPUTER name could not be auto-filled:\n{e}", file=sys.stderr)
+
+else:
+    try:
+        host_name = (
+            subprocess.check_output("whoami", shell=True)
+            .decode()
+            .strip()
+            .split("\\")[1]
+        )
+    except Exception as e:
+        print(f"WINDOWS USER name could not be auto-filled:\n{e}", file=sys.stderr)
+
+    try:
+        host_addr = (
+            subprocess.check_output("echo %COMPUTERNAME%", shell=True).decode().strip()
+        )
+    except Exception as e:
+        print(f"WINDOWS COMPUTER name could not be auto-filled:\n{e}", file=sys.stderr)
+
+intf_dict: dict[str, str] = {}
+
+if system == "Linux":
+    query = "ip -o link show | awk -F': ' '{print $2}'"
+    interfaces = subprocess.check_output(query, shell=True).decode().strip().split("\n")
+
+    for intf in interfaces:
+        command = "ifconfig " + intf + " | grep 'inet' | head -n 1| awk '{print $2}'"
+        ip = subprocess.check_output(command, shell=True).decode().strip()
+        intf_dict[intf] = ip
+
+if system == "Darwin":
+    query = "networksetup -listallhardwareports | grep Device | awk '{print $2}'"
+    interfaces = subprocess.check_output(query, shell=True).decode().strip().split("\n")
+
+    for intf in interfaces:
+        command = "ifconfig " + intf + " | grep 'inet ' | awk '{print $2}'"
+        ip = subprocess.check_output(command, shell=True).decode().strip()
+        intf_dict[intf] = ip
+
+print(intf_dict)
