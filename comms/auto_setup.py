@@ -104,9 +104,11 @@ if system == "Windows":
 
     print(interfaces)
     ar = interfaces.split("\n")
-    print(ar)
+    stripped = [i.strip() for i in ar]
+
+    print(stripped)
     intf = ""
-    for i in ar:
+    for i in stripped:
         if len(i) == 0:
             continue
         if not i[0].isspace():
