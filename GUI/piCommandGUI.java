@@ -6,13 +6,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.function.Supplier;   // the lambda-returning-string type
 
 public class piCommandGUI extends JFrame {
 
     /* ---------- paths may need to tweak ---------- */
-    private static final String CONFIG_PATH  = "../comms/configs.py";
-    private static final String BACKEND_PATH = "../comms/host_to_client.py";
-        //depending on where user decides to save rsync data this needs to change
+    private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
+    private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
     private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
 
     /* ---------- network ---------- */
@@ -29,7 +31,7 @@ public class piCommandGUI extends JFrame {
     private final JLabel statusLabel = new JLabel("Status: Initializing...");
 
     private piCommandGUI(String hostAddr) {
-        super("RPi Command Center");
+        super("MotheterRemote");
         this.HOST = hostAddr;
 
         /* layout root */
@@ -39,9 +41,11 @@ public class piCommandGUI extends JFrame {
 
         /* tabbed pane (center) */
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Command Center", buildCommandTab());
-        tabs.addTab("Settings",       buildSettingsTab());
+        tabs.addTab("RPi Command Center", buildCommandTab());
+        tabs.addTab("Sensor Command Center", buildSensorTab());
         tabs.addTab("Data Sync",      buildDataTab());
+        tabs.addTab("Settings",       buildSettingsTab());
+
         add(tabs, BorderLayout.CENTER);
 
         /* console panel (south) */
@@ -66,6 +70,10 @@ public class piCommandGUI extends JFrame {
 
     /* -------------------- TABS -------------------- */
 
+    /**
+     *
+     * @return
+     */
     private JPanel buildCommandTab() {
         JPanel root = new JPanel(new BorderLayout(5,5));
 
@@ -73,9 +81,9 @@ public class piCommandGUI extends JFrame {
                 {"status", "Check the current process status"},
                 {"start",  "Start the main data collection process"},
                 {"rsync",  "Synchronize files from Pi to host"},
-                {"kill",   "Kill the running process on the Pi"},
-                {"ui",     "Open the UI on the Raspberry Pi"},
-                {"help",   "List available commands"}
+                {"kill",   "Kill the running process on the Pi"}
+//                {"ui",     "Shows and allows user to run available commands built in to the sensor"},
+//                {"help",   "List available commands"}
         };
 
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -100,6 +108,10 @@ public class piCommandGUI extends JFrame {
         return root;
     }
 
+    /**
+     *
+     * @return
+     */
     private JPanel buildSettingsTab() {
         JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -144,6 +156,10 @@ public class piCommandGUI extends JFrame {
 
     }
 
+    /**
+     *
+     * @return root
+     */
     private JPanel buildDataTab() {
         JList<String> list = new JList<>(fileModel);
         JScrollPane sp = new JScrollPane(list);
@@ -164,6 +180,109 @@ public class piCommandGUI extends JFrame {
         root.add(sp, BorderLayout.CENTER);
         root.add(btns, BorderLayout.SOUTH);
         loadFileList();
+        return root;
+    }
+
+
+    /** Sensor Commands tab – converts ui_commands.py menu into GUI
+     *
+     * @return root --> a JPanel variable containing the contents of the tab
+     */
+    private JPanel buildSensorTab() {
+
+        /* ===  MAP OF CATEGORIES → (Button Label, Tooltip, Command) === */
+        class Cmd { String label, tip; Supplier<String> cmd; Cmd(String l,String t,Supplier<String> c){label=l;tip=t;cmd=c;}}
+
+        Map<String,List<Cmd>> cat = new LinkedHashMap<>();
+
+        /* 1) READINGS & INFO */
+        cat.put("Readings & Info", List.of(
+                new Cmd("Request Reading","requests a reading", ()->"rx"),
+                new Cmd("Calibration Info","requests calibration information", ()->"cx"),
+                new Cmd("Unit Info","requests unit information", ()->"ix")
+        ));
+
+        /* 2) ARM / DISARM CAL */
+        cat.put("Arm / Disarm Calibration", List.of(
+                new Cmd("Arm Light","zcalAx", ()->"zcalAx"),
+                new Cmd("Arm Dark","zcalBx", ()->"zcalBx"),
+                new Cmd("Disarm","zcalDx", ()->"zcalDx")
+        ));
+
+        /* 3) Interval / Threshold */
+        cat.put("Interval / Threshold", List.of(
+                new Cmd("Request Interval Settings","Sends interval setting request. Prompts two responses: reading w/ serial, and interval setting respons", ()->"Ix"),
+                new Cmd("Set Interval Period","", this::promptIntervalPeriod),
+                new Cmd("Set Interval Threshold","", this::promptIntervalThreshold)
+        ));
+
+        /* 4) Manual Cal */
+        cat.put("Manual Calibration", List.of(
+                new Cmd("Set Light Offset","manually set calibration: light offset", this::promptLightOffset),
+                new Cmd("Set Light Temp","manually set calibration: light temperature", this::promptLightTemp),
+                new Cmd("Set Dark Period","manually set calibration: dark period", this::promptDarkPeriod),
+                new Cmd("Set Dark Temp","manually set calibration: dark temperature", this::promptDarkTemp)
+        ));
+
+        /* 5) Simulation */
+        cat.put("Simulation", List.of(
+                new Cmd("Request Sim Values","get simulation values", ()->"sx"),
+                new Cmd("Run Simulation","runs a simulation", this::promptSimulation)
+        ));
+
+        /* 6) Data Logging Commands */
+        cat.put("Data Logging Cmds", List.of(
+                new Cmd("Request Pointer","L1x", ()->"L1x"),
+                new Cmd("Log One Record","L3x", ()->"L3x"),
+                new Cmd("Return One Record","L4…", this::promptReturnOneRecord),
+                new Cmd("Set Trigger Mode","LMx", this::promptTriggerMode),
+                new Cmd("Request Trigger Mode","Lmx", ()->"Lmx"),
+                new Cmd("Request Interval Settings","LIx", ()->"LIx"),
+                new Cmd("Set Interval Period","LPx", this::promptLogIntervalPeriod),
+                new Cmd("Set Threshold","LPTx", this::promptLogThreshold)
+        ));
+
+        /* 7) Logging Utilities */
+        cat.put("Logging Utilities", List.of(
+                new Cmd("Request ID","L0x", ()->"L0x"),
+                new Cmd("Erase Flash Chip","L2x", this::confirmEraseFlash),
+                new Cmd("Battery Voltage","L5x", ()->"L5x"),
+                new Cmd("Request Clock","Lcx", ()->"Lcx"),
+                new Cmd("Set Clock","Lcx", this::promptSetClock),
+                new Cmd("Put Unit to Sleep","Lsx", ()->"Lsx"),
+                new Cmd("Request Alarm Data","Lax", ()->"Lax")
+        ));
+
+        /* ===  GUI BUILD === */
+        JComboBox<String> combo = new JComboBox<>(cat.keySet().toArray(String[]::new));
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+
+        /* Populate buttons for selected category */
+        Runnable refresh = () -> {
+            listPanel.removeAll();
+            String key = (String) combo.getSelectedItem();
+            for (Cmd c : cat.get(key)) {
+                JButton b = new JButton(c.label);
+                b.setToolTipText(c.tip);
+                b.addActionListener(e -> {
+                    String real = c.cmd.get();          // get command string (may prompt)
+                    if(real!=null && !real.isBlank()){
+                        sendCommand(real);
+                    }
+                });
+                listPanel.add(b);
+            }
+            listPanel.revalidate();
+            listPanel.repaint();
+        };
+        combo.addActionListener(e -> refresh.run());
+        refresh.run(); // initial fill
+
+        JPanel root = new JPanel(new BorderLayout(5,5));
+        root.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        root.add(combo, BorderLayout.NORTH);
+        root.add(new JScrollPane(listPanel), BorderLayout.CENTER);
         return root;
     }
 
@@ -194,7 +313,7 @@ public class piCommandGUI extends JFrame {
     private void updateConfigsPy(String newHostName, String newHostAddr,
                                  String newRpiName,  String newRpiAddr) {
         try {
-            File file = new File("../comms/configs.py");
+            File file = new File("../comms-GUI/configs.py");
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder content = new StringBuilder();
 
@@ -225,7 +344,7 @@ public class piCommandGUI extends JFrame {
 
     private void sendCommand(String cmd){
         if(cmd==null||cmd.isBlank()) return;
-        append("> "+cmd);
+        append("\n> "+cmd);
         try(Socket s=new Socket(HOST,PORT);
             OutputStream o=s.getOutputStream();
             BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
@@ -242,9 +361,9 @@ public class piCommandGUI extends JFrame {
             new Thread(()->{
                 try(BufferedReader r=new BufferedReader(new InputStreamReader(p.getInputStream()))){
                     String ln; while((ln=r.readLine())!=null) append("[PY] "+ln);
-                }catch(IOException ex){ append("[PY] "+ex.getMessage());}
+                }catch(IOException ex){ append("     [PY] "+ex.getMessage());}
             }).start();
-        }catch(IOException ex){ append("[GUI] Can't start backend: "+ex.getMessage()); }
+        }catch(IOException ex){ append("\n     [GUI] Can't start backend: "+ex.getMessage()); }
     }
 
     private void append(String txt){
@@ -282,6 +401,7 @@ public class piCommandGUI extends JFrame {
     }
 
 
+
     /* -------------------- initial prompt -------------------- */
     private static String[] promptForHostInfo(){
         JTextField nameField = new JTextField();
@@ -315,6 +435,8 @@ public class piCommandGUI extends JFrame {
             return false;
         }
     }
+
+
 
     /* -------------------- MAIN -------------------- */
     public static void main(String[] args) {
