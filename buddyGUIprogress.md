@@ -2,6 +2,7 @@
 
 ## why java?
 
+---
 ## rough prototype
 implemented a GUI that runs the python backend silently --> had buttons for each command and printed text from the terminal into a text are
 
@@ -262,6 +263,7 @@ public static void main(String[] args) {
     - _etc?_
 - **progress bar for rsync**
 
+---
 ## prototype 2
 ### Implemented Tabs:
 ##### Command Center
@@ -276,11 +278,76 @@ public static void main(String[] args) {
 ##### Data Sync
 * not sure if files actually can be viewed from it....
 
+
+---
 ## ?
 how to make status update regularly
 
 how to package the gui into an executable
 
+
+
+
+
+---
 ## Packaging
 * [JSmooth](https://jsmooth.sourceforge.net/)
 * [Jar2exe](https://www.jar2exe.com/)
+
+
+
+
+
+---
+## logs
+
+### 5/27/2025
+Looked through all the code from spring semester, refamiliarized with what I was doing and how motheter remote works
+
+started trying to fix GUI connection issue
+
+---
+### 5/28/2025
+Still trying to fix connection issue
+
+GUI only sends commands and shows what commands were sent, does not print was is shown when running `host_to_client.py` in the terminal... need to fix that
+
+tried implementing a way to automatically read in configs properties from `configs.py`
+* made `readConfigs.py` file to dump all the info from `configs.py` into a `config.properties`
+* GUI should be able to yoink all the info from `config.properties` so user doesn't have to manually input their _addr_ and _name_ into `configs.py`
+* for some reason the location of `config.properties` matters and idk where it should be placed?
+
+---
+### 5/29/2025
+Fixed host name problem, alot of errors coming from `host_to_client.py` not supporting the GUI so I had to change some stuff so that it would
+
+Got GUI to print what comes through in the terminal
+
+Finished debugging connection issues --> fixed the big ssh key and ssh missing but not (??) on my laptop
+
+decided to scrap whole `config.properties` debacle &rarr; have a designated place in the GUI for user to update their stuff, no need to access code.
+Added inputting host name and ip screen which also updates `configs.py` file when starting up GUI
+* need to figure out how to make the `host_to_client.py`
+
+Figured out how to make it update using:
+```python
+import importlib
+importlib.reload()
+```
+which when called with `configs` basically reloads the whole library effectively grabbing the new values that were changed in `configs`
+
+#### started revamping GUI
+added tabs for specific functions in the GUI
+
+**_TODO_**:
+- fix UI Button... why does it break everything
+- figure out if rsync works
+
+---
+### 5/30/2025
+Started to tackle the UI errors, %rarr; decided to turn the whole `ui_command.py` file into its own GUI of sorts and bonk that into its own tab:
+* proposed structure of sensor UI tab:
+  * dropdown menu for each category
+  * buttons within each dropdown
+  * when user input needed, a popup appears
+  * tooltips
