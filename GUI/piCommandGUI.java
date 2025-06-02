@@ -1,3 +1,18 @@
+/*
+ * piCommandGUI.java
+ * ------------------------------------------------------------
+ * A Swing-based Java GUI for interacting with a RaspberryPi‑hosted
+ * sky‑quality meter (SQM) system. The GUI communicates with a local
+ * Python backend (host_to_client.py) over a TCP socket and exposes a
+ * variety of commands for both the RaspberryPi and the SQM sensor
+ * firmware. This heavily‑commented version is intended as a teaching
+ * aid: each class member and logic block is annotated to explain its
+ * purpose, assumptions, and side effects.
+ *
+ * Date: 2025‑06‑02
+ * ------------------------------------------------------------------
+ */
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -9,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.function.Supplier;   // the lambda-returning-string type
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class piCommandGUI extends JFrame {
 /* ----  GLOBAL VARIABLES  ---------------------------------------------------------------------------------------------------------------------------------- */
@@ -27,7 +44,11 @@ public class piCommandGUI extends JFrame {
     private final JTextField cmdField = new JTextField();
     private final DefaultListModel<String> fileModel = new DefaultListModel<>();
 
-/* ----  CONSTRUCTOR  --------------------------------------------------------------------------------------------------------------------------------------- */
+    private final JPanel sensorRightPanel = new JPanel(new BorderLayout());
+    private final JPanel commandRightPanel = new JPanel(new BorderLayout());
+    private final JTextArea commandOutputArea = new JTextArea();
+
+    /* ----  CONSTRUCTOR  --------------------------------------------------------------------------------------------------------------------------------------- */
     private final JLabel statusLabel = new JLabel("Status: Initializing...");
 
     private piCommandGUI(String hostAddr) {
@@ -41,12 +62,50 @@ public class piCommandGUI extends JFrame {
 
         /* tabbed pane (center) */
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("RPi Command Center", buildCommandTab());
-        tabs.addTab("Sensor Command Center", buildSensorTab());
-        tabs.addTab("Data Sync",      buildDataTab());
-        tabs.addTab("Settings",       buildSettingsTab());
+        sensorRightPanel.setBorder(BorderFactory.createTitledBorder("Command Input"));
+        commandRightPanel.setBorder(BorderFactory.createTitledBorder("Backend Output"));
+        commandOutputArea.setEditable(false);
+        commandOutputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        commandRightPanel.add(new JScrollPane(commandOutputArea), BorderLayout.CENTER);
+
+        tabs.addTab("RPi Command Center", wrapWithRightPanel(buildCommandTab(), commandRightPanel));
+        tabs.addTab("Sensor Command Center", wrapWithRightPanel(buildSensorTab(), sensorRightPanel));
+        tabs.addTab("Data Sync", buildDataTab());
+        tabs.addTab("Settings", buildSettingsTab());
 
         add(tabs, BorderLayout.CENTER);
+
+
+        // Create a wrapper panel for center + right side-by-side
+        JPanel centerWrapper = new JPanel(new BorderLayout());
+        centerWrapper.add(tabs, BorderLayout.CENTER);
+        add(centerWrapper, BorderLayout.CENTER);
+
+// Set up both right panels
+        sensorRightPanel.setPreferredSize(new Dimension(300, 0));
+        sensorRightPanel.setBorder(BorderFactory.createTitledBorder("Command Input"));
+
+        commandRightPanel.setPreferredSize(new Dimension(300, 0));
+        commandRightPanel.setBorder(BorderFactory.createTitledBorder("Backend Output"));
+        JTextArea commandOutputArea = new JTextArea();
+        commandOutputArea.setEditable(false);
+        commandOutputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        commandRightPanel.add(new JScrollPane(commandOutputArea), BorderLayout.CENTER);
+
+//// Add listener to show appropriate right panel depending on tab
+//        tabs.addChangeListener(e -> {
+//            int selected = tabs.getSelectedIndex();
+//            String title = tabs.getTitleAt(selected);
+//            centerWrapper.remove(sensorRightPanel);
+//            centerWrapper.remove(commandRightPanel);
+//            if (title.equals("Sensor Command Center")) {
+//                centerWrapper.add(sensorRightPanel, BorderLayout.EAST);
+//            } else if (title.equals("RPi Command Center")) {
+//                centerWrapper.add(commandRightPanel, BorderLayout.EAST);
+//            }
+//            centerWrapper.revalidate();
+//            centerWrapper.repaint();
+//        });
 
         /* console panel (south) */
         add(buildConsolePanel(), BorderLayout.SOUTH);
@@ -60,11 +119,18 @@ public class piCommandGUI extends JFrame {
 
 /* ----  TABS  ---------------------------------------------------------------------------------------------------------------------------------------------- */
 
+    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.add(main, BorderLayout.CENTER);
+        side.setPreferredSize(new Dimension(300, 0));
+        wrapper.add(side, BorderLayout.EAST);
+        return wrapper;
+    }
     /**
      * buildCommandTab():
      *      constructs a new JPanel object that holds everything in the RPi command tab
-     *       > converts commands from host_to_client.py menu into distinct buttons
-     *       > sends commands back to host_to_client.py backend
+     *       __ converts commands from host_to_client.py menu into distinct buttons
+     *       __ sends commands back to host_to_client.py backend
      *
      * @return root --> a JPanel variable containing the contents of the tab
      */
@@ -178,108 +244,101 @@ public class piCommandGUI extends JFrame {
     }
 
 
-    /**
-     * buildSensorTab():
-     *      constructs a new JPanel object that holds everything in the sensor command tab
-     *       > converts ui_commands.py menu into GUI
-     *       > sends commands based on built-in sensor functions to RPi
-     *         through host_to_client.py backend
-     *
-     * @return root --> a JPanel variable containing the contents of the tab
-     */
     private JPanel buildSensorTab() {
+        // Updated Cmd class: uses Runnable instead of Supplier<String>
+        class Cmd {
+            String label, tip;
+            Runnable cmd;
+            Cmd(String l, String t, Runnable c) {
+                label = l;
+                tip = t;
+                cmd = c;
+            }
+        }
 
-        /* ===  MAP OF CATEGORIES → (Button Label, Tooltip, Command) === */
-        class Cmd { String label, tip; Supplier<String> cmd; Cmd(String l,String t,Supplier<String> c){label=l;tip=t;cmd=c;}}
-
-        Map<String,List<Cmd>> cat = new LinkedHashMap<>();
+        Map<String, List<Cmd>> cat = new LinkedHashMap<>();
 
         /* 1) READINGS & INFO */
         cat.put("Readings & Info", List.of(
-                new Cmd("Request Reading","requests a reading", ()->"rx"),
-                new Cmd("Calibration Info","requests calibration information", ()->"cx"),
-                new Cmd("Unit Info","requests unit information", ()->"ix")
+                new Cmd("Request Reading", "requests a reading", () -> sendCommand("rx")),
+                new Cmd("Calibration Info", "requests calibration information", () -> sendCommand("cx")),
+                new Cmd("Unit Info", "requests unit information", () -> sendCommand("ix"))
         ));
 
         /* 2) ARM / DISARM CAL */
         cat.put("Arm / Disarm Calibration", List.of(
-                new Cmd("Arm Light","zcalAx", ()->"zcalAx"),
-                new Cmd("Arm Dark","zcalBx", ()->"zcalBx"),
-                new Cmd("Disarm","zcalDx", ()->"zcalDx")
+                new Cmd("Arm Light", "zcalAx", () -> sendCommand("zcalAx")),
+                new Cmd("Arm Dark", "zcalBx", () -> sendCommand("zcalBx")),
+                new Cmd("Disarm", "zcalDx", () -> sendCommand("zcalDx"))
         ));
 
         /* 3) Interval / Threshold */
         cat.put("Interval / Threshold", List.of(
-                new Cmd("Request Interval Settings","Sends interval setting request. Prompts two responses: reading w/ serial, and interval setting respons", ()->"Ix"),
-                new Cmd("Set Interval Period","", this::promptIntervalPeriod),
-                new Cmd("Set Interval Threshold","", this::promptIntervalThreshold)
+                new Cmd("Request Interval Settings", "Ix", () -> sendCommand("Ix")),
+                new Cmd("Set Interval Period", "", this::promptIntervalPeriod),
+                new Cmd("Set Interval Threshold", "", this::promptIntervalThreshold)
         ));
 
-        /* 4) Manual Cal */
+        /* 4) Manual Calibration */
         cat.put("Manual Calibration", List.of(
-                new Cmd("Set Light Offset","manually set calibration: light offset", this::promptLightOffset),
-                new Cmd("Set Light Temp","manually set calibration: light temperature", this::promptLightTemp),
-                new Cmd("Set Dark Period","manually set calibration: dark period", this::promptDarkPeriod),
-                new Cmd("Set Dark Temp","manually set calibration: dark temperature", this::promptDarkTemp)
+                new Cmd("Set Light Offset", "manual light offset", this::promptLightOffset),
+                new Cmd("Set Light Temp", "manual light temperature", this::promptLightTemp),
+                new Cmd("Set Dark Period", "manual dark period", this::promptDarkPeriod),
+                new Cmd("Set Dark Temp", "manual dark temperature", this::promptDarkTemp)
         ));
 
         /* 5) Simulation */
         cat.put("Simulation", List.of(
-                new Cmd("Request Sim Values","get simulation values", ()->"sx"),
-                new Cmd("Run Simulation","runs a simulation", this::promptSimulation)
+                new Cmd("Request Sim Values", "sx", () -> sendCommand("sx")),
+                new Cmd("Run Simulation", "runs simulation", this::promptSimulation)
         ));
 
         /* 6) Data Logging Commands */
         cat.put("Data Logging Cmds", List.of(
-                new Cmd("Request Pointer","L1x", ()->"L1x"),
-                new Cmd("Log One Record","L3x", ()->"L3x"),
-                new Cmd("Return One Record","L4…", this::promptReturnOneRecord),
-                new Cmd("Set Trigger Mode","LMx", this::promptTriggerMode),
-                new Cmd("Request Trigger Mode","Lmx", ()->"Lmx"),
-                new Cmd("Request Interval Settings","LIx", ()->"LIx"),
-                new Cmd("Set Interval Period","LPx", this::promptLogIntervalPeriod),
-                new Cmd("Set Threshold","LPTx", this::promptLogThreshold)
+                new Cmd("Request Pointer", "L1x", () -> sendCommand("L1x")),
+                new Cmd("Log One Record", "L3x", () -> sendCommand("L3x")),
+                new Cmd("Return One Record", "L4x", this::promptReturnOneRecord),
+                new Cmd("Set Trigger Mode", "LMx", this::promptTriggerMode),
+                new Cmd("Request Trigger Mode", "Lmx", () -> sendCommand("Lmx")),
+                new Cmd("Request Interval Settings", "LIx", () -> sendCommand("LIx")),
+                new Cmd("Set Interval Period", "LPx", this::promptLogIntervalPeriod),
+                new Cmd("Set Threshold", "LPTx", this::promptLogThreshold)
         ));
 
         /* 7) Logging Utilities */
         cat.put("Logging Utilities", List.of(
-                new Cmd("Request ID","L0x", ()->"L0x"),
-                new Cmd("Erase Flash Chip","L2x", this::confirmEraseFlash),
-                new Cmd("Battery Voltage","L5x", ()->"L5x"),
-                new Cmd("Request Clock","Lcx", ()->"Lcx"),
-                new Cmd("Set Clock","Lcx", this::promptSetClock),
-                new Cmd("Put Unit to Sleep","Lsx", ()->"Lsx"),
-                new Cmd("Request Alarm Data","Lax", ()->"Lax")
+                new Cmd("Request ID", "L0x", () -> sendCommand("L0x")),
+                new Cmd("Erase Flash Chip", "L2x", this::confirmEraseFlash),  // update this if you also convert it to panel
+                new Cmd("Battery Voltage", "L5x", () -> sendCommand("L5x")),
+                new Cmd("Request Clock", "Lcx", () -> sendCommand("Lcx")),
+                new Cmd("Set Clock", "Lcx", this::promptSetClock),
+                new Cmd("Put Unit to Sleep", "Lsx", () -> sendCommand("Lsx")),
+                new Cmd("Request Alarm Data", "Lax", () -> sendCommand("Lax"))
         ));
 
-        /* ===  GUI BUILD === */
-        JComboBox<String> combo = new JComboBox<>(cat.keySet().toArray(String[]::new));
+        /* === GUI BUILD === */
+        JComboBox<String> combo = new JComboBox<>(cat.keySet().toArray(new String[0]));
         JPanel listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
 
-        /* Populate buttons for selected category */
         Runnable refresh = () -> {
             listPanel.removeAll();
             String key = (String) combo.getSelectedItem();
             for (Cmd c : cat.get(key)) {
                 JButton b = new JButton(c.label);
                 b.setToolTipText(c.tip);
-                b.addActionListener(e -> {
-                    String real = c.cmd.get();          // get command string (may prompt)
-                    if(real!=null && !real.isBlank()){
-                        sendCommand(real);
-                    }
-                });
+                b.addActionListener(e -> c.cmd.run());
                 listPanel.add(b);
             }
             listPanel.revalidate();
             listPanel.repaint();
         };
-        combo.addActionListener(e -> refresh.run());
-        refresh.run(); // initial fill
 
-        JPanel root = new JPanel(new BorderLayout(5,5));
-        root.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        combo.addActionListener(e -> refresh.run());
+        refresh.run(); // initial population
+
+        JPanel root = new JPanel(new BorderLayout(5, 5));
+        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         root.add(combo, BorderLayout.NORTH);
         root.add(new JScrollPane(listPanel), BorderLayout.CENTER);
         return root;
@@ -398,183 +457,255 @@ public class piCommandGUI extends JFrame {
             }
         }).start();
     }
-    /* ------------------------------------------------------------------
-   Below are helper pop-up methods for the few commands that need
-   extra user input for the sensor UI tab.  Each returns the
-   fully-formed command string (or null if the user cancels).
-   ------------------------------------------------------------------ */
-    private String promptIntervalPeriod(){
-        JTextField val = new JTextField();
-        String[] opts = {"Seconds","Minutes","Hours"};
-        int unit = JOptionPane.showOptionDialog(this,val,"Interval Period – pick unit, then enter value",
-                JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE,null,opts,opts[0]);
-        if(unit<0) return null;
-        if(JOptionPane.showConfirmDialog(this,val,"Enter integer value:",JOptionPane.OK_CANCEL_OPTION)!=0) return null;
-        String txt = val.getText().trim();
-        int t;
-        try{
-            t=Integer.parseInt(txt);
-        }catch(Exception e){
-            return null;
+// Utility to set sensor input panel content
+        private void setRightPanel(JPanel panel) {
+            sensorRightPanel.removeAll();
+            sensorRightPanel.add(panel, BorderLayout.CENTER);
+            sensorRightPanel.revalidate();
+            sensorRightPanel.repaint();
         }
 
-        long seconds = switch(unit){
-            case 1->t*60;
-            case 2->t*3600;
-            default->t;
-        };
+// Utility to clear sensor input panel
+        private void clearRightPanel() {
+            setRightPanel(new JPanel());
+        }
 
-        String withZeros = String.format("%010d", seconds);
-        return "p"+withZeros+"x";
+// Utility to append backend output to command right panel
+        private void appendToCommandRightPanel(String txt) {
+            SwingUtilities.invokeLater(() -> {
+                commandOutputArea.append(txt + "\n");
+                commandOutputArea.setCaretPosition(commandOutputArea.getDocument().getLength());
+            });
+        }
+
+    // Inline panel versions with original method names
+    private void promptIntervalPeriod() {
+        JPanel panel = new JPanel(new GridLayout(3, 1, 5, 5));
+        JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes", "Hours"});
+        JTextField valueField = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                int t = Integer.parseInt(valueField.getText().trim());
+                long seconds = switch(unitBox.getSelectedIndex()) {
+                    case 1 -> t * 60;
+                    case 2 -> t * 3600;
+                    default -> t;
+                };
+                String withZeros = String.format("%010d", seconds);
+                sendCommand("p" + withZeros + "x");
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid number");
+            }
+        });
+
+        panel.add(unitBox);
+        panel.add(valueField);
+        panel.add(submit);
+        setRightPanel(panel);
     }
 
-    private String promptIntervalThreshold(){
-        String thr = JOptionPane.showInputDialog(this,"Threshold (mag/arcsec²):");
-        if(thr==null||thr.isBlank()) return null;
-        double d; try{ d=Double.parseDouble(thr);}catch(Exception e){return null;}
-        String cmdPart = String.format("%08.2f", d).replace(' ','0');
-        return "p"+cmdPart+"x";
+    private void promptIntervalThreshold() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JTextField field = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                double d = Double.parseDouble(field.getText().trim());
+                String cmdPart = String.format("%08.2f", d).replace(' ', '0');
+                sendCommand("p" + cmdPart + "x");
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        panel.add(new JLabel("Threshold (mag/arcsec²):"), BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptReturnOneRecord() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JTextField ptrField = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            String ptr = ptrField.getText().trim();
+            if (ptr.matches("\\d{1,10}")) {
+                ptr = String.format("%010d", Long.parseLong(ptr));
+                sendCommand("L4" + ptr + "x");
+                clearRightPanel();
+            } else {
+                append("[Error] Invalid pointer");
+            }
+        });
+
+        panel.add(new JLabel("Record pointer (0-9999999999):"), BorderLayout.NORTH);
+        panel.add(ptrField, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptLightOffset() {
+        promptManualCalibration("Light offset (mag/arcsec²):", "%08.2f", "zcal5");
+    }
+
+    private void promptLightTemp() {
+        promptManualCalibration("Light temperature (°C):", "%03.1f", "zcal6");
+    }
+
+    private void promptDarkPeriod() {
+        promptManualCalibration("Dark-period (s):", "%07.3f", "zcal7");
+    }
+
+    private void promptDarkTemp() {
+        promptManualCalibration("Dark temperature (°C):", "%03.1f", "zcal8");
+    }
+
+    private void promptManualCalibration(String labelText, String format, String prefix) {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JTextField field = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                double v = Double.parseDouble(field.getText().trim());
+                sendCommand(prefix + String.format(format, v).replace(' ', '0') + "x");
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        panel.add(new JLabel(labelText), BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptSimulation() {
+        JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
+        JTextField countField = new JTextField();
+        JTextField freqField = new JTextField();
+        JTextField tempField = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        panel.add(new JLabel("Counts:")); panel.add(countField);
+        panel.add(new JLabel("Frequency (Hz):")); panel.add(freqField);
+        panel.add(new JLabel("Temperature (°C):")); panel.add(tempField);
+        panel.add(new JLabel()); panel.add(submit);
+
+        submit.addActionListener(e -> {
+            try {
+                long c = Long.parseLong(countField.getText().trim());
+                long f = Long.parseLong(freqField.getText().trim());
+                int t = (int) Double.parseDouble(tempField.getText().trim());
+                sendCommand("S," + String.format("%010d", c) + "," + String.format("%010d", f) + "," + String.format("%010d", t) + "x");
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        setRightPanel(panel);
+    }
+
+    private void promptTriggerMode() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JComboBox<String> modes = new JComboBox<>(new String[]{"0", "1", "2", "3", "4", "5", "6", "7"});
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            sendCommand("LM" + modes.getSelectedItem() + "x");
+            clearRightPanel();
+        });
+
+        panel.add(new JLabel("Select Trigger Mode:"), BorderLayout.NORTH);
+        panel.add(modes, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptLogIntervalPeriod() {
+        JPanel panel = new JPanel(new GridLayout(3, 1, 5, 5));
+        JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes"});
+        JTextField valueField = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                int v = Integer.parseInt(valueField.getText().trim());
+                String zeros = String.format("%05d", v);
+                String prefix = unitBox.getSelectedIndex() == 0 ? "LPS" : "LPM";
+                sendCommand(prefix + zeros + "x");
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid number");
+            }
+        });
+
+        panel.add(unitBox);
+        panel.add(valueField);
+        panel.add(submit);
+        setRightPanel(panel);
+    }
+
+    private void promptLogThreshold() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JTextField field = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                double d = Double.parseDouble(field.getText().trim());
+                sendCommand("LPT" + String.format("%08.2f", d).replace(' ', '0') + "x");
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        panel.add(new JLabel("Threshold (mag/arcsec²):"), BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptSetClock() {
+        JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
+        JTextField dateField = new JTextField();
+        JTextField timeField = new JTextField();
+        JButton submit = new JButton("Submit");
+
+        panel.add(new JLabel("Date (YYYYMMDD):")); panel.add(dateField);
+        panel.add(new JLabel("Time (HHMMSS):")); panel.add(timeField);
+        panel.add(new JLabel()); panel.add(submit);
+
+        submit.addActionListener(e -> {
+            String d = dateField.getText().trim();
+            String t = timeField.getText().trim();
+            if (!d.matches("\\d{8}") || !t.matches("\\d{6}")) {
+                append("[Error] Invalid date/time format");
+                return;
+            }
+            String formatted = d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) +
+                    " 0 " + t.substring(0, 2) + ":" + t.substring(2, 4) + ":" + t.substring(4);
+            sendCommand("Lc" + formatted + "x");
+            clearRightPanel();
+        });
+
+        setRightPanel(panel);
     }
 
     private String confirmEraseFlash(){
         int res = JOptionPane.showConfirmDialog(this,
                 "ERASE FLASH CHIP?\nThis cannot be undone.","Confirm",JOptionPane.OK_CANCEL_OPTION);
         return res==JOptionPane.OK_OPTION ? "L2x" : null;
-    }
-
-    private String promptReturnOneRecord(){
-        String ptr = JOptionPane.showInputDialog(this,"Record pointer (0-9999999999):");
-        if(ptr==null||!ptr.matches("\\d{1,10}")) return null;
-        ptr = String.format("%010d", Long.parseLong(ptr));
-        return "L4"+ptr+"x";
-    }
-
-/* ------------------------------------------------------------------
-   STUB HELPERS for Manual-Cal, Simulation, Logging, etc.
-   Each shows a simple dialog, validates basic input,
-   and returns the full command string (or null to abort).
-   ------------------------------------------------------------------ */
-
-    /* -------- Manual Calibration -------- */
-    private String promptLightOffset() {          // zcal5<value>x
-        String v = JOptionPane.showInputDialog(this, "Light offset (mag/arcsec²):");
-        if(v==null) return null;
-        try{
-            Double.parseDouble(v);
-        }catch(Exception e){
-            return null;
-        }
-
-        return "zcal5"+String.format("%08.2f", Double.parseDouble(v)).replace(' ','0')+"x";
-    }
-    private String promptLightTemp() {            // zcal6<value>x
-        String v = JOptionPane.showInputDialog(this, "Light temperature (°C):");
-        if(v==null) return null;
-        try{
-            Double.parseDouble(v);
-        }catch(Exception e){
-            return null;
-        }
-
-        return "zcal6"+String.format("%03.1f", Double.parseDouble(v)).replace(' ','0')+"x";
-    }
-    private String promptDarkPeriod(){            // zcal7<value>x
-        String v = JOptionPane.showInputDialog(this, "Dark-period (s):");
-        if(v==null) return null;
-        try{
-            Double.parseDouble(v);
-        }catch(Exception e){
-            return null;
-        }
-
-        return "zcal7"+String.format("%07.3f", Double.parseDouble(v)).replace(' ','0')+"x";
-    }
-    private String promptDarkTemp(){              // zcal8<value>x
-        String v = JOptionPane.showInputDialog(this, "Dark temperature (°C):");
-        if(v==null) return null;
-        try{
-            Double.parseDouble(v);
-        }catch(Exception e){
-            return null;
-        }
-
-        return "zcal8"+String.format("%03.1f", Double.parseDouble(v)).replace(' ','0')+"x";
-    }
-
-    /* -------- Simulation -------- */
-    private String promptSimulation(){            // S,count,freq,temp x
-        JTextField counts     = new JTextField();
-        JTextField frequency  = new JTextField();
-        JTextField temp       = new JTextField();
-        JPanel p = new JPanel(new GridLayout(0,2,5,5));
-        p.add(new JLabel("Counts:"));     p.add(counts);
-        p.add(new JLabel("Frequency (Hz):")); p.add(frequency);
-        p.add(new JLabel("Temperature (°C):")); p.add(temp);
-        int res = JOptionPane.showConfirmDialog(this,p,"Simulation params",
-                JOptionPane.OK_CANCEL_OPTION);
-        if(res!=JOptionPane.OK_OPTION) return null;
-        try{
-            long  c = Long.parseLong(counts.getText().trim());
-            long  f = Long.parseLong(frequency.getText().trim());
-            int   t = (int)Double.parseDouble(temp.getText().trim());
-            String sc = String.format("%010d",c);
-            String sf = String.format("%010d",f);
-            String st = String.format("%010d",t);
-            return "S,"+sc+","+sf+","+st+"x";
-        }catch(Exception e){ return null; }
-    }
-
-    /* -------- Trigger-mode (0-7) -------- */
-    private String promptTriggerMode(){           // LM<mode>x
-        String[] opts = {"0","1","2","3","4","5","6","7"};
-        String m = (String)JOptionPane.showInputDialog(this,
-                "Select trigger-mode:", "Trigger-Mode",
-                JOptionPane.PLAIN_MESSAGE, null, opts, opts[0]);
-        return (m==null)?null : "LM"+m+"x";
-    }
-
-    /* -------- Logging interval period -------- */
-    private String promptLogIntervalPeriod(){     // LP[S|M]<value>x
-        JTextField val = new JTextField();
-        String[] units = {"Seconds","Minutes"};
-        int u = JOptionPane.showOptionDialog(this,val,
-                "Interval Period – choose unit, then enter value",
-                JOptionPane.OK_CANCEL_OPTION,JOptionPane.PLAIN_MESSAGE,
-                null,units,units[0]);
-        if(u<0) return null;
-        if(JOptionPane.showConfirmDialog(this,val,
-                "Enter integer value:",JOptionPane.OK_CANCEL_OPTION)!=0) return null;
-        try{
-            int v=Integer.parseInt(val.getText().trim());
-            String zeros = String.format("%05d",v);
-            return (u==0? "LPS": "LPM")+zeros+"x";
-        }catch(Exception e){ return null; }
-    }
-
-    /* -------- Logging threshold -------- */
-    private String promptLogThreshold(){          // LPT<threshold>x
-        String v = JOptionPane.showInputDialog(this,"Threshold (mag/arcsec²):");
-        if(v==null) return null;
-        try{ Double.parseDouble(v);}catch(Exception e){ return null; }
-        return "LPT"+String.format("%08.2f",Double.parseDouble(v)).replace(' ','0')+"x";
-    }
-
-    /* -------- Set Clock -------- */
-    private String promptSetClock(){                // LcYYYY-MM-DD w HH:MM:SSx
-        JTextField date = new JTextField();         // yyyyMMdd
-        JTextField time = new JTextField();         // HHmmss
-        JPanel p=new JPanel(new GridLayout(0,2,5,5));
-        p.add(new JLabel("Date (YYYYMMDD):")); p.add(date);
-        p.add(new JLabel("Time (HHMMSS):"));   p.add(time);
-        if(JOptionPane.showConfirmDialog(this,p,"Set Clock",
-                JOptionPane.OK_CANCEL_OPTION)!=0) return null;
-        String d=date.getText().trim();
-        String t=time.getText().trim();
-        if(!d.matches("\\d{8}")||!t.matches("\\d{6}")) return null;
-        /* weekday – 0 placeholder (backend may ignore) */
-        String formatted = d.substring(0,4)+"-"+d.substring(4,6)+"-"+d.substring(6)
-                +" 0 "+t.substring(0,2)+":"+t.substring(2,4)+":"+t.substring(4);
-        return "Lc"+formatted+"x";
     }
 
 /* ----  INITIAL PROMPT  ------------------------------------------------------------------------------------------------------------------------------------ */
