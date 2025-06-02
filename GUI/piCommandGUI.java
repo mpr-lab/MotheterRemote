@@ -9,6 +9,7 @@
  * aid: each class member and logic block is annotated to explain its
  * purpose, assumptions, and side effects.
  *
+ * Author: Buddy Luong
  * Date: 2025‑06‑02
  * ------------------------------------------------------------------
  */
@@ -28,21 +29,25 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class piCommandGUI extends JFrame {
-/* ----  GLOBAL VARIABLES  ---------------------------------------------------------------------------------------------------------------------------------- */
-    /* ---------- paths may need to tweak ---------- */
+    /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
+    /* ---------------- File system paths ---------------- */
+    // Path to Python‑side configuration file (relative to project root)
     private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
+    // Path to the Python backend we invoke with ProcessBuilder
     private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
+    // Folder on host where rsync‑ed data will be stored
     private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
 
-    /* ---------- network ---------- */
-    private String HOST;                     // assigned by prompt
-    private String NAME;
-    private static final int PORT = 12345;   // match configs.host_server
+    /* ---------------- Network ---------------- */
+    private String HOST;   // server IP or hostname (user‑supplied)
+    private String NAME;   // human‑friendly host name (user‑supplied)
+    // Socket port must match configs.host_server in the Python backend
+    private static final int PORT = 12345;
 
-    /* ---------- GUI widgets ---------- */
-    private final JTextArea  console = new JTextArea();
-    private final JTextField cmdField = new JTextField();
-    private final DefaultListModel<String> fileModel = new DefaultListModel<>();
+    /* ---------------- Swing widgets ---------------- */
+    private final JTextArea  console  = new JTextArea();      // running log / output
+    private final JTextField cmdField = new JTextField();     // raw command entry
+    private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
 
     private final JPanel sensorRightPanel = new JPanel(new BorderLayout());
     private final JPanel commandRightPanel = new JPanel(new BorderLayout());
@@ -76,12 +81,11 @@ public class piCommandGUI extends JFrame {
         add(tabs, BorderLayout.CENTER);
 
 
-        // Create a wrapper panel for center + right side-by-side
+        /* right panel for Command Centers */
         JPanel centerWrapper = new JPanel(new BorderLayout());
         centerWrapper.add(tabs, BorderLayout.CENTER);
         add(centerWrapper, BorderLayout.CENTER);
 
-// Set up both right panels
         sensorRightPanel.setPreferredSize(new Dimension(300, 0));
         sensorRightPanel.setBorder(BorderFactory.createTitledBorder("Command Input"));
 
@@ -91,21 +95,6 @@ public class piCommandGUI extends JFrame {
         commandOutputArea.setEditable(false);
         commandOutputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         commandRightPanel.add(new JScrollPane(commandOutputArea), BorderLayout.CENTER);
-
-//// Add listener to show appropriate right panel depending on tab
-//        tabs.addChangeListener(e -> {
-//            int selected = tabs.getSelectedIndex();
-//            String title = tabs.getTitleAt(selected);
-//            centerWrapper.remove(sensorRightPanel);
-//            centerWrapper.remove(commandRightPanel);
-//            if (title.equals("Sensor Command Center")) {
-//                centerWrapper.add(sensorRightPanel, BorderLayout.EAST);
-//            } else if (title.equals("RPi Command Center")) {
-//                centerWrapper.add(commandRightPanel, BorderLayout.EAST);
-//            }
-//            centerWrapper.revalidate();
-//            centerWrapper.repaint();
-//        });
 
         /* console panel (south) */
         add(buildConsolePanel(), BorderLayout.SOUTH);
@@ -117,8 +106,9 @@ public class piCommandGUI extends JFrame {
         SwingUtilities.invokeLater(() -> sendCommand("reload-config"));
     }
 
-/* ----  TABS  ---------------------------------------------------------------------------------------------------------------------------------------------- */
-
+    /* ====================================================================
+     * TAB BUILDERS
+     * ================================================================= */
     private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.add(main, BorderLayout.CENTER);
@@ -245,8 +235,13 @@ public class piCommandGUI extends JFrame {
 
 
     private JPanel buildSensorTab() {
-        // Updated Cmd class: uses Runnable instead of Supplier<String>
-        class Cmd {
+        /*
+         * We build a Map<Category name, List<Cmd>> where each Cmd bundles
+         * a button label, tooltip, and a Supplier<String> that returns the
+         * actual command to send.  Most commands are fixed strings, but
+         * those requiring user input pop up a dialog and may return null
+         * (indicating the dialog was cancelled or the input invalid).
+         */        class Cmd {
             String label, tip;
             Runnable cmd;
             Cmd(String l, String t, Runnable c) {
@@ -359,7 +354,9 @@ public class piCommandGUI extends JFrame {
         return p;
     }
 
-/* ----  UTILITY  ------------------------------------------------------------------------------------------------------------------------------------------- */
+    /* ====================================================================
+     * UTILITY METHODS
+     * ================================================================= */
     private void loadFileList() {
         fileModel.clear();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(DATA_DIR)) {
@@ -457,7 +454,6 @@ public class piCommandGUI extends JFrame {
             }
         }).start();
     }
-// Utility to set sensor input panel content
         private void setRightPanel(JPanel panel) {
             sensorRightPanel.removeAll();
             sensorRightPanel.add(panel, BorderLayout.CENTER);
@@ -465,12 +461,10 @@ public class piCommandGUI extends JFrame {
             sensorRightPanel.repaint();
         }
 
-// Utility to clear sensor input panel
         private void clearRightPanel() {
             setRightPanel(new JPanel());
         }
 
-// Utility to append backend output to command right panel
         private void appendToCommandRightPanel(String txt) {
             SwingUtilities.invokeLater(() -> {
                 commandOutputArea.append(txt + "\n");
@@ -478,7 +472,11 @@ public class piCommandGUI extends JFrame {
             });
         }
 
-    // Inline panel versions with original method names
+    /* -------------------------------------------------------------------
+     * Helper dialogs for commands that need extra user input.
+     * Each method returns the fully‑formatted command string, or null if
+     * the operation was cancelled / invalid.
+     * ---------------------------------------------------------------- */
     private void promptIntervalPeriod() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
@@ -666,11 +664,13 @@ public class piCommandGUI extends JFrame {
         JTextField tempField = new JTextField();
         JButton submit = new JButton("Submit");
 
-        inner.add(new JLabel("Counts:")); panel.add(countsField);
-        inner.add(new JLabel("Frequency (Hz):")); panel.add(freqField);
-        inner.add(new JLabel("Temperature (°C):")); panel.add(tempField);
-        panel.add(inner, BorderLayout.CENTER)
-        panel.add(new JLabel());
+        inner.add(new JLabel("Counts:"));
+        inner.add(countsField);
+        inner.add(new JLabel("Frequency (Hz):"));
+        inner.add(freqField);
+        inner.add(new JLabel("Temperature (°C):"));
+        inner.add(tempField);
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(submit, BorderLayout.SOUTH);
 
         submit.addActionListener(e -> {
@@ -711,7 +711,8 @@ public class piCommandGUI extends JFrame {
     }
 
     private void promptLogIntervalPeriod() {
-        JPanel panel = new JPanel(new GridLayout(4, 1, 5, 5));
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
         JLabel unitLabel = new JLabel("Select unit:");
         JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes"});
         JLabel valueLabel = new JLabel("Enter value:");
@@ -730,11 +731,12 @@ public class piCommandGUI extends JFrame {
             }
         });
 
-        panel.add(unitLabel);
-        panel.add(unitBox);
-        panel.add(valueLabel);
-        panel.add(valueField);
-        panel.add(submit);
+        inner.add(unitLabel);
+        inner.add(unitBox);
+        inner.add(valueLabel);
+        inner.add(valueField);
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
@@ -762,14 +764,16 @@ public class piCommandGUI extends JFrame {
     }
 
     private void promptSetClock() {
-        JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(3, 2, 5, 5));
         JTextField dateField = new JTextField();
         JTextField timeField = new JTextField();
         JButton submit = new JButton("Submit");
 
-        panel.add(new JLabel("Date (YYYYMMDD):")); panel.add(dateField);
-        panel.add(new JLabel("Time (HHMMSS):")); panel.add(timeField);
-        panel.add(new JLabel()); panel.add(submit);
+        inner.add(new JLabel("Date (YYYYMMDD):")); inner.add(dateField);
+        inner.add(new JLabel("Time (HHMMSS):")); inner.add(timeField);
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
 
         submit.addActionListener(e -> {
             String d = dateField.getText().trim();
@@ -793,7 +797,9 @@ public class piCommandGUI extends JFrame {
         return res==JOptionPane.OK_OPTION ? "L2x" : null;
     }
 
-/* ----  INITIAL PROMPT  ------------------------------------------------------------------------------------------------------------------------------------ */
+    /* ====================================================================
+     * INITIAL PROMPT & MAIN
+     * ================================================================= */
     private static String[] promptForHostInfo(){
         JTextField nameField = new JTextField();
         JTextField addrField = new JTextField();
@@ -826,9 +832,7 @@ public class piCommandGUI extends JFrame {
             return false;
         }
     }
-
-
- /* ----  MAIN  --------------------------------------------------------------------------------------------------------------------------------------------- */
+    /* ------ MAIN ------ */
     public static void main(String[] args) {
         /*  prompt BEFORE building the GUI */
         String[] info = promptForHostInfo();

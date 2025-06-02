@@ -1089,14 +1089,10 @@ _**TODO**_ - - - - - - - -
 
 ---
 ### 6/2/2025
-Changed the popup windows for Sensor Commands to a panel on the right side of the GUI. Updates some of the helper fucntion windows to flow a little better:
+Changed the popup windows for Sensor Commands to a panel on the right side of the GUI. Updates some of the helper function windows to flow a little better:
 * interval/threshold &rarr; set interval period
   * unit as dropdown, value all in one step
 * data logging cmds &rarr; set interval period
   * unit as dropdown, value all in one step
 
 Added a popup alert to notify user if command was sent or not sent with 2second timer to prevent user from sending too many commands too fast.
-
-Can you update the Sensor commands tab so that instead of a popup for user input, a panel is added to the right side of the GUI? Also, can you make it so that for the set interval period in both the "interval/threshold" and "data logging cmds" categories, the unit is selected as a dropdown and the value is a text input all in one step?
-
-Can you add a popup alert to notify user if command was sent or not sent
