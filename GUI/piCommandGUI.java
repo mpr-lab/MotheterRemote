@@ -480,8 +480,11 @@ public class piCommandGUI extends JFrame {
 
     // Inline panel versions with original method names
     private void promptIntervalPeriod() {
-        JPanel panel = new JPanel(new GridLayout(3, 1, 5, 5));
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
+        JLabel unitLabel = new JLabel("Select unit:");
         JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes", "Hours"});
+        JLabel valueLabel = new JLabel("Enter value:");
         JTextField valueField = new JTextField();
         JButton submit = new JButton("Submit");
 
@@ -501,15 +504,22 @@ public class piCommandGUI extends JFrame {
             }
         });
 
-        panel.add(unitBox);
-        panel.add(valueField);
-        panel.add(submit);
+        inner.add(unitLabel);
+        inner.add(unitBox);
+        inner.add(valueLabel);
+        inner.add(valueField);
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
+
     private void promptIntervalThreshold() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Threshold (mag/arcsec²):"));
         JTextField field = new JTextField();
+        inner.add(field);
         JButton submit = new JButton("Submit");
 
         submit.addActionListener(e -> {
@@ -523,15 +533,17 @@ public class piCommandGUI extends JFrame {
             }
         });
 
-        panel.add(new JLabel("Threshold (mag/arcsec²):"), BorderLayout.NORTH);
-        panel.add(field, BorderLayout.CENTER);
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
     private void promptReturnOneRecord() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Record pointer (0-9999999999):"));
         JTextField ptrField = new JTextField();
+        inner.add(ptrField);
         JButton submit = new JButton("Submit");
 
         submit.addActionListener(e -> {
@@ -545,67 +557,131 @@ public class piCommandGUI extends JFrame {
             }
         });
 
-        panel.add(new JLabel("Record pointer (0-9999999999):"), BorderLayout.NORTH);
-        panel.add(ptrField, BorderLayout.CENTER);
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
     private void promptLightOffset() {
-        promptManualCalibration("Light offset (mag/arcsec²):", "%08.2f", "zcal5");
-    }
-
-    private void promptLightTemp() {
-        promptManualCalibration("Light temperature (°C):", "%03.1f", "zcal6");
-    }
-
-    private void promptDarkPeriod() {
-        promptManualCalibration("Dark-period (s):", "%07.3f", "zcal7");
-    }
-
-    private void promptDarkTemp() {
-        promptManualCalibration("Dark temperature (°C):", "%03.1f", "zcal8");
-    }
-
-    private void promptManualCalibration(String labelText, String format, String prefix) {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Light offset (mag/arcsec²):"));
         JTextField field = new JTextField();
+        inner.add(field);
         JButton submit = new JButton("Submit");
 
         submit.addActionListener(e -> {
             try {
-                double v = Double.parseDouble(field.getText().trim());
-                sendCommand(prefix + String.format(format, v).replace(' ', '0') + "x");
+                double value = Double.parseDouble(field.getText().trim());
+                String cmd = "zcal5" + String.format("%08.2f", value).replace(' ', '0') + "x";
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
             }
         });
 
-        panel.add(new JLabel(labelText), BorderLayout.NORTH);
-        panel.add(field, BorderLayout.CENTER);
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptLightTemp() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Light temperature (°C):"));
+        JTextField field = new JTextField();
+        inner.add(field);
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                double value = Double.parseDouble(field.getText().trim());
+                String cmd = "zcal6" + String.format("%03.1f", value).replace(' ', '0') + "x";
+                sendCommand(cmd);
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptDarkPeriod() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Dark period (s):"));
+        JTextField field = new JTextField();
+        inner.add(field);
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                double value = Double.parseDouble(field.getText().trim());
+                String cmd = "zcal7" + String.format("%07.3f", value).replace(' ', '0') + "x";
+                sendCommand(cmd);
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(submit, BorderLayout.SOUTH);
+        setRightPanel(panel);
+    }
+
+    private void promptDarkTemp() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Dark temperature (°C):"));
+        JTextField field = new JTextField();
+        inner.add(field);
+        JButton submit = new JButton("Submit");
+
+        submit.addActionListener(e -> {
+            try {
+                double value = Double.parseDouble(field.getText().trim());
+                String cmd = "zcal8" + String.format("%03.1f", value).replace(' ', '0') + "x";
+                sendCommand(cmd);
+                clearRightPanel();
+            } catch (Exception ex) {
+                append("[Error] Invalid input");
+            }
+        });
+
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
     private void promptSimulation() {
-        JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
-        JTextField countField = new JTextField();
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(4, 2, 5, 5));
+        JTextField countsField = new JTextField();
         JTextField freqField = new JTextField();
         JTextField tempField = new JTextField();
         JButton submit = new JButton("Submit");
 
-        panel.add(new JLabel("Counts:")); panel.add(countField);
-        panel.add(new JLabel("Frequency (Hz):")); panel.add(freqField);
-        panel.add(new JLabel("Temperature (°C):")); panel.add(tempField);
-        panel.add(new JLabel()); panel.add(submit);
+        inner.add(new JLabel("Counts:")); panel.add(countsField);
+        inner.add(new JLabel("Frequency (Hz):")); panel.add(freqField);
+        inner.add(new JLabel("Temperature (°C):")); panel.add(tempField);
+        panel.add(inner, BorderLayout.CENTER)
+        panel.add(new JLabel());
+        panel.add(submit, BorderLayout.SOUTH);
 
         submit.addActionListener(e -> {
             try {
-                long c = Long.parseLong(countField.getText().trim());
+                long c = Long.parseLong(countsField.getText().trim());
                 long f = Long.parseLong(freqField.getText().trim());
                 int t = (int) Double.parseDouble(tempField.getText().trim());
-                sendCommand("S," + String.format("%010d", c) + "," + String.format("%010d", f) + "," + String.format("%010d", t) + "x");
+                String sc = String.format("%010d", c);
+                String sf = String.format("%010d", f);
+                String st = String.format("%010d", t);
+                sendCommand("S," + sc + "," + sf + "," + st + "x");
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -617,23 +693,28 @@ public class piCommandGUI extends JFrame {
 
     private void promptTriggerMode() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
-        JComboBox<String> modes = new JComboBox<>(new String[]{"0", "1", "2", "3", "4", "5", "6", "7"});
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Select trigger mode (0–7):"));
+        JComboBox<String> modeBox = new JComboBox<>(new String[]{"0", "1", "2", "3", "4", "5", "6", "7"});
+        inner.add(modeBox);
         JButton submit = new JButton("Submit");
 
         submit.addActionListener(e -> {
-            sendCommand("LM" + modes.getSelectedItem() + "x");
+            String m = (String) modeBox.getSelectedItem();
+            sendCommand("LM" + m + "x");
             clearRightPanel();
         });
 
-        panel.add(new JLabel("Select Trigger Mode:"), BorderLayout.NORTH);
-        panel.add(modes, BorderLayout.CENTER);
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
     private void promptLogIntervalPeriod() {
-        JPanel panel = new JPanel(new GridLayout(3, 1, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(4, 1, 5, 5));
+        JLabel unitLabel = new JLabel("Select unit:");
         JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes"});
+        JLabel valueLabel = new JLabel("Enter value:");
         JTextField valueField = new JTextField();
         JButton submit = new JButton("Submit");
 
@@ -641,15 +722,17 @@ public class piCommandGUI extends JFrame {
             try {
                 int v = Integer.parseInt(valueField.getText().trim());
                 String zeros = String.format("%05d", v);
-                String prefix = unitBox.getSelectedIndex() == 0 ? "LPS" : "LPM";
-                sendCommand(prefix + zeros + "x");
+                String cmd = (unitBox.getSelectedIndex() == 0 ? "LPS" : "LPM") + zeros + "x";
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid number");
+                append("[Error] Invalid input");
             }
         });
 
+        panel.add(unitLabel);
         panel.add(unitBox);
+        panel.add(valueLabel);
         panel.add(valueField);
         panel.add(submit);
         setRightPanel(panel);
@@ -657,21 +740,23 @@ public class piCommandGUI extends JFrame {
 
     private void promptLogThreshold() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
+        inner.add(new JLabel("Threshold (mag/arcsec²):"));
         JTextField field = new JTextField();
+        inner.add(field);
         JButton submit = new JButton("Submit");
 
         submit.addActionListener(e -> {
             try {
-                double d = Double.parseDouble(field.getText().trim());
-                sendCommand("LPT" + String.format("%08.2f", d).replace(' ', '0') + "x");
+                double value = Double.parseDouble(field.getText().trim());
+                sendCommand("LPT" + String.format("%08.2f", value).replace(' ', '0') + "x");
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
             }
         });
 
-        panel.add(new JLabel("Threshold (mag/arcsec²):"), BorderLayout.NORTH);
-        panel.add(field, BorderLayout.CENTER);
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(submit, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
@@ -689,14 +774,14 @@ public class piCommandGUI extends JFrame {
         submit.addActionListener(e -> {
             String d = dateField.getText().trim();
             String t = timeField.getText().trim();
-            if (!d.matches("\\d{8}") || !t.matches("\\d{6}")) {
-                append("[Error] Invalid date/time format");
-                return;
+            if (d.matches("\\d{8}") && t.matches("\\d{6}")) {
+                String formatted = d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) +
+                        " 0 " + t.substring(0, 2) + ":" + t.substring(2, 4) + ":" + t.substring(4);
+                sendCommand("Lc" + formatted + "x");
+                clearRightPanel();
+            } else {
+                append("[Error] Invalid date/time");
             }
-            String formatted = d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) +
-                    " 0 " + t.substring(0, 2) + ":" + t.substring(2, 4) + ":" + t.substring(4);
-            sendCommand("Lc" + formatted + "x");
-            clearRightPanel();
         });
 
         setRightPanel(panel);
