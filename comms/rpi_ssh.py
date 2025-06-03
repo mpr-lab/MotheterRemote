@@ -38,6 +38,8 @@ def _device_search() -> None:
 
 
 def main():
+    print("rpi_ssh.py running...")
+
     parser = argparse.ArgumentParser(
         prog="rpi_ssh.py",
         description="Processes and responds to ssh commands from host computer",

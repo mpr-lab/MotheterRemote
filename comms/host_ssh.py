@@ -38,9 +38,9 @@ has_radio = True  # eventually this will be in configs
 
 
 def send_to_rpi(m: str) -> str:
-    m = "status"
     run_command = f"python3 {rpi_repo}/rpi_ssh.py {m}"
     s = f"ssh {rpi_name}@{rpi_addr} '{run_command}'"
+    print(f"sending: {s}")
     output = subprocess.check_output(s, shell=True)
     decoded = output.decode("utf-8")
     return decoded
