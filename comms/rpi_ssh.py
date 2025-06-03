@@ -11,31 +11,31 @@ import configs
 device_type: str = "SQM-LU"  # for debugging only
 
 
-# def _device_search() -> None:
-#     """Determines whether a radio or sensor is connected by trying to create each device"""
-#     global output
+def _device_search() -> None:
+    """Determines whether a radio or sensor is connected by trying to create each device"""
+    global output
 
-#     try:
-#         if device_type == "SQM-LU":
-#             output = sensor.SQMLU()
-#         elif device_type == "SQM-LE":
-#             output = sensor.SQMLE()
-#         else:
-#             output = sensor.SQMLU()  # default
-#         output.start_continuous_read()
-#         return
-#     except Exception as e:
-#         print(str(e))
-#         print(f"SQM-LU or SQM-LE sensor not found, trying radio...")
+    try:
+        if device_type == "SQM-LU":
+            output = sensor.SQMLU()
+        elif device_type == "SQM-LE":
+            output = sensor.SQMLE()
+        else:
+            output = sensor.SQMLU()  # default
+        output.start_continuous_read()
+        return
+    except Exception as e:
+        print(str(e))
+        print(f"SQM-LU or SQM-LE sensor not found, trying radio...")
 
-#     try:
-#         output = lora_parent.Radio()
-#         return
-#     except Exception as e:
-#         print(str(e))
-#         print(f"No radio found at port {configs.R_ADDR}")
+    try:
+        output = lora_parent.Radio()
+        return
+    except Exception as e:
+        print(str(e))
+        print(f"No radio found at port {configs.R_ADDR}")
 
-#     print("No radio or sensor found. Please check connection!")
+    print("No radio or sensor found. Please check connection!")
 
 
 def main():
@@ -53,6 +53,8 @@ def main():
     )
     args = vars(parser.parse_args())
     command = args.get("command")
+    if command == None:
+        return "AOK"
     if not isinstance(command, str):
         print(f"Command is not a string. command: {command}, type: {type(command)}")
         exit()
@@ -60,9 +62,9 @@ def main():
     if "rsync" in command:
         return "radio not implemented yet"
     elif "status" in command:
-        return "status"
+        return "AOK"
     else:
-        print("status")
+        print("AOK")
 
     # else:
     #     try:
