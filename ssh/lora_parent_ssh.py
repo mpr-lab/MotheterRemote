@@ -6,7 +6,7 @@ import time
 import serial
 import threading
 import os
-import ssh.configs_ssh as configs_ssh
+import configs_ssh
 import sys
 
 # where to store data

@@ -7,8 +7,8 @@ import importlib
 import subprocess
 
 # python module imports
-import ssh.ui_commands_ssh as ui_commands_ssh
-import ssh.configs_ssh as configs_ssh
+import ui_commands_ssh
+import configs_ssh
 
 # WiFi/Ethernet connection info
 rpi_addr = configs_ssh.rpi_addr
@@ -19,11 +19,11 @@ host_data_path = configs_ssh.host_data_path
 rpi_data_path = configs_ssh.rpi_data_path
 rpi_repo = configs_ssh.rpi_repo
 
-has_radio = True  # eventually this will be in configs
+has_radio = configs_ssh.has_radio  # eventually this will be in configs
 
 
 def send_to_rpi(m: str) -> str:
-    run_command = f"ssh {rpi_name}@{rpi_addr} './doohickey.sh {m}'"
+    run_command = f"ssh {rpi_name}@{rpi_addr} 'cd {rpi_repo}/ssh; ./rpi_runner.sh {m}'"
     os.system(run_command)
 
     read_command = f"ssh {rpi_name}@{rpi_addr} 'tail -n 1 stdout.txt'"

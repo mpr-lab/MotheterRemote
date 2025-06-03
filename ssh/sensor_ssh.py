@@ -12,7 +12,7 @@ import argparse
 import threading
 
 # module import
-import ssh.configs_ssh as configs_ssh
+import configs_ssh
 
 # device info
 device_type = configs_ssh.device_type.replace("_", "-")

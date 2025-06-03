@@ -3,9 +3,9 @@ import argparse
 import sys
 
 # module imports
-import ssh.sensor_ssh as sensor_ssh
-import ssh.lora_parent_ssh as lora_parent_ssh
-import ssh.configs_ssh as configs_ssh
+import sensor_ssh
+import lora_parent_ssh
+import configs_ssh
 
 output: sensor_ssh.SQMLE | sensor_ssh.SQMLU | lora_parent_ssh.Radio
 
