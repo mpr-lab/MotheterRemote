@@ -64,7 +64,7 @@ def main():
     # else:
 
     print("print statement")
-    os.system("os system")
+    os.system("echo 'os system'")
     return "return statement"
 
     # else:
@@ -75,3 +75,6 @@ def main():
     #         print("Resetting output device")  # probably lost connection
     #         _device_search()  # reconnect if possible
     #         time.sleep(configs.long_s)
+
+
+main()
