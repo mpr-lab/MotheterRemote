@@ -18,7 +18,7 @@ built-in concurrency makes it easier to handle:
 * Live logging and GUI updates
 * Async command responses (e.g., status updates)
 
-### maintainable and Modular
+### maintainable and modular
 GUI logic is separated from backend logic (handled in Python), allowing easier development and debugging on both ends.
 
 ### widely known/easy accessible
@@ -96,6 +96,36 @@ just so this exists somewhere:
     - _known pis? if multiple pis, a dropdown to switch between them_
     - also updating settings page to account for all that
 - **Better way to display feedback from terminal**
+---
+## prototype 4
+Right Panel instead of popup window for user input, using right panel to display information on RPi command center
+
+
+
+---
+## prototype 5
+Restructured the GUI: each tab is its own java file:
+### `GUI.java`
+Contains the constructor for the full GUI
+
+### `RPiCommandTab.java`
+Contains the constructor for the RPi Command Center Tab
+
+### `SensorCommandTab.java`
+Contains the constructor for the Sensor Command Center Tab
+
+### `DataTab.java`
+Contains the constructor for the Data Tab
+
+### `SettingsTab.java`
+Contains the constructor for the Settings Tab
+
+### `HelpTab.java`
+Contains the constructor for the Help Tab
+
+### `Utility.java`
+Contains the utility methods used across all GUI tabs
+
 ---
 ## ?
 how to make status update regularly
@@ -245,3 +275,10 @@ _**TODO**_ - - - - - - - -
 Talked to Skye about the setup wizard... have big plans for this but not sure how to implement
 
 Trying to move away from using socket in the backend to using SSH, need to update `sendCommand()` to accomodate the changes
+
+Added a Help tab:
+* dropdown menu to choose what to help with
+  * general help: how GUI works as a whole
+  * RPi command help: how to use the RPi Command Center Tab
+
+Trying and failing to restricture GUI so that each tab is its own java file (right now `piCommandGUI.java` is over 1000 lines of code) &rarr; this would make maintenance a lot easier and make everything more modular.
