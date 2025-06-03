@@ -1,7 +1,6 @@
 # imports
 import argparse
 import time
-import os
 
 # module imports
 import sensor
@@ -61,9 +60,10 @@ def main():
         return
 
     if "rsync" in command:
-        return "radio not implemented yet"
+        print("radio not implemented yet")
+        return
     elif "status" in command:
-        print("print AOK")
+        print("AOK")
         return
     else:
         try:
