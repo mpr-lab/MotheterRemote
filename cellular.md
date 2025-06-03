@@ -92,7 +92,7 @@ Tailscale is a VPN service that essentially creates a virtual LAN. Devices that 
 
 Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan.
 
-On your computer, go to [the Tailscale download page](https://tailscale.com/download) and get the app. Up to a hundred devices can be added for free, so don't worry about having too many devices online.
+On your computer, go to [the Tailscale download page](https://tailscale.com/download) and get the app. Up to a hundred devices can be added for free, so don't worry about having too many devices online. If using a Mac, be sure to download from the Tailscale website and not from the App Store; once the app is set up, go to its settings and allow CLI integration.
 
 The Raspberry Pi probably runs Raspbian Bullseye, so [follow the instructions](https://tailscale.com/download/linux/rpi-bullseye), which are also copied below:
 

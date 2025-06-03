@@ -2,9 +2,6 @@ import platform
 import sys
 import subprocess
 
-# connection type to first RPi.
-# options are: ethernet, wifi, wifi_tailscale, cellular_tailscale
-connection_type = "wifi_tailscale"
 
 system = platform.system()
 if system in ["Linux", "SunOS", "Darwin"]:
