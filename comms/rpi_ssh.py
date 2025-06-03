@@ -55,31 +55,24 @@ def main():
     command = args.get("command")
     if command == None:
         print("AOK")
-        os.system("echo AOK")
-        return "AOK"
+        return
     if not isinstance(command, str):
         print(f"Command is not a string. command: {command}, type: {type(command)}")
-        exit()
+        return
 
     if "rsync" in command:
         return "radio not implemented yet"
     elif "status" in command:
         print("print AOK")
-        os.system("echo 'os AOK'")
-        return "ret AOK"
+        return
     else:
-        print("print AOK")
-        os.system("echo 'os AOK'")
-        return "ret AOK"
-
-    # else:
-    #     try:
-    #         output.rpi_to_client(command)  # forward message to radio/sensor
-    #     except Exception as e:
-    #         print(str(e))
-    #         print("Resetting output device")  # probably lost connection
-    #         _device_search()  # reconnect if possible
-    #         time.sleep(configs.long_s)
+        try:
+            output.rpi_to_client(command)  # forward message to radio/sensor
+        except Exception as e:
+            print(str(e))
+            print("Resetting output device")  # probably lost connection
+            _device_search()  # reconnect if possible
+            time.sleep(configs.long_s)
 
 
 main()
