@@ -69,7 +69,7 @@ def main():
     if "rsync" in command:
         print("radio not implemented yet")
     elif "status" in command:
-        os.system("ls")
+        os.system("status")
     else:
         try:
             output.rpi_to_client(command)  # forward message to radio/sensor

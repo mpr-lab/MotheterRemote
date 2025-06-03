@@ -42,6 +42,7 @@ def send_to_rpi(m: str) -> str:
     s = f"ssh {rpi_name}@{rpi_addr} '{run_command}; exit'"
     output = subprocess.check_output(s, shell=True)
     decoded = output.decode("utf-8")
+    print(decoded)
     return decoded
 
 
