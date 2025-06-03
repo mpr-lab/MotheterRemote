@@ -484,14 +484,22 @@ public class piCommandGUI extends JFrame {
         JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes", "Hours"});
         JLabel valueLabel = new JLabel("Enter value:");
         JTextField valueField = new JTextField();
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
                 int t = Integer.parseInt(valueField.getText().trim());
                 long seconds = switch(unitBox.getSelectedIndex()) {
-                    case 1 -> t * 60;
-                    case 2 -> t * 3600;
+                    case 1 -> t * 60;               // minutes → seconds
+                    case 2 -> t * 3600;             // hours   → seconds
                     default -> t;
                 };
                 String withZeros = String.format("%010d", seconds);
@@ -502,12 +510,14 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         inner.add(unitLabel);
         inner.add(unitBox);
         inner.add(valueLabel);
         inner.add(valueField);
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
@@ -518,7 +528,15 @@ public class piCommandGUI extends JFrame {
         inner.add(new JLabel("Threshold (mag/arcsec²):"));
         JTextField field = new JTextField();
         inner.add(field);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -531,8 +549,10 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
@@ -542,7 +562,15 @@ public class piCommandGUI extends JFrame {
         inner.add(new JLabel("Record pointer (0-9999999999):"));
         JTextField ptrField = new JTextField();
         inner.add(ptrField);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             String ptr = ptrField.getText().trim();
@@ -555,18 +583,28 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptLightOffset() {
+    private void promptLightOffset() {                              // zcal5<value>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Light offset (mag/arcsec²):"));
         JTextField field = new JTextField();
         inner.add(field);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -579,18 +617,28 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptLightTemp() {
+    private void promptLightTemp() {                                //zcal6<value>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Light temperature (°C):"));
         JTextField field = new JTextField();
         inner.add(field);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -603,18 +651,28 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptDarkPeriod() {
+    private void promptDarkPeriod() {                               //zcal7<value>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Dark period (s):"));
         JTextField field = new JTextField();
         inner.add(field);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -627,18 +685,28 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptDarkTemp() {
+    private void promptDarkTemp() {                                 //zcal8<value>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Dark temperature (°C):"));
         JTextField field = new JTextField();
         inner.add(field);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -651,18 +719,28 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptSimulation() {
+    private void promptSimulation() {                               // S,count.freq,temp x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 2, 5, 5));
         JTextField countsField = new JTextField();
         JTextField freqField = new JTextField();
         JTextField tempField = new JTextField();
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         inner.add(new JLabel("Counts:"));
         inner.add(countsField);
@@ -670,8 +748,6 @@ public class piCommandGUI extends JFrame {
         inner.add(freqField);
         inner.add(new JLabel("Temperature (°C):"));
         inner.add(tempField);
-        panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
 
         submit.addActionListener(e -> {
             try {
@@ -688,16 +764,28 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptTriggerMode() {
+    private void promptTriggerMode() {                              // LM<mode>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Select trigger mode (0–7):"));
         JComboBox<String> modeBox = new JComboBox<>(new String[]{"0", "1", "2", "3", "4", "5", "6", "7"});
         inner.add(modeBox);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             String m = (String) modeBox.getSelectedItem();
@@ -705,19 +793,29 @@ public class piCommandGUI extends JFrame {
             clearRightPanel();
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptLogIntervalPeriod() {
+    private void promptLogIntervalPeriod() {                        // LP[S|M]<value>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
         JLabel unitLabel = new JLabel("Select unit:");
         JComboBox<String> unitBox = new JComboBox<>(new String[]{"Seconds", "Minutes"});
         JLabel valueLabel = new JLabel("Enter value:");
         JTextField valueField = new JTextField();
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -731,22 +829,32 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         inner.add(unitLabel);
         inner.add(unitBox);
         inner.add(valueLabel);
         inner.add(valueField);
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptLogThreshold() {
+    private void promptLogThreshold() {                             // LPT<threshold>x
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Threshold (mag/arcsec²):"));
         JTextField field = new JTextField();
         inner.add(field);
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         submit.addActionListener(e -> {
             try {
@@ -758,22 +866,30 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
         panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
-    private void promptSetClock() {
+    private void promptSetClock() {                                 // LcYYYY-MM-DD w HH:MM:SSx
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(3, 2, 5, 5));
-        JTextField dateField = new JTextField();
-        JTextField timeField = new JTextField();
+        JTextField dateField = new JTextField();                    // yyyyMMdd
+        JTextField timeField = new JTextField();                    // HHmmss
+
+        FlowLayout layout = new FlowLayout();
+        JPanel btnRow = new JPanel();
         JButton submit = new JButton("Submit");
+        JButton cancel = new JButton("Cancel");
+
+        btnRow.setLayout(layout);
+        btnRow.add(submit);
+        btnRow.add(cancel);
 
         inner.add(new JLabel("Date (YYYYMMDD):")); inner.add(dateField);
         inner.add(new JLabel("Time (HHMMSS):")); inner.add(timeField);
-        panel.add(inner, BorderLayout.CENTER);
-        panel.add(submit, BorderLayout.SOUTH);
 
         submit.addActionListener(e -> {
             String d = dateField.getText().trim();
@@ -788,6 +904,10 @@ public class piCommandGUI extends JFrame {
             }
         });
 
+        cancel.addActionListener(e -> clearRightPanel());
+
+        panel.add(inner, BorderLayout.CENTER);
+        panel.add(btnRow, BorderLayout.SOUTH);
         setRightPanel(panel);
     }
 
