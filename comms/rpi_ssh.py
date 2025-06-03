@@ -1,6 +1,7 @@
 # imports
 import argparse
 import time
+import os
 
 # module imports
 import sensor
@@ -10,31 +11,31 @@ import configs
 device_type: str = "SQM-LU"  # for debugging only
 
 
-def _device_search() -> None:
-    """Determines whether a radio or sensor is connected by trying to create each device"""
-    global output
+# def _device_search() -> None:
+#     """Determines whether a radio or sensor is connected by trying to create each device"""
+#     global output
 
-    try:
-        if device_type == "SQM-LU":
-            output = sensor.SQMLU()
-        elif device_type == "SQM-LE":
-            output = sensor.SQMLE()
-        else:
-            output = sensor.SQMLU()  # default
-        output.start_continuous_read()
-        return
-    except Exception as e:
-        print(str(e))
-        print(f"SQM-LU or SQM-LE sensor not found, trying radio...")
+#     try:
+#         if device_type == "SQM-LU":
+#             output = sensor.SQMLU()
+#         elif device_type == "SQM-LE":
+#             output = sensor.SQMLE()
+#         else:
+#             output = sensor.SQMLU()  # default
+#         output.start_continuous_read()
+#         return
+#     except Exception as e:
+#         print(str(e))
+#         print(f"SQM-LU or SQM-LE sensor not found, trying radio...")
 
-    try:
-        output = lora_parent.Radio()
-        return
-    except Exception as e:
-        print(str(e))
-        print(f"No radio found at port {configs.R_ADDR}")
+#     try:
+#         output = lora_parent.Radio()
+#         return
+#     except Exception as e:
+#         print(str(e))
+#         print(f"No radio found at port {configs.R_ADDR}")
 
-    print("No radio or sensor found. Please check connection!")
+#     print("No radio or sensor found. Please check connection!")
 
 
 def main():
@@ -61,10 +62,14 @@ def main():
     elif "status" in command:
         return "status"
     else:
-        try:
-            output.rpi_to_client(command)  # forward message to radio/sensor
-        except Exception as e:
-            print(str(e))
-            print("Resetting output device")  # probably lost connection
-            _device_search()  # reconnect if possible
-            time.sleep(configs.long_s)
+        print("print statement")
+        os.system("os system")
+        return "return statement"
+    # else:
+    #     try:
+    #         output.rpi_to_client(command)  # forward message to radio/sensor
+    #     except Exception as e:
+    #         print(str(e))
+    #         print("Resetting output device")  # probably lost connection
+    #         _device_search()  # reconnect if possible
+    #         time.sleep(configs.long_s)

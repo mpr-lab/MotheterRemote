@@ -34,7 +34,7 @@ short_s = configs.short_s
 allow_ui: bool = False  # whether ready to ask for user input
 output: object
 
-has_radio = False  # eventually this will be in configs
+has_radio = True  # eventually this will be in configs
 
 
 def send_to_rpi(m: str) -> str:
