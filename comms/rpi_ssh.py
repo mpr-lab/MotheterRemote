@@ -64,13 +64,13 @@ def main():
     if "rsync" in command:
         return "radio not implemented yet"
     elif "status" in command:
-        print("AOK")
-        os.system("echo AOK")
-        return "AOK"
+        print("print AOK")
+        os.system("echo 'os AOK'")
+        return "ret AOK"
     else:
-        print("AOK")
-        os.system("echo AOK")
-        return "AOK"
+        print("print AOK")
+        os.system("echo 'os AOK'")
+        return "ret AOK"
 
     # else:
     #     try:
