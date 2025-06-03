@@ -77,7 +77,7 @@ def user_input(data: str) -> None:
 
 def _status() -> None:
     output = send_to_rpi("status")
-    if "AOK" in output:
+    if "status" in output:
         print("RPi is responding")
     else:
         print(f"RPi might not be responding properly:\n{output}")
