@@ -11,13 +11,8 @@ import ui_commands
 import configs
 
 # WiFi/Ethernet connection info
-host_addr = configs.host_addr
 rpi_addr = configs.rpi_addr
 rpi_name = configs.rpi_name
-
-# socket port numbers
-host_server = configs.host_server
-rpi_server = configs.rpi_server
 
 # data storage and repository directories
 host_data_path = configs.host_data_path
