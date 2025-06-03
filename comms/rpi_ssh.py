@@ -1,5 +1,4 @@
 # imports
-import os
 import argparse
 import time
 
@@ -9,15 +8,6 @@ import lora_parent
 import configs
 
 device_type: str = "SQM-LU"  # for debugging only
-
-
-def p(s: str) -> None:
-    """Flushes buffer and prints. Enables print in threads
-
-    Args:
-        s (str): string to print
-    """
-    print(s, flush=True)
 
 
 def _device_search() -> None:
@@ -34,17 +24,17 @@ def _device_search() -> None:
         output.start_continuous_read()
         return
     except Exception as e:
-        p(str(e))
-        p(f"SQM-LU or SQM-LE sensor not found, trying radio...")
+        print(str(e))
+        print(f"SQM-LU or SQM-LE sensor not found, trying radio...")
 
     try:
         output = lora_parent.Radio()
         return
     except Exception as e:
-        p(str(e))
-        p(f"No radio found at port {configs.R_ADDR}")
+        print(str(e))
+        print(f"No radio found at port {configs.R_ADDR}")
 
-    p("No radio or sensor found. Please check connection!")
+    print("No radio or sensor found. Please check connection!")
 
 
 def main():
@@ -67,14 +57,14 @@ def main():
         exit()
 
     if "rsync" in command:
-        print("radio not implemented yet")
+        return "radio not implemented yet"
     elif "status" in command:
-        print("status")
+        return "status"
     else:
         try:
             output.rpi_to_client(command)  # forward message to radio/sensor
         except Exception as e:
-            p(str(e))
-            p("Resetting output device")  # probably lost connection
+            print(str(e))
+            print("Resetting output device")  # probably lost connection
             _device_search()  # reconnect if possible
             time.sleep(configs.long_s)
