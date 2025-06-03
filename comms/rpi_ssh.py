@@ -53,18 +53,20 @@ def main():
     )
     args = vars(parser.parse_args())
     command = args.get("command")
-    if not isinstance(command, str):
-        print(f"Command is not a string. command: {command}, type: {type(command)}")
-        exit()
+    # if not isinstance(command, str):
+    #     print(f"Command is not a string. command: {command}, type: {type(command)}")
+    #     exit()
 
-    if "rsync" in command:
-        return "radio not implemented yet"
-    elif "status" in command:
-        return "status"
-    else:
-        print("print statement")
-        os.system("os system")
-        return "return statement"
+    # if "rsync" in command:
+    #     return "radio not implemented yet"
+    # elif "status" in command:
+    #     return "status"
+    # else:
+
+    print("print statement")
+    os.system("os system")
+    return "return statement"
+
     # else:
     #     try:
     #         output.rpi_to_client(command)  # forward message to radio/sensor
