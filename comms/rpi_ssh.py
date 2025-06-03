@@ -7,7 +7,7 @@ import sensor
 import lora_parent
 import configs
 
-device_type: str = "SQM-LU"  # for debugging only
+output: sensor.SQMLE | sensor.SQMLU | lora_parent.Radio
 
 
 def _device_search() -> None:
@@ -15,9 +15,9 @@ def _device_search() -> None:
     global output
 
     try:
-        if device_type == "SQM-LU":
+        if configs.device_type == "SQM-LU":
             output = sensor.SQMLU()
-        elif device_type == "SQM-LE":
+        elif configs.device_type == "SQM-LE":
             output = sensor.SQMLE()
         else:
             output = sensor.SQMLU()  # default
@@ -54,9 +54,11 @@ def main():
     )
     args = vars(parser.parse_args())
     command = args.get("command")
+
     if command == None:
         print("AOK")
         return
+
     if not isinstance(command, str):
         print(f"Command is not a string. command: {command}, type: {type(command)}")
         return
@@ -64,17 +66,17 @@ def main():
     if "rsync" in command:
         print("radio not implemented yet")
         return
-    elif "status" in command:
+
+    if "status" in command:
         print("AOK")
         return
-    else:
-        try:
-            output.rpi_to_client(command)  # forward message to radio/sensor
-        except Exception as e:
-            print(str(e))
-            print("Resetting output device")  # probably lost connection
-            _device_search()  # reconnect if possible
-            time.sleep(configs.long_s)
+
+    try:
+        _device_search()  # connect if possible
+        global output
+        output.rpi_to_client(command)  # forward message to radio/sensor
+    except Exception as e:
+        print(f"Could not connect to device:\n{str(e)}")
 
 
 main()

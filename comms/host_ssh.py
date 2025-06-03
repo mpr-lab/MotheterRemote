@@ -19,21 +19,6 @@ host_data_path = configs.host_data_path
 rpi_data_path = configs.rpi_data_path
 rpi_repo = configs.rpi_repo
 
-# text encoding
-utf8 = configs.utf8
-EOF = configs.EOF
-EOL = configs.EOL
-msg_len = configs.msg_len
-
-# timing
-long_s = configs.long_s
-mid_s = configs.mid_s
-short_s = configs.short_s
-
-# global
-allow_ui: bool = False  # whether ready to ask for user input
-output: object
-
 has_radio = True  # eventually this will be in configs
 
 
@@ -77,6 +62,7 @@ def user_input(data: str) -> None:
 
 def _status() -> None:
     output = send_to_rpi("status")
+    print(output)
     if "AOK" in output:
         print("RPi is responding")
     else:
