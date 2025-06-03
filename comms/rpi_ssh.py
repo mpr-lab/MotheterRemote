@@ -42,7 +42,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="rpi_ssh.py",
         description="Processes and responds to ssh commands from host computer",
-        epilog="If no argument given, runs ls",
+        epilog="If no argument given, runs status",
     )
 
     parser.add_argument(
@@ -54,6 +54,8 @@ def main():
     args = vars(parser.parse_args())
     command = args.get("command")
     if command == None:
+        print("AOK")
+        os.system("echo AOK")
         return "AOK"
     if not isinstance(command, str):
         print(f"Command is not a string. command: {command}, type: {type(command)}")
@@ -62,9 +64,13 @@ def main():
     if "rsync" in command:
         return "radio not implemented yet"
     elif "status" in command:
+        print("AOK")
+        os.system("echo AOK")
         return "AOK"
     else:
         print("AOK")
+        os.system("echo AOK")
+        return "AOK"
 
     # else:
     #     try:

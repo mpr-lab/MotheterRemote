@@ -128,13 +128,14 @@ def _rsync() -> None:
 def main() -> None:
     """Starts server and listens for incoming communications"""
     # _ui_loop()
-    run_command = f"python3 {rpi_repo}/rpi_ssh.py"
-    s = f"ssh {rpi_name}@{rpi_addr} '{run_command}; pwd'"
+    m = "status"
+    run_command = f"python3 {rpi_repo}/rpi_ssh.py {m}"
+    s = f"ssh {rpi_name}@{rpi_addr} '{run_command}'"
     print(s)
     output = subprocess.check_output(s, shell=True)
-    print(output)
+    print(f"output:{output}")
     decoded = output.decode("utf-8")
-    print(decoded)
+    print(f"output: {decoded}")
 
 
 if __name__ == "__main__":
