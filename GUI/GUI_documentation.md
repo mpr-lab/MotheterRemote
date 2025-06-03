@@ -50,47 +50,7 @@ A Swing-based desktop application that lets you control a Raspberry-Pi sensor sy
     - Appears when a command is selected from the left
     - Contents change depending on the command type
 
-
-#### Command Panel Behaviors
-
-##### 1. Set Interval Period / Set Logging Interval
-
-**Fields:**
-- `Interval Value:` `[_________]`
-- `Units:` `[ms ▼]`
-
-**Send Button:**
-- `[ Send Command ]`
-
-##### 2. Set Threshold (Temperature / Humidity)
-
-**Fields:**
-- `Threshold Value:` `[_________]`
-- `Units:` (optional; °C or % if needed)
-
-**Send Button:**
-- `[ Send Command ]`
-
-##### 3. Start/Stop Monitoring, Enable/Disable Logging
-
-**Display:**
-- Short description
-- Confirm button
-
-**Example:**
-> Press "Send Command" to start sensor monitoring.
-
-**Send Button:**
-- `[ Send Command ]`
-
-##### 4. Query Sensor Data
-
-**Display:**
-- Description: "Fetch current temperature and humidity from the Raspberry Pi."
-
-**Send Button:**
-- `[ Send Command ]`
-
+    
 
 ####  Notes
 
