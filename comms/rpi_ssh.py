@@ -39,20 +39,20 @@ device_type: str = "SQM-LU"  # for debugging only
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog="rpi_ssh.py",
-        description="Processes and responds to ssh commands from host computer",
-        epilog="If no argument given, runs ls",
-    )
+    # parser = argparse.ArgumentParser(
+    #     prog="rpi_ssh.py",
+    #     description="Processes and responds to ssh commands from host computer",
+    #     epilog="If no argument given, runs ls",
+    # )
 
-    parser.add_argument(
-        "command",
-        nargs="?",
-        type=str,
-        help="Whatever command/message the host wants to run",
-    )
-    args = vars(parser.parse_args())
-    command = args.get("command")
+    # parser.add_argument(
+    #     "command",
+    #     nargs="?",
+    #     type=str,
+    #     help="Whatever command/message the host wants to run",
+    # )
+    # args = vars(parser.parse_args())
+    # command = args.get("command")
     # if not isinstance(command, str):
     #     print(f"Command is not a string. command: {command}, type: {type(command)}")
     #     exit()
