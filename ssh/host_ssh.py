@@ -7,28 +7,37 @@ import importlib
 import subprocess
 
 # python module imports
-import ui_commands
-import configs
+import ssh.ui_commands_ssh as ui_commands_ssh
+import ssh.configs_ssh as configs_ssh
 
 # WiFi/Ethernet connection info
-rpi_addr = configs.rpi_addr
-rpi_name = configs.rpi_name
+rpi_addr = configs_ssh.rpi_addr
+rpi_name = configs_ssh.rpi_name
 
 # data storage and repository directories
-host_data_path = configs.host_data_path
-rpi_data_path = configs.rpi_data_path
-rpi_repo = configs.rpi_repo
+host_data_path = configs_ssh.host_data_path
+rpi_data_path = configs_ssh.rpi_data_path
+rpi_repo = configs_ssh.rpi_repo
 
 has_radio = True  # eventually this will be in configs
 
 
 def send_to_rpi(m: str) -> str:
-    run_command = f"python3 {rpi_repo}/rpi_ssh.py {m}"
-    s = f"ssh {rpi_name}@{rpi_addr} '{run_command}'"
-    print(f"sending: {s}")
-    output = subprocess.check_output(s, shell=True)
-    decoded = output.decode("utf-8")
-    return decoded
+    run_command = f"ssh {rpi_name}@{rpi_addr} './doohickey.sh {m}'"
+    os.system(run_command)
+
+    read_command = f"ssh {rpi_name}@{rpi_addr} 'tail -n 1 stdout.txt'"
+    output = subprocess.check_output(read_command, shell=True).decode()
+
+    # run_command = f"python3 {rpi_repo}/rpi_ssh.py {m}"
+    # pipe_command = "2>&1 | tee output.txt"
+    # _command = ""
+    # # s = f"ssh {rpi_name}@{rpi_addr} '{run_command}' 2>&1 | tee output.txt'"
+    # s = f""
+    # print(f"sending: {s}")
+    # output = subprocess.check_output(s, shell=True)
+    # decoded = output.decode("utf-8")
+    return output
 
 
 def user_input(data: str) -> None:
@@ -39,7 +48,7 @@ def user_input(data: str) -> None:
             _status()
         case "ui":
             # Match the received message to a command and act accordingly
-            data = ui_commands.command_menu()
+            data = ui_commands_ssh.command_menu()
             send_to_rpi(data)  # Forward the generated command to the RPi
         case "rsync" | "sync":
             # Perform rsync to pull data from the RPi to the host
@@ -54,7 +63,7 @@ def user_input(data: str) -> None:
             )
             print(help_msg)
         case "reload-config":
-            importlib.reload(configs)
+            importlib.reload(configs_ssh)
         case _:
             # Default case: treat message as a raw command to send to the RPi
             send_to_rpi(data)
@@ -75,7 +84,7 @@ def _ui_loop() -> None:
         s = input("\nType message to send: ")
         match s:
             case "ui":
-                s = ui_commands.command_menu()
+                s = ui_commands_ssh.command_menu()
             case "rsync" | "sync":
                 _rsync()
                 continue
