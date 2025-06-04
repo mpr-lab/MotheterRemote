@@ -11,24 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.function.Supplier;   // the lambda-returning-string type
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-public final class Utility {
-    /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
-    /* ---------------- File system paths ---------------- */
-    // Path to Python‑side configuration file (relative to project root)
-    private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
-    // Path to the Python backend we invoke with ProcessBuilder
-    private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
-    // Folder on host where rsync‑ed data will be stored
-    private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
-
-    /* ---------------- Network ---------------- */
-    private static String HOST;   // server IP or hostname (user‑supplied)
-    private static String NAME;   // human‑friendly host name (user‑supplied)
-    // Socket port must match configs.host_server in the Python backend
-    private static final int PORT = 12345;
-
-    private Utility() { }
-    public static void loadFileList() {
+public class Utility {
+    public void loadFileList() {
         fileModel.clear();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(DATA_DIR)) {
             for (Path p : ds) fileModel.addElement(p.getFileName().toString());
@@ -36,7 +20,7 @@ public final class Utility {
         } catch (IOException ex){ append("[GUI] Data dir error: "+ex.getMessage()); }
     }
 
-    public static void updateConfigsPy(String newHostName, String newHostAddr,
+    public void updateConfigsPy(String newHostName, String newHostAddr,
                                  String newRpiName,  String newRpiAddr) {
         try {
             File file = new File("../comms-GUI/configs.py");
@@ -68,7 +52,7 @@ public final class Utility {
     }
 
 
-    public static void sendCommand(String cmd){
+    public void sendCommand(String cmd){
         if(cmd==null||cmd.isBlank()) return;
         append("\n> "+cmd);
         try(Socket s=new Socket(HOST,PORT);
@@ -79,7 +63,7 @@ public final class Utility {
         }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
     }
 
-    public static void startPythonBackend(){
+    public void startPythonBackend(){
         try{
             ProcessBuilder pb=new ProcessBuilder("python3","-u",BACKEND_PATH);
             pb.redirectErrorStream(true);
@@ -92,37 +76,11 @@ public final class Utility {
         }catch(IOException ex){ append("\n     [GUI] Can't start backend: "+ex.getMessage()); }
     }
 
-    public static void append(String txt){
+    public void append(String txt){
         SwingUtilities.invokeLater(() -> {
             console.append(txt+"\n");
             console.setCaretPosition(console.getDocument().getLength());
         });
     }
 
-    public static void sendStatusRequest() {
-        new Thread(() -> {
-            try (Socket socket = new Socket(HOST, PORT);
-                 OutputStream out = socket.getOutputStream();
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
-                out.write("status\n".getBytes(StandardCharsets.UTF_8));
-                out.flush();
-
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    response.append(line).append(" ");
-                }
-
-                SwingUtilities.invokeLater(() ->
-                        statusLabel.setText("Status: " + response.toString().trim())
-                );
-
-            } catch (IOException e) {
-                SwingUtilities.invokeLater(() ->
-                        statusLabel.setText("Status: ERROR - " + e.getMessage())
-                );
-            }
-        }).start();
-    }
 }

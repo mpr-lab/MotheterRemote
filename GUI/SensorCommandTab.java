@@ -12,51 +12,29 @@ import java.util.function.Supplier;   // the lambda-returning-string type
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class SensorCommandTab implements GUITab {
-    private JPanel mainPanel;
-    private JPanel sidePanel;
+public class SensorCommandTab extends JPanel{
 
-    /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
-    /* ---------------- File system paths ---------------- */
-    // Path to Python‑side configuration file (relative to project root)
-    private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
-    // Path to the Python backend we invoke with ProcessBuilder
-    private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
-    // Folder on host where rsync‑ed data will be stored
-    private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
-
+    public JPanel rightPanel = new JPanel(new BorderLayout());
+    
     /* ---------------- Network ---------------- */
     private String HOST;   // server IP or hostname (user‑supplied)
     private String NAME;   // human‑friendly host name (user‑supplied)
     // Socket port must match configs.host_server in the Python backend
-    private static final int PORT = 12345;
+    private int PORT;
+    private  JTextArea  CONSOLE;      // running log / output
 
-    /* ---------------- Swing widgets ---------------- */
-    private final JTextArea  console  = new JTextArea();      // running log / output
-    private final JTextField cmdField = new JTextField();     // raw command entry
-    private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
-
-    private final JPanel sensorRightPanel = new JPanel(new BorderLayout());
-    private final JPanel commandRightPanel = new JPanel(new BorderLayout());
-    private final JTextArea commandOutputArea = new JTextArea();
-
-    /* ----  CONSTRUCTOR  --------------------------------------------------------------------------------------------------------------------------------------- */
-    private final JLabel statusLabel = new JLabel("Status: Initializing...");
-
-
-    public SensorCommandTab() {
-        mainPanel = buildMain();
-        sidePanel = buildSide();
-    }
-
-    private JPanel buildMain() {
+    public SensorCommandTab(JTextArea Console, String Host, int Port){
         /*
          * We build a Map<Category name, List<Cmd>> where each Cmd bundles
          * a button label, tooltip, and a Supplier<String> that returns the
          * actual command to send.  Most commands are fixed strings, but
          * those requiring user input pop up a dialog and may return null
          * (indicating the dialog was cancelled or the input invalid).
-         */        class Cmd {
+         */
+        setSize(800, 560);
+        setLayout(new BorderLayout());
+        setConfigs(Console, Host, Port);
+        class Cmd {
             String label, tip;
             Runnable cmd;
             Cmd(String l, String t, Runnable c) {
@@ -70,21 +48,21 @@ public class SensorCommandTab implements GUITab {
 
         /* 1) READINGS & INFO */
         cat.put("Readings & Info", List.of(
-                new Cmd("Request Reading", "requests a reading", () -> Utility.sendCommand("rx")),
-                new Cmd("Calibration Info", "requests calibration information", () -> Utility.sendCommand("cx")),
-                new Cmd("Unit Info", "requests unit information", () -> Utility.sendCommand("ix"))
+                new Cmd("Request Reading", "requests a reading", () -> sendCommand("rx")),
+                new Cmd("Calibration Info", "requests calibration information", () -> sendCommand("cx")),
+                new Cmd("Unit Info", "requests unit information", () -> sendCommand("ix"))
         ));
 
         /* 2) ARM / DISARM CAL */
         cat.put("Arm / Disarm Calibration", List.of(
-                new Cmd("Arm Light", "zcalAx", () -> Utility.sendCommand("zcalAx")),
-                new Cmd("Arm Dark", "zcalBx", () -> Utility.sendCommand("zcalBx")),
-                new Cmd("Disarm", "zcalDx", () -> Utility.sendCommand("zcalDx"))
+                new Cmd("Arm Light", "zcalAx", () -> sendCommand("zcalAx")),
+                new Cmd("Arm Dark", "zcalBx", () -> sendCommand("zcalBx")),
+                new Cmd("Disarm", "zcalDx", () -> sendCommand("zcalDx"))
         ));
 
         /* 3) Interval / Threshold */
         cat.put("Interval / Threshold", List.of(
-                new Cmd("Request Interval Settings", "Ix", () -> Utility.sendCommand("Ix")),
+                new Cmd("Request Interval Settings", "Ix", () -> sendCommand("Ix")),
                 new Cmd("Set Interval Period", "", this::promptIntervalPeriod),
                 new Cmd("Set Interval Threshold", "", this::promptIntervalThreshold)
         ));
@@ -99,31 +77,31 @@ public class SensorCommandTab implements GUITab {
 
         /* 5) Simulation */
         cat.put("Simulation", List.of(
-                new Cmd("Request Sim Values", "sx", () -> Utility.sendCommand("sx")),
+                new Cmd("Request Sim Values", "sx", () -> sendCommand("sx")),
                 new Cmd("Run Simulation", "runs simulation", this::promptSimulation)
         ));
 
         /* 6) Data Logging Commands */
         cat.put("Data Logging Cmds", List.of(
-                new Cmd("Request Pointer", "L1x", () -> Utility.sendCommand("L1x")),
-                new Cmd("Log One Record", "L3x", () -> Utility.sendCommand("L3x")),
+                new Cmd("Request Pointer", "L1x", () -> sendCommand("L1x")),
+                new Cmd("Log One Record", "L3x", () -> sendCommand("L3x")),
                 new Cmd("Return One Record", "L4x", this::promptReturnOneRecord),
                 new Cmd("Set Trigger Mode", "LMx", this::promptTriggerMode),
-                new Cmd("Request Trigger Mode", "Lmx", () -> Utility.sendCommand("Lmx")),
-                new Cmd("Request Interval Settings", "LIx", () -> Utility.sendCommand("LIx")),
+                new Cmd("Request Trigger Mode", "Lmx", () -> sendCommand("Lmx")),
+                new Cmd("Request Interval Settings", "LIx", () -> sendCommand("LIx")),
                 new Cmd("Set Interval Period", "LPx", this::promptLogIntervalPeriod),
                 new Cmd("Set Threshold", "LPTx", this::promptLogThreshold)
         ));
 
         /* 7) Logging Utilities */
         cat.put("Logging Utilities", List.of(
-                new Cmd("Request ID", "L0x", () -> Utility.sendCommand("L0x")),
-//                new Cmd("Erase Flash Chip", "L2x", this::confirmEraseFlash),  // update this if you also convert it to panel
-                new Cmd("Battery Voltage", "L5x", () -> Utility.sendCommand("L5x")),
-                new Cmd("Request Clock", "Lcx", () -> Utility.sendCommand("Lcx")),
+                new Cmd("Request ID", "L0x", () -> sendCommand("L0x")),
+                new Cmd("Erase Flash Chip", "L2x", this::confirmEraseFlash),  // update this if you also convert it to panel
+                new Cmd("Battery Voltage", "L5x", () -> sendCommand("L5x")),
+                new Cmd("Request Clock", "Lcx", () -> sendCommand("Lcx")),
                 new Cmd("Set Clock", "Lcx", this::promptSetClock),
-                new Cmd("Put Unit to Sleep", "Lsx", () -> Utility.sendCommand("Lsx")),
-                new Cmd("Request Alarm Data", "Lax", () -> Utility.sendCommand("Lax"))
+                new Cmd("Put Unit to Sleep", "Lsx", () -> sendCommand("Lsx")),
+                new Cmd("Request Alarm Data", "Lax", () -> sendCommand("Lax"))
         ));
 
         /* === GUI BUILD === */
@@ -147,46 +125,75 @@ public class SensorCommandTab implements GUITab {
         combo.addActionListener(e -> refresh.run());
         refresh.run(); // initial population
 
-        JPanel root = new JPanel(new BorderLayout(5, 5));
-        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        root.add(combo, BorderLayout.NORTH);
-        root.add(new JScrollPane(listPanel), BorderLayout.CENTER);
-        return root;
+        JPanel mainPanel = new JPanel(new BorderLayout(5, 5));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.add(combo, BorderLayout.NORTH);
+        mainPanel.add(new JScrollPane(listPanel), BorderLayout.CENTER);
+
+        rightPanel.setPreferredSize(new Dimension(300, 0));
+        rightPanel.setBorder(BorderFactory.createTitledBorder("Command Input"));
+        
+        add(wrapWithRightPanel(mainPanel, rightPanel));
+        
     }
-
-    private JPanel buildSide() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Command Input"));
-        return panel;
+    private void setConfigs(JTextArea console, String host, int port){
+        CONSOLE = console;
+        HOST = host;
+        PORT = port;
     }
-
-    
-
+    private void sendCommand(String cmd){
+        if(cmd==null||cmd.isBlank()) return;
+        append("\n> "+cmd);
+        try(Socket s=new Socket(HOST,PORT);
+            OutputStream o=s.getOutputStream();
+            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
+            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
+            String line; while((line=in.readLine())!=null) append(line);
+        }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
+    }
+    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.add(main, BorderLayout.CENTER);
+        side.setPreferredSize(new Dimension(300, 0));
+        wrapper.add(side, BorderLayout.EAST);
+        return wrapper;
+    }
+    private void append(String txt){
+        SwingUtilities.invokeLater(() -> {
+            CONSOLE.append(txt+"\n");
+            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
+        });
+    }
 
     private void setRightPanel(JPanel panel) {
-        sensorRightPanel.removeAll();
-        sensorRightPanel.add(panel, BorderLayout.CENTER);
-        sensorRightPanel.revalidate();
-        sensorRightPanel.repaint();
+        rightPanel.removeAll();
+        rightPanel.add(panel, BorderLayout.CENTER);
+        rightPanel.revalidate();
+        rightPanel.repaint();
     }
 
     private void clearRightPanel() {
         setRightPanel(new JPanel());
     }
 
-    private void appendToCommandRightPanel(String txt) {
-        SwingUtilities.invokeLater(() -> {
-            commandOutputArea.append(txt + "\n");
-            commandOutputArea.setCaretPosition(commandOutputArea.getDocument().getLength());
-        });
-    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /* -------------------------------------------------------------------
      * Helper dialogs for commands that need extra user input.
      *
      * Each method sneds the fully‑formatted command string, or clears the
      * input panel if the operation was cancelled / invalid.
      * ---------------------------------------------------------------- */
-
     private void promptIntervalPeriod() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
@@ -213,7 +220,7 @@ public class SensorCommandTab implements GUITab {
                     default -> t;
                 };
                 String withZeros = String.format("%010d", seconds);
-                Utility.sendCommand("p" + withZeros + "x");
+                sendCommand("p" + withZeros + "x");
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid number");
@@ -252,7 +259,7 @@ public class SensorCommandTab implements GUITab {
             try {
                 double d = Double.parseDouble(field.getText().trim());
                 String cmdPart = String.format("%08.2f", d).replace(' ', '0');
-                Utility.sendCommand("p" + cmdPart + "x");
+                sendCommand("p" + cmdPart + "x");
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -286,7 +293,7 @@ public class SensorCommandTab implements GUITab {
             String ptr = ptrField.getText().trim();
             if (ptr.matches("\\d{1,10}")) {
                 ptr = String.format("%010d", Long.parseLong(ptr));
-                Utility.sendCommand("L4" + ptr + "x");
+                sendCommand("L4" + ptr + "x");
                 clearRightPanel();
             } else {
                 append("[Error] Invalid pointer");
@@ -320,7 +327,7 @@ public class SensorCommandTab implements GUITab {
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal5" + String.format("%08.2f", value).replace(' ', '0') + "x";
-                Utility.sendCommand(cmd);
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -354,7 +361,7 @@ public class SensorCommandTab implements GUITab {
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal6" + String.format("%03.1f", value).replace(' ', '0') + "x";
-                Utility.sendCommand(cmd);
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -388,7 +395,7 @@ public class SensorCommandTab implements GUITab {
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal7" + String.format("%07.3f", value).replace(' ', '0') + "x";
-                Utility.sendCommand(cmd);
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -422,7 +429,7 @@ public class SensorCommandTab implements GUITab {
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal8" + String.format("%03.1f", value).replace(' ', '0') + "x";
-                Utility.sendCommand(cmd);
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -467,7 +474,7 @@ public class SensorCommandTab implements GUITab {
                 String sc = String.format("%010d", c);
                 String sf = String.format("%010d", f);
                 String st = String.format("%010d", t);
-                Utility.sendCommand("S," + sc + "," + sf + "," + st + "x");
+                sendCommand("S," + sc + "," + sf + "," + st + "x");
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -499,7 +506,7 @@ public class SensorCommandTab implements GUITab {
 
         submit.addActionListener(e -> {
             String m = (String) modeBox.getSelectedItem();
-            Utility.sendCommand("LM" + m + "x");
+            sendCommand("LM" + m + "x");
             clearRightPanel();
         });
 
@@ -532,7 +539,7 @@ public class SensorCommandTab implements GUITab {
                 int v = Integer.parseInt(valueField.getText().trim());
                 String zeros = String.format("%05d", v);
                 String cmd = (unitBox.getSelectedIndex() == 0 ? "LPS" : "LPM") + zeros + "x";
-                Utility.sendCommand(cmd);
+                sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -569,7 +576,7 @@ public class SensorCommandTab implements GUITab {
         submit.addActionListener(e -> {
             try {
                 double value = Double.parseDouble(field.getText().trim());
-                Utility.sendCommand("LPT" + String.format("%08.2f", value).replace(' ', '0') + "x");
+                sendCommand("LPT" + String.format("%08.2f", value).replace(' ', '0') + "x");
                 clearRightPanel();
             } catch (Exception ex) {
                 append("[Error] Invalid input");
@@ -607,7 +614,7 @@ public class SensorCommandTab implements GUITab {
             if (d.matches("\\d{8}") && t.matches("\\d{6}")) {
                 String formatted = d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) +
                         " 0 " + t.substring(0, 2) + ":" + t.substring(2, 4) + ":" + t.substring(4);
-                Utility.sendCommand("Lc" + formatted + "x");
+                sendCommand("Lc" + formatted + "x");
                 clearRightPanel();
             } else {
                 append("[Error] Invalid date/time");
@@ -621,20 +628,11 @@ public class SensorCommandTab implements GUITab {
         setRightPanel(panel);
     }
 
-//    private String confirmEraseFlash(){
-//        int res = JOptionPane.showConfirmDialog(this,
-//                "ERASE FLASH CHIP?\nThis cannot be undone.","Confirm",JOptionPane.OK_CANCEL_OPTION);
-//        return res==JOptionPane.OK_OPTION ? "L2x" : null;
-//    }
-
-
-    @Override
-    public JPanel getMainPanel() {
-        return mainPanel;
+    private String confirmEraseFlash(){
+        int res = JOptionPane.showConfirmDialog(this,
+                "ERASE FLASH CHIP?\nThis cannot be undone.","Confirm",JOptionPane.OK_CANCEL_OPTION);
+        return res==JOptionPane.OK_OPTION ? "L2x" : null;
     }
-
-    @Override
-    public JPanel getSidePanel() {
-        return sidePanel;
-    }
+    
+    
 }

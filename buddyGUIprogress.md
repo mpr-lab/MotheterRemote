@@ -98,9 +98,33 @@ just so this exists somewhere:
 - **Better way to display feedback from terminal**
 ---
 ## prototype 4
-Right Panel instead of popup window for user input, using right panel to display information on RPi command center
+### still making small adjustments to tabs
+##### RPi Command Center
+* added a pane on the right side of the GUI to better display information, still kinda confused on what direction to go, but going to work with Skye hopefully to make this work
 
+##### Sensor Command Center
+* Implemented right side panel instead of popup windows for easier flow
+* added a popup window with 2 second time that tells user that the command was sent &rarr; should solve the problem of user sending too many commands too quickly
+* fixed some of the user inputs that had text areas where a dropdown would make more sense
+* confirmed that commands run properly
 
+##### Data Sync
+* everything is the same
+
+##### Settings
+* everything is the same
+
+##### Help
+* added a new help tab which will go more in depth on each of the command center tabs and how to use the GUI as a whole
+* dropdown menu to access pages on more specific parts of the help center:
+  * General
+  * Rpi Command
+  * Sensor Command
+  * Data Sync
+  * Settings
+
+### how to improve?
+* **restructuring project files to make them more manageable**
 
 ---
 ## prototype 5
@@ -268,7 +292,7 @@ _**TODO**_ - - - - - - - -
 - Need to add a popup alert to notify user if command was sent or not sent with 2 second timer to prevent user from sending too many commands too fast.
 - code initial setup wizard that saves users addr and name as well as any raspberry pis that are set up as well, update settings tab to accomodate
 - code help tab that explains how to use the GUI
-- still fix the RPi comman center tab to display data better... not sure how to do that still
+- still fix the RPi command center tab to display data better... not sure how to do that still
 
 ---
 ### 6/3/2025
@@ -280,5 +304,27 @@ Added a Help tab:
 * dropdown menu to choose what to help with
   * general help: how GUI works as a whole
   * RPi command help: how to use the RPi Command Center Tab
+    * add an in depth section on how each button works 
+    * hopefully add a troubleshooting section
+  * Sensor command help: how to use
+    * documentation on what each button does in the sensor UI and how to use them/ when to use them
+    * add a troubleshooting section
+  * Data Sync Help:
+  * Settings Help:
+    * add a troubleshooting section
 
-Trying and failing to restricture GUI so that each tab is its own java file (right now `piCommandGUI.java` is over 1000 lines of code) &rarr; this would make maintenance a lot easier and make everything more modular.
+Trying and failing to restructure GUI so that each tab is its own java file (right now `piCommandGUI.java` is over 1000 lines of code) &rarr; this would make maintenance a lot easier and make everything more modular.
+
+**Problems right now:**
+* moving everything to separate java files kinda fucks with the console connection
+* trying to find a better way to consolidate code and not have a bunch of duplicate lines (maybe using a utility file?)
+* mostly the connection issue, and everything is currently going wrong with the sensor page
+* other pages mostly work? need to rework the right side pane thing
+
+
+\
+\
+\
+_**TODO**_ - - - - - - - -
+* continue work shopping help center
+* **restructuring code**

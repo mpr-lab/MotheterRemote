@@ -103,8 +103,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
     pass
 
-# TODO: check to make sure that new code works in command line still ( i think it does )
-#  Review new code with Skye and make sure they approve :>
+
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     """overwrites BaseRequestHandler with custom handler"""
 
@@ -122,51 +121,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             f"Received from {self.client_address[0]} in {cur_thread.name}: {self.data}"
         )
         _print_formatted(self.data)  # print formatted data to terminal
-#
-#
-# class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
-#     """Handles incoming TCP requests from the GUI or other clients."""
-#
-#     # Check that the request is coming from a socket
-#     def handle(self):
-#         if not isinstance(self.request, socket.socket):
-#             return
-#
-#         # Receive the incoming message (max length defined in configs)
-#         data = self.request.recv(msg_len).decode(utf8).strip()
-#         print(f"{data}")
-#
-#         # Match the received message to a command and act accordingly
-#         match data:
-#             case "status":
-#                 _status()
-#             case "start":
-#                 _start_listener()
-#             case "ui":
-#                 # Match the received message to a command and act accordingly
-#                 data = ui_commands.command_menu()
-#                 conn.send_to_rpi(data)  # Forward the generated command to the RPi
-#             case "rsync" | "sync":
-#                 # Perform rsync to pull data from the RPi to the host
-#                 _rsync()
-#             case "kill":
-#                 # Send SSH command to the RPi to kill the running process
-#                 _kill_listener()
-#             case "help":
-#                 # Provide a help message listing valid commands
-#                 help_msg = (
-#                     "Commands:\n"
-#                     "  ui   – open device UI\n"
-#                     "  rsync|sync – copy data from sensor\n"
-#                     "  kill – stop rpi_wifi.py on the Pi\n"
-#                     "  help – this text\n"
-#                 )
-#                 self.request.sendall(help_msg.encode(utf8))
-#             case "reload-config":
-#                 importlib.reload(configs)
-#             case _:
-#                 # Default case: treat message as a raw command to send to the RPi
-#                 conn.send_to_rpi(data)
 
 def _start_listener() -> None:
     """Sends command to prompt RPi to start listening"""

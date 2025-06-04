@@ -14,6 +14,8 @@ import java.awt.event.ActionListener;
 public class HelpTab extends JFrame {
     private JPanel mainPanel;
     private JPanel helpPanel = new JPanel();
+    private JLabel helpTitle = new JLabel();
+    private JTextArea helpText = new JTextArea();
 
 
     //    public HelpTab() {
@@ -33,30 +35,34 @@ public class HelpTab extends JFrame {
                 "Data Help",
                 "Settings Help"
         });
-        //        JTextArea helpText = new JTextArea();
-//        inner.setEditable(false);
-//        inner.setLineWrap(true);
-//        helpText.setWrapStyleWord(true);
-//        JScrollPane scroll = new JScrollPane(helpText);
+
+        helpText.setEditable(false);
+        helpText.setLineWrap(true);
+        helpText.setWrapStyleWord(true);
+        JScrollPane scroll = new JScrollPane();
+
+//        scroll.add(helpTitle);
+        scroll.add(helpText);
 
         helpSelector.addActionListener(e -> {
             String selection = (String) helpSelector.getSelectedItem();
-//            helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+            helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
 
             switch (selection) {
-                case "General Help" -> setPanel(genHelp());
-                case "RPi Command Center Help" -> setPanel(rpiHelp());
-                case "Sensor Command Center Help" -> setPanel(sensorHelp());
-                case "Data Help" -> setPanel(dataHelp());
-                case "Settings Help" -> setPanel(settingsHelp());
+                case "General Help" -> genHelp();
+                case "RPi Command Center Help" -> rpiHelp();
+                case "Sensor Command Center Help" -> sensorHelp();
+                case "Data Help" -> dataHelp();
+                case "Settings Help" -> settingsHelp();
             }
         });
 
         add(helpSelector, BorderLayout.NORTH);
-        add(helpPanel, BorderLayout.CENTER);
+        add(scroll, BorderLayout.CENTER);
+//        add(helpPanel, BorderLayout.CENTER);
     }
 //    private JPanel buildMain() {
-//        JPanel root = new JPanel(new BorderLayout(10, 10));
+//        JPanel root = new JPanel(new BorderLayout(5, 5));
 //        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 //
 //        JComboBox<String> helpSelector = new JComboBox<>(new String[]{
@@ -92,84 +98,55 @@ public class HelpTab extends JFrame {
 //        return root;
 //    }
 
-    private JPanel genHelp(){
-        setSize(800, 560);
+    private JPanel template(String title, String dStr){
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JTextArea description = new JTextArea("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        JPanel inner = new JPanel(new GridLayout(3, 1, 1, 1));
+        JScrollPane scroll = new JScrollPane(inner);
+
+        JTextArea description = new JTextArea(dStr);
         description.setEditable(false);
         description.setLineWrap(true);
         description.setWrapStyleWord(true);
 
-        panel.add(description, BorderLayout.NORTH);
-        panel.add(new JLabel("General Help:"));
+        inner.add(description);
+        inner.add(new JLabel("Command Help"));
+        inner.add(new JLabel("Troubleshooting:"));
+
+        panel.add(new JLabel(title), BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
     }
-
-    private JPanel rpiHelp(){
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setSize(800, 560);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JTextArea description = new JTextArea("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
-        description.setEditable(false);
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-
-        panel.add(description, BorderLayout.NORTH);
-        panel.add(new JLabel("RPi Help:"));
-
-        return panel;
+    private void genHelp(){
+        helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        helpTitle.setText("General Help");
+//        return template("General Help", "This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
     }
 
-    private JPanel sensorHelp(){
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setSize(800, 560);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JTextArea description = new JTextArea("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
-        description.setEditable(false);
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-
-        panel.add(description, BorderLayout.NORTH);
-        panel.add(new JLabel("Sensor Help:"));
-
-        return panel;
+    private void rpiHelp(){
+        helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        helpTitle.setText("RPi Help");
+//        return template("RPi Command Center Help", "Use this tab to manage core RPi processes like starting/stopping the listener, checking status, and syncing files with the host.");
     }
 
-    private JPanel dataHelp(){
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setSize(800, 560);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    private void sensorHelp(){
+        helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        helpTitle.setText("Sensor Help");
 
-        JTextArea description = new JTextArea("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
-        description.setEditable(false);
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-
-        panel.add(description, BorderLayout.NORTH);
-        panel.add(new JLabel("Data Help:"));
-
-        return panel;
     }
 
-    private JPanel settingsHelp(){
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setSize(800, 560);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    private void dataHelp(){
+        helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        helpTitle.setText("Data Help");
 
-        JTextArea description = new JTextArea("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
-        description.setEditable(false);
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
+    }
 
-        panel.add(description, BorderLayout.NORTH);
-        panel.add(new JLabel("Settings Help:"));
+    private void settingsHelp(){
+        helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        helpTitle.setText("Settings Help");
 
-        return panel;
     }
 
     private void setPanel(JPanel panel) {
