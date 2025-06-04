@@ -46,12 +46,12 @@ public class BuildGUI extends JFrame{
         tabs.addTab("Sensor Command Center", new SensorCommandTab(console, HOST, PORT));
         tabs.addTab("Data Sync", new DataTab(console, HOST, PORT));
         tabs.addTab("Settings", new SettingsTab(console, HOST, PORT));
-//        tabs.addTab("?", buildHelpTab());
+        tabs.addTab("?", new HelpTab());
         JPanel centerWrapper = new JPanel(new BorderLayout());
         centerWrapper.add(tabs, BorderLayout.CENTER);
         add(centerWrapper, BorderLayout.CENTER);
 
-//        add(tabs, BorderLayout.CENTER);
+        add(tabs, BorderLayout.CENTER);
         add(buildConsolePanel(), BorderLayout.SOUTH);
 
         startPythonBackend();

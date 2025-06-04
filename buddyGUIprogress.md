@@ -328,3 +328,6 @@ Trying and failing to restructure GUI so that each tab is its own java file (rig
 _**TODO**_ - - - - - - - -
 * continue work shopping help center
 * **restructuring code**
+
+---
+### 6/4/2025
