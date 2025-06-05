@@ -13,16 +13,19 @@ if test $num_inst == 1; then # grep found one thing (the actual program)
 elif test $num_inst == 0; then # grep returned something
     echo "Sensor streaming program not running! Attempting to start now."
 
+    touch /var/tmp/ssh_debug/sensor_output.txt
+    touch /var/tmp/ssh_debug/sensor_error.txt
+
     # redirect stdout to log file
-    echo $dt >> /var/tmp/ssh/sensor_output.txt
-    exec 1>> /var/tmp/ssh/sensor_output.txt
+    echo $dt >> /var/tmp/ssh_debug/sensor_output.txt
+    exec 1>> /var/tmp/ssh_debug/sensor_output.txt
 
     # redirect stderr to log file
-    echo $dt >> /var/tmp/ssh_debug/stderr.txt
+    echo $dt >> /var/tmp/ssh_debug/sensor_error.txt
     exec 2>> /var/tmp/ssh_debug/sensor_error.txt
 
     # run python program in background (don't wait for it to finish, just let shell die)
-    /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py 2>> /var/tmp/ssh_debug/sensor_error.txt 1>>/var/tmp/ssh/sensor_output.txt &
+    /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py 2>> /var/tmp/ssh_debug/sensor_error.txt 1>>/var/tmp/ssh_debug/sensor_output.txt &
 else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."
 fi
