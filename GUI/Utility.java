@@ -29,7 +29,7 @@ public class Utility {
     private JTextArea  CONSOLE;      // running log / output
 
     private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
-
+    public Utility(){}
     public Utility(JTextArea Console, String Host, String Name, int Port){
         setConfigs(Console, Host, Name, Port);
     }

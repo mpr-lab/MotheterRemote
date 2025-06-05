@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.lang.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -37,7 +38,7 @@ public class BuildGUI extends JFrame{
 
         /* layout root */
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(800, 560);
+        setSize(800, 650);
         setLayout(new BorderLayout());
 
         /* tabbed pane (center) */
@@ -86,10 +87,10 @@ public class BuildGUI extends JFrame{
     private void toggleConsoleVisibility(JScrollPane scrollPane, JButton toggleButton) {
         if (scrollPane.isVisible()) {
             scrollPane.setVisible(false);
-            toggleButton.setText("Restore");
+            toggleButton.setText("Show Console");
         } else {
             scrollPane.setVisible(true);
-            toggleButton.setText("Minimize");
+            toggleButton.setText("Hide Console");
         }
     }
 
@@ -144,21 +145,21 @@ public class BuildGUI extends JFrame{
         return new String[]{n,a};
     }
 
-    private static boolean initialWriteConfigs(String n,String a){
-        try{
-            List<String> lines = Files.readAllLines(Paths.get(CONFIG_PATH), StandardCharsets.UTF_8);
-            for(int i=0;i<lines.size();i++){
-                String t=lines.get(i).trim();
-                if(t.startsWith("host_name")) lines.set(i,"host_name = \""+n+"\"");
-                else if(t.startsWith("host_addr")) lines.set(i,"host_addr = \""+a+"\"");
-            }
-            Files.write(Paths.get(CONFIG_PATH), lines, StandardCharsets.UTF_8);
-            return true;
-        }catch(IOException ex){
-            JOptionPane.showMessageDialog(null,"Failed to update configs.py:\n"+ex.getMessage());
-            return false;
-        }
-    }
+//    private static boolean initialWriteConfigs(String n,String a){
+//        try{
+//            List<String> lines = Files.readAllLines(Paths.get(CONFIG_PATH), StandardCharsets.UTF_8);
+//            for(int i=0;i<lines.size();i++){
+//                String t=lines.get(i).trim();
+//                if(t.startsWith("host_name")) lines.set(i,"host_name = \""+n+"\"");
+//                else if(t.startsWith("host_addr")) lines.set(i,"host_addr = \""+a+"\"");
+//            }
+//            Files.write(Paths.get(CONFIG_PATH), lines, StandardCharsets.UTF_8);
+//            return true;
+//        }catch(IOException ex){
+//            JOptionPane.showMessageDialog(null,"Failed to update configs.py:\n"+ex.getMessage());
+//            return false;
+//        }
+//    }
     private static String[] runAutoSetup() {
         try {
             ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/auto_setup.py");
@@ -195,31 +196,13 @@ public class BuildGUI extends JFrame{
     public static void main(String[] args) {
         String[] info = runAutoSetup();
         if (info == null) System.exit(0);
-
-        if (!initialWriteConfigs(info[0], info[1])) System.exit(0);
+//        if (!initialWriteConfigs(info[1], info[0])) System.exit(0);
 
         SwingUtilities.invokeLater(() -> {
-            BuildGUI gui = new BuildGUI(info[0], info[1]);  // pass host_addr and host_name
+            BuildGUI gui = new BuildGUI(info[1], info[0]);  // pass host_addr and host_name
             gui.setVisible(true);
         });
     }
 
-
-
-//    public static void main(String[] args) {
-//        String hostAddr = "buddy-surface";
-//        String hostName = "buddy";
-////        /*  prompt BEFORE building the GUI */
-////        String[] info = promptForHostInfo();
-////        if(info==null){ System.exit(0); }
-////
-////        if(!initialWriteConfigs(info[0],info[1])) System.exit(0);
-//
-//        SwingUtilities.invokeLater(() -> {
-//            BuildGUI gui = new BuildGUI(hostAddr, hostName);  // pass host_addr
-//            gui.setVisible(true);
-//
-//        });
-//    }
 
 }
