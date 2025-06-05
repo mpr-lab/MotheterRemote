@@ -192,7 +192,10 @@ class SQMLE(SQM):
                 # was buf[3].decode("hex")
                 if buf.decode(hex)[3] == "f7":
                     # was buf[24:30].encode("hex")
-                    print("Received from %s: MAC: %s" % (addr, buf.decode(hex)[24:30]))
+                    print(
+                        "Received from %s: MAC: %s" % (addr, buf.decode(hex)[24:30]),
+                        file=sys.stderr,
+                    )
             except:
                 # Timeout in seconds. Allow all devices time to respond
                 if time.time() - starttime > 3:
