@@ -1,4 +1,7 @@
 # buddy's GUI development notes
+//    ps -ef | grep python
+
+
 
 ## why java?
 ### Cross-Platform Compatibility

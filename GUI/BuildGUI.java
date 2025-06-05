@@ -30,9 +30,10 @@ public class BuildGUI extends JFrame{
 
     private final JTextArea  console  = new JTextArea();      // running log / output
 
-    private BuildGUI(String hostAddr) {
+    private BuildGUI(String hostAddr, String hostName) {
         super("MotheterRemote");
         this.HOST = hostAddr;
+        this.NAME = hostName;
 
         /* layout root */
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -42,10 +43,10 @@ public class BuildGUI extends JFrame{
         /* tabbed pane (center) */
         JTabbedPane tabs = new JTabbedPane();
 
-        tabs.addTab("RPi Command Center", new RPiCommandTab(console, HOST, PORT));
-        tabs.addTab("Sensor Command Center", new SensorCommandTab(console, HOST, PORT));
+        tabs.addTab("RPi Command Center", new RPiCommandTab(console, HOST, NAME, PORT));
+        tabs.addTab("Sensor Command Center", new SensorCommandTab(console, HOST, NAME, PORT));
         tabs.addTab("Data Sync", new DataTab(console, HOST, PORT));
-        tabs.addTab("Settings", new SettingsTab(console, HOST, PORT));
+        tabs.addTab("Settings", new SettingsTab(console, HOST, NAME, PORT));
         tabs.addTab("?", new HelpTab());
         JPanel centerWrapper = new JPanel(new BorderLayout());
         centerWrapper.add(tabs, BorderLayout.CENTER);
@@ -63,17 +64,21 @@ public class BuildGUI extends JFrame{
         JScrollPane scroll = new JScrollPane(console);
         scroll.setPreferredSize(new Dimension(0, 150));
 
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        // Clear button to clear the console log
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
-
         // Toggle button for minimizing/maximizing the console log
         JButton toggleButton = new JButton("Minimize");
         toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
 
+        btnRow.add(toggleButton);
+        btnRow.add(clear);
+
         JPanel p = new JPanel(new BorderLayout());
+        p.add(btnRow, BorderLayout.NORTH);
         p.add(scroll, BorderLayout.CENTER);
-        p.add(clear, BorderLayout.EAST);
-        p.add(toggleButton, BorderLayout.WEST); // Add toggle button to the panel
 
         return p;
     }
@@ -120,6 +125,8 @@ public class BuildGUI extends JFrame{
         });
     }
 
+
+
     private static String[] promptForHostInfo(){
         JTextField nameField = new JTextField();
         JTextField addrField = new JTextField();
@@ -152,19 +159,68 @@ public class BuildGUI extends JFrame{
             return false;
         }
     }
+    private static String[] runAutoSetup() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/auto_setup.py");
+            pb.redirectErrorStream(true);  // combine stdout + stderr
+            Process p = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            String result = null;
+
+            // Debug: print all output
+            while ((line = reader.readLine()) != null) {
+                System.out.println("PYTHON OUTPUT: " + line);  // debug
+                if (line.matches("^[^,\\s]+,[^,\\s]+$")) {
+                    result = line;
+                }
+            }
+
+            p.waitFor();
+
+            if (result != null) {
+                return result.split(",", 2);  // [host_name, host_addr]
+            } else {
+                JOptionPane.showMessageDialog(null, "auto_setup.py did not return valid host info.");
+                return null;
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Failed to run auto_setup.py:\n" + e.getMessage());
+            return null;
+        }
+    }
 
     public static void main(String[] args) {
-        String hostAddr = "buddy-surface";
-//        /*  prompt BEFORE building the GUI */
-//        String[] info = promptForHostInfo();
-//        if(info==null){ System.exit(0); }
-//
-//        if(!initialWriteConfigs(info[0],info[1])) System.exit(0);
+        String[] info = runAutoSetup();
+        if (info == null) System.exit(0);
+
+        if (!initialWriteConfigs(info[0], info[1])) System.exit(0);
 
         SwingUtilities.invokeLater(() -> {
-            BuildGUI gui = new BuildGUI(hostAddr);  // pass host_addr
+            BuildGUI gui = new BuildGUI(info[0], info[1]);  // pass host_addr
+//            BuildGUI gui = new BuildGUI("127.0.0.1", "172.18.208.7");  // pass host_addr
             gui.setVisible(true);
-
         });
     }
+
+
+
+//    public static void main(String[] args) {
+//        String hostAddr = "buddy-surface";
+//        String hostName = "buddy";
+////        /*  prompt BEFORE building the GUI */
+////        String[] info = promptForHostInfo();
+////        if(info==null){ System.exit(0); }
+////
+////        if(!initialWriteConfigs(info[0],info[1])) System.exit(0);
+//
+//        SwingUtilities.invokeLater(() -> {
+//            BuildGUI gui = new BuildGUI(hostAddr, hostName);  // pass host_addr
+//            gui.setVisible(true);
+//
+//        });
+//    }
+
 }

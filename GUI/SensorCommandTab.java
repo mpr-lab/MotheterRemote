@@ -13,7 +13,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class SensorCommandTab extends JPanel{
-
     public JPanel rightPanel = new JPanel(new BorderLayout());
     
     /* ---------------- Network ---------------- */
@@ -23,7 +22,7 @@ public class SensorCommandTab extends JPanel{
     private int PORT;
     private  JTextArea  CONSOLE;      // running log / output
 
-    public SensorCommandTab(JTextArea Console, String Host, int Port){
+    public SensorCommandTab(JTextArea Console, String Host, String Name, int Port){
         /*
          * We build a Map<Category name, List<Cmd>> where each Cmd bundles
          * a button label, tooltip, and a Supplier<String> that returns the
@@ -31,9 +30,12 @@ public class SensorCommandTab extends JPanel{
          * those requiring user input pop up a dialog and may return null
          * (indicating the dialog was cancelled or the input invalid).
          */
+        setConfigs(Console, Host, Name, Port);
+        Utility util = new Utility(Console, Host, Name, Port);
+        
         setSize(800, 560);
         setLayout(new BorderLayout());
-        setConfigs(Console, Host, Port);
+
         class Cmd {
             String label, tip;
             Runnable cmd;
@@ -48,21 +50,21 @@ public class SensorCommandTab extends JPanel{
 
         /* 1) READINGS & INFO */
         cat.put("Readings & Info", List.of(
-                new Cmd("Request Reading", "requests a reading", () -> sendCommand("rx")),
-                new Cmd("Calibration Info", "requests calibration information", () -> sendCommand("cx")),
-                new Cmd("Unit Info", "requests unit information", () -> sendCommand("ix"))
+                new Cmd("Request Reading", "requests a reading", () -> util.sendCommand("rx")),
+                new Cmd("Calibration Info", "requests calibration information", () -> util.sendCommand("cx")),
+                new Cmd("Unit Info", "requests unit information", () -> util.sendCommand("ix"))
         ));
 
         /* 2) ARM / DISARM CAL */
         cat.put("Arm / Disarm Calibration", List.of(
-                new Cmd("Arm Light", "zcalAx", () -> sendCommand("zcalAx")),
-                new Cmd("Arm Dark", "zcalBx", () -> sendCommand("zcalBx")),
-                new Cmd("Disarm", "zcalDx", () -> sendCommand("zcalDx"))
+                new Cmd("Arm Light", "zcalAx", () -> util.sendCommand("zcalAx")),
+                new Cmd("Arm Dark", "zcalBx", () -> util.sendCommand("zcalBx")),
+                new Cmd("Disarm", "zcalDx", () -> util.sendCommand("zcalDx"))
         ));
 
         /* 3) Interval / Threshold */
         cat.put("Interval / Threshold", List.of(
-                new Cmd("Request Interval Settings", "Ix", () -> sendCommand("Ix")),
+                new Cmd("Request Interval Settings", "Ix", () -> util.sendCommand("Ix")),
                 new Cmd("Set Interval Period", "", this::promptIntervalPeriod),
                 new Cmd("Set Interval Threshold", "", this::promptIntervalThreshold)
         ));
@@ -77,31 +79,31 @@ public class SensorCommandTab extends JPanel{
 
         /* 5) Simulation */
         cat.put("Simulation", List.of(
-                new Cmd("Request Sim Values", "sx", () -> sendCommand("sx")),
+                new Cmd("Request Sim Values", "sx", () -> util.sendCommand("sx")),
                 new Cmd("Run Simulation", "runs simulation", this::promptSimulation)
         ));
 
         /* 6) Data Logging Commands */
         cat.put("Data Logging Cmds", List.of(
-                new Cmd("Request Pointer", "L1x", () -> sendCommand("L1x")),
-                new Cmd("Log One Record", "L3x", () -> sendCommand("L3x")),
+                new Cmd("Request Pointer", "L1x", () -> util.sendCommand("L1x")),
+                new Cmd("Log One Record", "L3x", () -> util.sendCommand("L3x")),
                 new Cmd("Return One Record", "L4x", this::promptReturnOneRecord),
                 new Cmd("Set Trigger Mode", "LMx", this::promptTriggerMode),
-                new Cmd("Request Trigger Mode", "Lmx", () -> sendCommand("Lmx")),
-                new Cmd("Request Interval Settings", "LIx", () -> sendCommand("LIx")),
+                new Cmd("Request Trigger Mode", "Lmx", () -> util.sendCommand("Lmx")),
+                new Cmd("Request Interval Settings", "LIx", () -> util.sendCommand("LIx")),
                 new Cmd("Set Interval Period", "LPx", this::promptLogIntervalPeriod),
                 new Cmd("Set Threshold", "LPTx", this::promptLogThreshold)
         ));
 
         /* 7) Logging Utilities */
         cat.put("Logging Utilities", List.of(
-                new Cmd("Request ID", "L0x", () -> sendCommand("L0x")),
+                new Cmd("Request ID", "L0x", () -> util.sendCommand("L0x")),
                 new Cmd("Erase Flash Chip", "L2x", this::confirmEraseFlash),  // update this if you also convert it to panel
-                new Cmd("Battery Voltage", "L5x", () -> sendCommand("L5x")),
-                new Cmd("Request Clock", "Lcx", () -> sendCommand("Lcx")),
+                new Cmd("Battery Voltage", "L5x", () -> util.sendCommand("L5x")),
+                new Cmd("Request Clock", "Lcx", () -> util.sendCommand("Lcx")),
                 new Cmd("Set Clock", "Lcx", this::promptSetClock),
-                new Cmd("Put Unit to Sleep", "Lsx", () -> sendCommand("Lsx")),
-                new Cmd("Request Alarm Data", "Lax", () -> sendCommand("Lax"))
+                new Cmd("Put Unit to Sleep", "Lsx", () -> util.sendCommand("Lsx")),
+                new Cmd("Request Alarm Data", "Lax", () -> util.sendCommand("Lax"))
         ));
 
         /* === GUI BUILD === */
@@ -133,37 +135,38 @@ public class SensorCommandTab extends JPanel{
         rightPanel.setPreferredSize(new Dimension(300, 0));
         rightPanel.setBorder(BorderFactory.createTitledBorder("Command Input"));
         
-        add(wrapWithRightPanel(mainPanel, rightPanel));
+        add(util.wrapWithRightPanel(mainPanel, rightPanel));
         
     }
-    private void setConfigs(JTextArea console, String host, int port){
+    private void setConfigs(JTextArea console, String host, String name, int port){
         CONSOLE = console;
         HOST = host;
+        NAME = name;
         PORT = port;
     }
-    private void sendCommand(String cmd){
-        if(cmd==null||cmd.isBlank()) return;
-        append("\n> "+cmd);
-        try(Socket s=new Socket(HOST,PORT);
-            OutputStream o=s.getOutputStream();
-            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
-            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
-            String line; while((line=in.readLine())!=null) append(line);
-        }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
-    }
-    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.add(main, BorderLayout.CENTER);
-        side.setPreferredSize(new Dimension(300, 0));
-        wrapper.add(side, BorderLayout.EAST);
-        return wrapper;
-    }
-    private void append(String txt){
-        SwingUtilities.invokeLater(() -> {
-            CONSOLE.append(txt+"\n");
-            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
-        });
-    }
+//    private void sendCommand(String cmd){
+//        if(cmd==null||cmd.isBlank()) return;
+//        append("\n> "+cmd);
+//        try(Socket s=new Socket(HOST,PORT);
+//            OutputStream o=s.getOutputStream();
+//            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
+//            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
+//            String line; while((line=in.readLine())!=null) append(line);
+//        }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
+//    }
+//    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
+//        JPanel wrapper = new JPanel(new BorderLayout());
+//        wrapper.add(main, BorderLayout.CENTER);
+//        side.setPreferredSize(new Dimension(300, 0));
+//        wrapper.add(side, BorderLayout.EAST);
+//        return wrapper;
+//    }
+//    private void append(String txt){
+//        SwingUtilities.invokeLater(() -> {
+//            CONSOLE.append(txt+"\n");
+//            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
+//        });
+//    }
 
     private void setRightPanel(JPanel panel) {
         rightPanel.removeAll();
@@ -177,17 +180,17 @@ public class SensorCommandTab extends JPanel{
     }
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
     /* -------------------------------------------------------------------
      * Helper dialogs for commands that need extra user input.
      *
@@ -195,6 +198,8 @@ public class SensorCommandTab extends JPanel{
      * input panel if the operation was cancelled / invalid.
      * ---------------------------------------------------------------- */
     private void promptIntervalPeriod() {
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
         JLabel unitLabel = new JLabel("Select unit:");
@@ -220,10 +225,10 @@ public class SensorCommandTab extends JPanel{
                     default -> t;
                 };
                 String withZeros = String.format("%010d", seconds);
-                sendCommand("p" + withZeros + "x");
+                util.sendCommand("p" + withZeros + "x");
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid number");
+                util.append("[Error] Invalid number");
             }
         });
 
@@ -240,6 +245,8 @@ public class SensorCommandTab extends JPanel{
 
 
     private void promptIntervalThreshold() {
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Threshold (mag/arcsec²):"));
@@ -259,10 +266,10 @@ public class SensorCommandTab extends JPanel{
             try {
                 double d = Double.parseDouble(field.getText().trim());
                 String cmdPart = String.format("%08.2f", d).replace(' ', '0');
-                sendCommand("p" + cmdPart + "x");
+                util.sendCommand("p" + cmdPart + "x");
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -274,6 +281,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptReturnOneRecord() {
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Record pointer (0-9999999999):"));
@@ -293,10 +302,10 @@ public class SensorCommandTab extends JPanel{
             String ptr = ptrField.getText().trim();
             if (ptr.matches("\\d{1,10}")) {
                 ptr = String.format("%010d", Long.parseLong(ptr));
-                sendCommand("L4" + ptr + "x");
+                util.sendCommand("L4" + ptr + "x");
                 clearRightPanel();
             } else {
-                append("[Error] Invalid pointer");
+                util.append("[Error] Invalid pointer");
             }
         });
 
@@ -308,6 +317,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLightOffset() {                              // zcal5<value>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Light offset (mag/arcsec²):"));
@@ -327,10 +338,10 @@ public class SensorCommandTab extends JPanel{
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal5" + String.format("%08.2f", value).replace(' ', '0') + "x";
-                sendCommand(cmd);
+                util.sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -342,6 +353,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLightTemp() {                                //zcal6<value>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Light temperature (°C):"));
@@ -361,10 +374,10 @@ public class SensorCommandTab extends JPanel{
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal6" + String.format("%03.1f", value).replace(' ', '0') + "x";
-                sendCommand(cmd);
+                util.sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -376,6 +389,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptDarkPeriod() {                               //zcal7<value>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Dark period (s):"));
@@ -395,10 +410,10 @@ public class SensorCommandTab extends JPanel{
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal7" + String.format("%07.3f", value).replace(' ', '0') + "x";
-                sendCommand(cmd);
+                util.sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -410,6 +425,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptDarkTemp() {                                 //zcal8<value>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Dark temperature (°C):"));
@@ -429,10 +446,10 @@ public class SensorCommandTab extends JPanel{
             try {
                 double value = Double.parseDouble(field.getText().trim());
                 String cmd = "zcal8" + String.format("%03.1f", value).replace(' ', '0') + "x";
-                sendCommand(cmd);
+                util.sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -444,6 +461,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptSimulation() {                               // S,count.freq,temp x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 2, 5, 5));
         JTextField countsField = new JTextField();
@@ -474,10 +493,10 @@ public class SensorCommandTab extends JPanel{
                 String sc = String.format("%010d", c);
                 String sf = String.format("%010d", f);
                 String st = String.format("%010d", t);
-                sendCommand("S," + sc + "," + sf + "," + st + "x");
+                util.sendCommand("S," + sc + "," + sf + "," + st + "x");
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -489,6 +508,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptTriggerMode() {                              // LM<mode>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Select trigger mode (0–7):"));
@@ -506,7 +527,7 @@ public class SensorCommandTab extends JPanel{
 
         submit.addActionListener(e -> {
             String m = (String) modeBox.getSelectedItem();
-            sendCommand("LM" + m + "x");
+            util.sendCommand("LM" + m + "x");
             clearRightPanel();
         });
 
@@ -518,6 +539,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLogIntervalPeriod() {                        // LP[S|M]<value>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
         JLabel unitLabel = new JLabel("Select unit:");
@@ -539,10 +562,10 @@ public class SensorCommandTab extends JPanel{
                 int v = Integer.parseInt(valueField.getText().trim());
                 String zeros = String.format("%05d", v);
                 String cmd = (unitBox.getSelectedIndex() == 0 ? "LPS" : "LPM") + zeros + "x";
-                sendCommand(cmd);
+                util.sendCommand(cmd);
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -558,6 +581,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLogThreshold() {                             // LPT<threshold>x
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
         inner.add(new JLabel("Threshold (mag/arcsec²):"));
@@ -576,10 +601,10 @@ public class SensorCommandTab extends JPanel{
         submit.addActionListener(e -> {
             try {
                 double value = Double.parseDouble(field.getText().trim());
-                sendCommand("LPT" + String.format("%08.2f", value).replace(' ', '0') + "x");
+                util.sendCommand("LPT" + String.format("%08.2f", value).replace(' ', '0') + "x");
                 clearRightPanel();
             } catch (Exception ex) {
-                append("[Error] Invalid input");
+                util.append("[Error] Invalid input");
             }
         });
 
@@ -591,6 +616,8 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptSetClock() {                                 // LcYYYY-MM-DD w HH:MM:SSx
+        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(3, 2, 5, 5));
         JTextField dateField = new JTextField();                    // yyyyMMdd
@@ -614,10 +641,10 @@ public class SensorCommandTab extends JPanel{
             if (d.matches("\\d{8}") && t.matches("\\d{6}")) {
                 String formatted = d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) +
                         " 0 " + t.substring(0, 2) + ":" + t.substring(2, 4) + ":" + t.substring(4);
-                sendCommand("Lc" + formatted + "x");
+                util.sendCommand("Lc" + formatted + "x");
                 clearRightPanel();
             } else {
-                append("[Error] Invalid date/time");
+                util.append("[Error] Invalid date/time");
             }
         });
 

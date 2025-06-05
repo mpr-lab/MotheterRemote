@@ -12,7 +12,37 @@ import java.util.function.Supplier;   // the lambda-returning-string type
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 public class Utility {
+    /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
+    /* ---------------- File system paths ---------------- */
+    // Path to Python‑side configuration file (relative to project root)
+    private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
+    // Path to the Python backend we invoke with ProcessBuilder
+    private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
+    // Folder on host where rsync‑ed data will be stored
+    private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
+
+    /* ---------------- Network ---------------- */
+    private String HOST;   // server IP or hostname (user‑supplied)
+    private String NAME;   // human‑friendly host name (user‑supplied)
+    // Socket port must match configs.host_server in the Python backend
+    private int PORT = 12345;
+    private JTextArea  CONSOLE;      // running log / output
+
+    private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
+
+    public Utility(JTextArea Console, String Host, String Name, int Port){
+        setConfigs(Console, Host, Name, Port);
+    }
+
+    private void setConfigs(JTextArea console, String host, String name, int port){
+        CONSOLE = console;
+        HOST = host;
+        NAME = name;
+        PORT = port;
+    }
+
     public void loadFileList() {
+
         fileModel.clear();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(DATA_DIR)) {
             for (Path p : ds) fileModel.addElement(p.getFileName().toString());
@@ -51,6 +81,13 @@ public class Utility {
         }
     }
 
+    public JPanel wrapWithRightPanel(JPanel main, JPanel side) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.add(main, BorderLayout.CENTER);
+        side.setPreferredSize(new Dimension(300, 0));
+        wrapper.add(side, BorderLayout.EAST);
+        return wrapper;
+    }
 
     public void sendCommand(String cmd){
         if(cmd==null||cmd.isBlank()) return;
@@ -78,9 +115,13 @@ public class Utility {
 
     public void append(String txt){
         SwingUtilities.invokeLater(() -> {
-            console.append(txt+"\n");
-            console.setCaretPosition(console.getDocument().getLength());
+            CONSOLE.append(txt+"\n");
+            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
         });
     }
+
+
+
+
 
 }

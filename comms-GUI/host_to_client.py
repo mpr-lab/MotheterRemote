@@ -170,6 +170,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 self.request.sendall(help_msg.encode(utf8))
             case "reload-config":
                 importlib.reload(configs)
+
             case _:
                 # Default case: treat message as a raw command to send to the RPi
                 conn.send_to_rpi(data)

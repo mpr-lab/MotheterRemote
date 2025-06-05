@@ -13,7 +13,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class RPiCommandTab extends JPanel {
-    public RPiCommandTab(JTextArea console, String HOST, int PORT) {
+    /* ---------------- Network ---------------- */
+    private String HOST;   // server IP or hostname (user‑supplied)
+    private String NAME;   // human‑friendly host name (user‑supplied)
+    private int PORT;
+    private JTextArea  CONSOLE;      // running log / output
+    public RPiCommandTab(JTextArea Console, String Host, String Name, int Port) {
+        setConfigs(Console, Host, Name, Port);
+        Utility util = new Utility(Console, Host, Name, Port);
+
         setSize(800, 560);
         setLayout(new BorderLayout());
 
@@ -33,7 +41,7 @@ public class RPiCommandTab extends JPanel {
         for (String[] p : presets) {
             JButton b = new JButton(p[0]);
             b.setToolTipText(p[1]);  // Set tooltip
-            b.addActionListener(e -> sendCommand(console, HOST, PORT, p[0]));
+            b.addActionListener(e -> util.sendCommand(p[0]));
             btnRow.add(b);
         }
 
@@ -42,7 +50,7 @@ public class RPiCommandTab extends JPanel {
         JButton sendBtn = new JButton("Send");
         JTextField cmdField = new JTextField();     // raw command entry
 
-        sendBtn.addActionListener(e -> sendCommand(console, HOST, PORT, cmdField.getText()));
+        sendBtn.addActionListener(e -> util.sendCommand(cmdField.getText()));
         cmdField.addActionListener(e -> sendBtn.doClick());
 
         JPanel commandRightPanel = new JPanel(new BorderLayout());
@@ -59,30 +67,36 @@ public class RPiCommandTab extends JPanel {
         south.add(cmdField, BorderLayout.CENTER);
         south.add(sendBtn,  BorderLayout.EAST);
         panel.add(south, BorderLayout.SOUTH);
-        add(wrapWithRightPanel(panel, commandRightPanel));
+        add(util.wrapWithRightPanel(panel, commandRightPanel));
+    }
+    private void setConfigs(JTextArea console, String host, String name, int port){
+        CONSOLE = console;
+        HOST = host;
+        NAME = name;
+        PORT = port;
     }
 
-    private void sendCommand(JTextArea console, String HOST, int PORT, String cmd){
-        if(cmd==null||cmd.isBlank()) return;
-        append(console, "\n> "+cmd);
-        try(Socket s=new Socket(HOST,PORT);
-            OutputStream o=s.getOutputStream();
-            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
-            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
-            String line; while((line=in.readLine())!=null) append(console, line);
-        }catch(IOException ex){ append(console, "[ERR] "+ex.getMessage()); }
-    }
-    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.add(main, BorderLayout.CENTER);
-        side.setPreferredSize(new Dimension(300, 0));
-        wrapper.add(side, BorderLayout.EAST);
-        return wrapper;
-    }
-    private void append(JTextArea console, String txt){
-        SwingUtilities.invokeLater(() -> {
-            console.append(txt+"\n");
-            console.setCaretPosition(console.getDocument().getLength());
-        });
-    }
+//    private void sendCommand(JTextArea console, String HOST, int PORT, String cmd){
+//        if(cmd==null||cmd.isBlank()) return;
+//        append(console, "\n> "+cmd);
+//        try(Socket s=new Socket(HOST,PORT);
+//            OutputStream o=s.getOutputStream();
+//            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
+//            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
+//            String line; while((line=in.readLine())!=null) append(console, line);
+//        }catch(IOException ex){ append(console, "[ERR] "+ex.getMessage()); }
+//    }
+//    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
+//        JPanel wrapper = new JPanel(new BorderLayout());
+//        wrapper.add(main, BorderLayout.CENTER);
+//        side.setPreferredSize(new Dimension(300, 0));
+//        wrapper.add(side, BorderLayout.EAST);
+//        return wrapper;
+//    }
+//    private void append(JTextArea console, String txt){
+//        SwingUtilities.invokeLater(() -> {
+//            console.append(txt+"\n");
+//            console.setCaretPosition(console.getDocument().getLength());
+//        });
+//    }
 }
