@@ -30,7 +30,8 @@ def main():
     while True:
         time.sleep(60)
         m = sensor.client_to_rpi()
-        print(m, file=sys.stdout)
+        if len(m) != 0:
+            print(m, file=sys.stdout)
 
 
 if __name__ == "__main__":
