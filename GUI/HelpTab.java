@@ -116,21 +116,24 @@ public class HelpTab extends JPanel{
         description.setLineWrap(true);
         description.setWrapStyleWord(true);
 
-        description.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        description.setText("Use this tab to manage core RPi processes like starting/stopping the listener, checking status, and syncing files with the host.");
 
         JLabel commands = new JLabel("Commands");
-        JTextArea h2 = new JTextArea();
-        h2.setEditable(false);
-        h2.setLineWrap(true);
-        h2.setWrapStyleWord(true);
-        h2.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+//        JPanel cmdList = new JPanel(new GridLayout(4,1));
+//        JPanel cmdDesc = new JPanel();
+//
+        JTextArea cmdHelp = new JTextArea();
+        cmdHelp.setEditable(false);
+        cmdHelp.setLineWrap(true);
+        cmdHelp.setWrapStyleWord(true);
+        cmdHelp.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
 
         JLabel troubleshoot = new JLabel("Troubleshooting");
 
         inner.add(title);
         inner.add(description);
         inner.add(commands);
-        inner.add(h2);
+        inner.add(cmdHelp);
         inner.add(troubleshoot);
 
         panel.add(inner, BorderLayout.CENTER);
