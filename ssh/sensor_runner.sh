@@ -3,6 +3,8 @@
 # get date/time
 dt="$(date '+%d/%m/%Y %H:%M:%S');"
 
+echo "Running sensor_runner.sh"
+
 processes=$(ps -ef | grep [s]ensor_stream.py)
 if [[ $? == 1 ]]; then # grep found nothing
     echo "Sensor streaming program not running!"
@@ -16,7 +18,7 @@ if [[ $? == 1 ]]; then # grep found nothing
     exec 2>> /var/tmp/ssh_debug/sensor_error.txt
 
     # run python program in background (don't wait for it to finish, just let shell die)
-    /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py &
+    /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py 2>> /var/tmp/ssh_debug/sensor_error.txt 1>>/var/tmp/ssh/sensor_output.txt &
 
 elif [[ $processes ]]; then # grep returned something
     : # do nothing
