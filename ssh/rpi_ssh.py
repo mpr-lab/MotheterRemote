@@ -7,7 +7,9 @@ import sensor_ssh
 import lora_parent_ssh
 import configs_ssh
 
-output: sensor_ssh.SQMLE | sensor_ssh.SQMLU | lora_parent_ssh.Radio
+device = sensor_ssh.SQMLE | sensor_ssh.SQMLU | lora_parent_ssh.Radio
+
+output: device | None = None
 
 
 def _device_search() -> None:
@@ -77,10 +79,27 @@ def main():
     try:
         _device_search()  # connect if possible
         global output
-        print("not actually sending anything", file=sys.stderr)
-        # output.rpi_to_client(command)  # forward message to radio/sensor
+
+        if output == None:
+            print("Could not connect to device.", file=sys.stderr)
+            if configs_ssh.has_radio:
+                print(
+                    f"Device should be radio at {configs_ssh.R_ADDR}", file=sys.stderr
+                )
+            else:
+                print(
+                    f"Device should be {configs_ssh.device_type} sensor at {configs_ssh.device_addr}",
+                    file=sys.stderr,
+                )
+            return
+
+        try:
+            output.rpi_to_client(command)
+        except Exception as e:
+            print(f"Communication failed!\n{e}", file=sys.stderr)
+
     except Exception as e:
-        print(f"Could not connect to device:\n{str(e)}", file=sys.stderr)
+        print(f"Could not connect to device:\n{e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

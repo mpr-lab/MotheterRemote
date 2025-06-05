@@ -26,7 +26,9 @@ def send_to_rpi(m: str) -> str:
     run_command = f"ssh {rpi_name}@{rpi_addr} 'cd {rpi_repo}/ssh; ./rpi_runner.sh {m}'"
     os.system(run_command)
 
-    read_command = f"ssh {rpi_name}@{rpi_addr} 'tail -n 1 stdout.txt'"
+    read_command = (
+        f"ssh {rpi_name}@{rpi_addr} 'tail -n 1 /var/tmp/ssh_debug/stdout.txt'"
+    )
     output = subprocess.check_output(read_command, shell=True).decode()
 
     # run_command = f"python3 {rpi_repo}/rpi_ssh.py {m}"
@@ -125,3 +127,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# cat stderr.txt | tr [:cntrl:] "\t" | sed "s/NEW_ENTRY/\n/g" | tail -n 1 | tr "\t" "\n" | sed "1d"
+# this is the most horrendous bash i've done all day
