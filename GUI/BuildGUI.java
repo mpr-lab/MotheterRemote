@@ -61,16 +61,33 @@ public class BuildGUI extends JFrame{
         console.setEditable(false);
         console.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         JScrollPane scroll = new JScrollPane(console);
-        scroll.setPreferredSize(new Dimension(0,150));
+        scroll.setPreferredSize(new Dimension(0, 150));
 
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
 
+        // Toggle button for minimizing/maximizing the console log
+        JButton toggleButton = new JButton("Minimize");
+        toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
+
         JPanel p = new JPanel(new BorderLayout());
         p.add(scroll, BorderLayout.CENTER);
-        p.add(clear,  BorderLayout.EAST);
+        p.add(clear, BorderLayout.EAST);
+        p.add(toggleButton, BorderLayout.WEST); // Add toggle button to the panel
+
         return p;
     }
+
+    private void toggleConsoleVisibility(JScrollPane scrollPane, JButton toggleButton) {
+        if (scrollPane.isVisible()) {
+            scrollPane.setVisible(false);
+            toggleButton.setText("Restore");
+        } else {
+            scrollPane.setVisible(true);
+            toggleButton.setText("Minimize");
+        }
+    }
+
 
     private void sendCommand(String cmd){
         if(cmd==null||cmd.isBlank()) return;
