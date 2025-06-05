@@ -199,8 +199,7 @@ public class BuildGUI extends JFrame{
         if (!initialWriteConfigs(info[0], info[1])) System.exit(0);
 
         SwingUtilities.invokeLater(() -> {
-            BuildGUI gui = new BuildGUI(info[0], info[1]);  // pass host_addr
-//            BuildGUI gui = new BuildGUI("127.0.0.1", "172.18.208.7");  // pass host_addr
+            BuildGUI gui = new BuildGUI(info[0], info[1]);  // pass host_addr and host_name
             gui.setVisible(true);
         });
     }
