@@ -89,16 +89,38 @@ public class Utility {
         return wrapper;
     }
 
-    public void sendCommand(String cmd){
-        if(cmd==null||cmd.isBlank()) return;
-        append("\n> "+cmd);
-        try(Socket s=new Socket(HOST,PORT);
-            OutputStream o=s.getOutputStream();
-            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
-            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
-            String line; while((line=in.readLine())!=null) append(line);
-        }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
+//    public void sendCommand(String cmd){
+//        if(cmd==null||cmd.isBlank()) return;
+//        append("\n> "+cmd);
+//        try(Socket s=new Socket(HOST,PORT);
+//            OutputStream o=s.getOutputStream();
+//            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
+//            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
+//            String line; while((line=in.readLine())!=null) append(line);
+//        }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
+//    }
+
+    public void sendCommand(String cmd) {
+        if (cmd == null || cmd.isBlank()) return;
+        append("\n> " + cmd);
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/ssh/host_ssh.py", cmd);
+            pb.redirectErrorStream(true);  // merge stderr with stdout
+            Process p = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                append(line);
+            }
+
+            p.waitFor();
+        } catch (IOException | InterruptedException ex) {
+            append("[ERR] " + ex.getMessage());
+        }
     }
+
 
     public void startPythonBackend(){
         try{
