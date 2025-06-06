@@ -229,3 +229,17 @@ when you're done, instantly do `sudo ip link set usb0 down`. otherwise it will j
 do `nmcli -f NAME,UUID,AUTOCONNECT,AUTOCONNECT-PRIORITY c` to see the networks and their priorities. the wired connection (probably #2) should have priority -999.
 
 but that's the order in which it tries to connect to things, not the order in which it tries to use them. so do `route -n`, and see whether the metric number for `usb0` is less than `wlan0`. if it is, do `sudo apt install ifmetric` and `sudo ifmetric wlan0 50` (or any number lower than the ethernet `usb0`).
+
+## I FIXED GIT PERMISSIONS kind of
+
+Git doesn't like respecting file permissions, so a file that's executable on my local machine won't necessarily be executable in the repo or any remote machine. If you have problems with this, and ONLY IF YOU'RE NOT ON WINDOWS, this might be a fix:
+
+`git config core.filemode true` so that git will track file permissions changes
+
+`git update-index --chmod=+x ssh/rpi_runner.sh` so that your script is now listed as executable
+
+then commit changes
+
+on remote machine, do `git reset --hard origin/newrsync` (or whatever branch you're on). should be fixed!
+
+to make something executable (ignoring git interference), do `chmod 755 filename` (or `777` if you just can't be bothered anymore)
