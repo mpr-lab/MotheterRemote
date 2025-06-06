@@ -243,3 +243,7 @@ then commit changes
 on remote machine, do `git reset --hard origin/newrsync` (or whatever branch you're on). should be fixed!
 
 to make something executable (ignoring git interference), do `chmod 755 filename` (or `777` if you just can't be bothered anymore)
+
+### wait that didnt work
+
+when i hit "commit" it just instantly ignored my permissions changes. after update-index, now trying `git push --force`.
