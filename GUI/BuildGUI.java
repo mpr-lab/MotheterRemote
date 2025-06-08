@@ -3,6 +3,9 @@ import java.awt.*;
 import java.io.*;
 import java.lang.*;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class BuildGUI extends JFrame{
     /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
@@ -22,7 +25,7 @@ public class BuildGUI extends JFrame{
 
     private final JTextArea  console  = new JTextArea();      // running log / output
 
-    private BuildGUI(String hostAddr, String hostName) {
+    BuildGUI(String hostAddr, String hostName) {
         super("MotheterRemote");
         this.HOST = hostAddr;
         this.NAME = hostName;
@@ -153,15 +156,45 @@ public class BuildGUI extends JFrame{
     }
 
     public static void main(String[] args) {
-        String[] info = runAutoSetup();
-        if (info == null) System.exit(0);
-//        if (!initialWriteConfigs(info[1], info[0])) System.exit(0);
+        Path profilesDir = Paths.get("profiles");
 
-        SwingUtilities.invokeLater(() -> {
-            BuildGUI gui = new BuildGUI(info[1], info[0]);  // pass host_addr and host_name
-            gui.setVisible(true);
-        });
+        if (Files.notExists(profilesDir)) {
+            // First run: launch the setup wizard
+            SwingUtilities.invokeLater(SetupWizard::new);
+        } else {
+            // Profiles exist: prompt to choose one
+            LoadProfileSelector.showAndUpdateConfigs();
+
+            // Now launch main GUI (assuming configs.py was updated)
+            try {
+                List<String> lines = Files.readAllLines(Paths.get("../comms-GUI/configs.py"));
+                String name = null, addr = null;
+                for (String line : lines) {
+                    if (line.startsWith("rpi_name")) {
+                        name = line.split("=")[1].trim().replaceAll("['\"]", "");
+                    } else if (line.startsWith("rpi_addr")) {
+                        addr = line.split("=")[1].trim().replaceAll("['\"]", "");
+                    }
+                }
+                if (name != null && addr != null) {
+                    String finalName = name;
+                    String finalAddr = addr;
+                    SwingUtilities.invokeLater(() -> {
+                        BuildGUI gui = new BuildGUI(finalAddr, finalName);
+                        gui.setVisible(true);
+                    });
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to read rpi_name or rpi_addr from configs.py");
+                    System.exit(1);
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Error reading configs.py: " + ex.getMessage());
+                System.exit(1);
+            }
+        }
     }
+
+
 
 
 }

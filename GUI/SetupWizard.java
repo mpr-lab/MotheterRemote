@@ -1,9 +1,9 @@
 import javax.swing.*;
-        import java.awt.*;
-        import java.awt.event.*;
-        import java.io.*;
-        import java.nio.file.*;
-        import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 public class SetupWizard extends JFrame {
     private CardLayout cardLayout = new CardLayout();
@@ -127,9 +127,8 @@ public class SetupWizard extends JFrame {
 
     private JCheckBox radioBox = new JCheckBox("Using Radios");
     private JCheckBox tailscaleBox = new JCheckBox("Using Tailscale");
-    private JRadioButton wifiBtn = new JRadioButton("Wifi", true);
-    private JRadioButton ethernetBtn = new JRadioButton("Ethernet");
-    private JRadioButton cellularBtn = new JRadioButton("Cellular");
+    private JRadioButton sshBtn = new JRadioButton("SSH", true);
+    private JRadioButton socketBtn = new JRadioButton("Socket");
 
     private JPanel buildConnectionPanel() {
         JPanel panel = new JPanel();
@@ -138,12 +137,10 @@ public class SetupWizard extends JFrame {
 
         panel.add(new JLabel("Choose Connection Type:"));
         ButtonGroup group = new ButtonGroup();
-        group.add(wifiBtn);
-        group.add(ethernetBtn);
-        group.add(cellularBtn);
-        panel.add(wifiBtn);
-        panel.add(ethernetBtn);
-        panel.add(cellularBtn);
+        group.add(sshBtn);
+        group.add(socketBtn);
+        panel.add(sshBtn);
+        panel.add(socketBtn);
 
         panel.add(radioBox);
         panel.add(tailscaleBox);
@@ -165,6 +162,15 @@ public class SetupWizard extends JFrame {
 
         panel.add(new JScrollPane(info), BorderLayout.CENTER);
         panel.add(setupBtn, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel buildFinalPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+
+        JButton finishBtn = new JButton("Finish Setup");
+
+        panel.add(finishBtn);
         return panel;
     }
 
@@ -227,7 +233,11 @@ public class SetupWizard extends JFrame {
     }
 
     public static void main(String[] args) {
+        Path profilesDir = Paths.get("profiles");
+        if (Files.exists(profilesDir)) {
+            System.out.println("Profiles directory already exists. Skipping setup wizard.");
+            return;
+        }
         SwingUtilities.invokeLater(SetupWizard::new);
     }
 }
-
