@@ -1,12 +1,9 @@
-import org.json.JSONObject;
-
 import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+        import java.awt.*;
+        import java.awt.event.*;
+        import java.io.*;
+        import java.nio.file.*;
+        import java.util.*;
 
 public class SetupWizard extends JFrame {
     private CardLayout cardLayout = new CardLayout();
@@ -96,15 +93,32 @@ public class SetupWizard extends JFrame {
     }
 
     private void addRpiProfile(String defaultName, String defaultAddr) {
-        JPanel row = new JPanel(new GridLayout(1, 3, 10, 0));
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
+        container.setMaximumSize(new Dimension(500, 40));
+
         JTextField nameField = new JTextField(defaultName != null ? defaultName : "");
         JTextField addrField = new JTextField(defaultAddr != null ? defaultAddr : "");
-        row.add(new JLabel("Name:"));
-        row.add(nameField);
-        row.add(new JLabel("Address:"));
-        row.add(addrField);
 
-        profilesPanel.add(row);
+        container.add(new JLabel("Name:"));
+        container.add(Box.createRigidArea(new Dimension(5, 0)));
+        container.add(nameField);
+        container.add(Box.createRigidArea(new Dimension(10, 0)));
+        container.add(new JLabel("Address:"));
+        container.add(Box.createRigidArea(new Dimension(5, 0)));
+        container.add(addrField);
+
+        JButton deleteBtn = new JButton("Delete");
+        deleteBtn.addActionListener(e -> {
+            profilesPanel.remove(container);
+            profiles.removeIf(p -> p.nameField == nameField && p.addrField == addrField);
+            profilesPanel.revalidate();
+            profilesPanel.repaint();
+        });
+        container.add(Box.createRigidArea(new Dimension(10, 0)));
+        container.add(deleteBtn);
+
+        profilesPanel.add(container);
         profiles.add(new RPiProfile(nameField, addrField));
 
         profilesPanel.revalidate();
@@ -113,8 +127,9 @@ public class SetupWizard extends JFrame {
 
     private JCheckBox radioBox = new JCheckBox("Using Radios");
     private JCheckBox tailscaleBox = new JCheckBox("Using Tailscale");
-    private JRadioButton sshBtn = new JRadioButton("SSH", true);
-    private JRadioButton socketBtn = new JRadioButton("Socket");
+    private JRadioButton wifiBtn = new JRadioButton("Wifi", true);
+    private JRadioButton ethernetBtn = new JRadioButton("Ethernet");
+    private JRadioButton cellularBtn = new JRadioButton("Cellular");
 
     private JPanel buildConnectionPanel() {
         JPanel panel = new JPanel();
@@ -123,10 +138,12 @@ public class SetupWizard extends JFrame {
 
         panel.add(new JLabel("Choose Connection Type:"));
         ButtonGroup group = new ButtonGroup();
-        group.add(sshBtn);
-        group.add(socketBtn);
-        panel.add(sshBtn);
-        panel.add(socketBtn);
+        group.add(wifiBtn);
+        group.add(ethernetBtn);
+        group.add(cellularBtn);
+        panel.add(wifiBtn);
+        panel.add(ethernetBtn);
+        panel.add(cellularBtn);
 
         panel.add(radioBox);
         panel.add(tailscaleBox);
@@ -160,7 +177,10 @@ public class SetupWizard extends JFrame {
     private void setupSSHKeysForAll() {
         String home = System.getProperty("user.home");
         Path privateKey = Paths.get(home, ".ssh", "id_ed25519");
+        Path profilesDir = Paths.get("profiles");
         try {
+            Files.createDirectories(profilesDir);
+
             if (!Files.exists(privateKey)) {
                 ProcessBuilder genKey = new ProcessBuilder(
                         "ssh-keygen", "-t", "ed25519", "-f", privateKey.toString(), "-N", ""
@@ -180,10 +200,12 @@ public class SetupWizard extends JFrame {
                     pb.inheritIO();
                     pb.start().waitFor();
 
-                    JSONObject json = new JSONObject();
-                    json.put("rpi_name", rpiName);
-                    json.put("rpi_addr", rpiAddr);
-                    Files.writeString(Paths.get(rpiName + "_profile.json"), json.toString(4));
+                    Properties props = new Properties();
+                    props.setProperty("rpi_name", rpiName);
+                    props.setProperty("rpi_addr", rpiAddr);
+                    try (FileWriter writer = new FileWriter(profilesDir.resolve(rpiName + "_profile.properties").toFile())) {
+                        props.store(writer, "RPi Profile");
+                    }
                 }
             }
 
@@ -208,3 +230,4 @@ public class SetupWizard extends JFrame {
         SwingUtilities.invokeLater(SetupWizard::new);
     }
 }
+
