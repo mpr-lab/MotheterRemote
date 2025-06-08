@@ -1,16 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 public class Utility {
     /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
     /* ---------------- File system paths ---------------- */
@@ -21,11 +15,6 @@ public class Utility {
     // Folder on host where rsync‑ed data will be stored
     private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
 
-    /* ---------------- Network ---------------- */
-//    private String HOST;   // server IP or hostname (user‑supplied)
-//    private String NAME;   // human‑friendly host name (user‑supplied)
-//    // Socket port must match configs.host_server in the Python backend
-//    private int PORT = 12345;
     private JTextArea  CONSOLE;      // running log / output
 
     private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
@@ -36,9 +25,6 @@ public class Utility {
 
     private void setConfigs(JTextArea console){
         CONSOLE = console;
-//        HOST = host;
-//        NAME = name;
-//        PORT = port;
     }
 
     public void loadFileList() {
@@ -88,17 +74,6 @@ public class Utility {
         wrapper.add(side, BorderLayout.EAST);
         return wrapper;
     }
-
-//    public void sendCommand(String cmd){
-//        if(cmd==null||cmd.isBlank()) return;
-//        append("\n> "+cmd);
-//        try(Socket s=new Socket(HOST,PORT);
-//            OutputStream o=s.getOutputStream();
-//            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
-//            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
-//            String line; while((line=in.readLine())!=null) append(line);
-//        }catch(IOException ex){ append("[ERR] "+ex.getMessage()); }
-//    }
 
     public void sendCommand(String cmd) {
         if (cmd == null || cmd.isBlank()) return;

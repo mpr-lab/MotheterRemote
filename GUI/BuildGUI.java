@@ -87,23 +87,22 @@ public class BuildGUI extends JFrame{
         }
     }
 
-
-    private static String[] promptForHostInfo(){
-        JTextField nameField = new JTextField();
-        JTextField addrField = new JTextField();
-
-        JPanel p=new JPanel(new GridLayout(0,1,5,5));
-        p.add(new JLabel("host_name:")); p.add(nameField);
-        p.add(new JLabel("host_addr:")); p.add(addrField);
-
-        int res=JOptionPane.showConfirmDialog(null,p,"Configure Host",JOptionPane.OK_CANCEL_OPTION);
-        if(res!=JOptionPane.OK_OPTION) return null;
-
-        String n=nameField.getText().trim();
-        String a=addrField.getText().trim();
-        if(n.isEmpty()||a.isEmpty()) return null;
-        return new String[]{n,a};
-    }
+//    private static String[] promptForHostInfo(){
+//        JTextField nameField = new JTextField();
+//        JTextField addrField = new JTextField();
+//
+//        JPanel p=new JPanel(new GridLayout(0,1,5,5));
+//        p.add(new JLabel("host_name:")); p.add(nameField);
+//        p.add(new JLabel("host_addr:")); p.add(addrField);
+//
+//        int res=JOptionPane.showConfirmDialog(null,p,"Configure Host",JOptionPane.OK_CANCEL_OPTION);
+//        if(res!=JOptionPane.OK_OPTION) return null;
+//
+//        String n=nameField.getText().trim();
+//        String a=addrField.getText().trim();
+//        if(n.isEmpty()||a.isEmpty()) return null;
+//        return new String[]{n,a};
+//    }
 
 //    private static boolean initialWriteConfigs(String n,String a){
 //        try{
