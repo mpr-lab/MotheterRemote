@@ -36,7 +36,7 @@ public class Utility {
         } catch (IOException ex){ append("[GUI] Data dir error: "+ex.getMessage()); }
     }
 
-    public void updateConfigsPy(String newHostName, String newHostAddr,
+    public void updateConfigsPy(
                                  String newRpiName,  String newRpiAddr) {
         try {
             File file = new File(CONFIG_PATH);
@@ -45,11 +45,7 @@ public class Utility {
 
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().startsWith("host_name ="))
-                    line = "host_name = \"" + newHostName + "\"";
-                else if (line.trim().startsWith("host_addr ="))
-                    line = "host_addr = \"" + newHostAddr + "\"";
-                else if (line.trim().startsWith("rpi_name ="))
+                if (line.trim().startsWith("rpi_name ="))
                     line = "rpi_name = \"" + newRpiName + "\"";
                 else if (line.trim().startsWith("rpi_addr ="))
                     line = "rpi_addr = \"" + newRpiAddr + "\"";

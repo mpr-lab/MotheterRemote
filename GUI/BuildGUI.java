@@ -9,29 +9,21 @@ import java.util.Properties;
 
 
 public class BuildGUI extends JFrame {
-    /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
-    /* ---------------- File system paths ---------------- */
-    private static final String CONFIG_PATH  = "../ssh/configs_ssh.py";
-    private static final String BACKEND_PATH = "../ssh/host_ssh.py";
-    private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
-
-    /* ---------------- Network ---------------- */
-    private String HOST;
-    private String NAME;
-    private static final int PORT = 12345;
-
     private final JTextArea console = new JTextArea();
+    private final JComboBox<String> profileDropdown = new JComboBox<>();
+    private final JButton confirmProfileButton = new JButton("Confirm");
 
-    BuildGUI(String hostAddr, String hostName) {
+    BuildGUI() {
         super("MotheterRemote");
-        this.HOST = hostAddr;
-        this.NAME = hostName;
 
         Utility util = new Utility(console);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(800, 650);
         setLayout(new BorderLayout());
+
+        JPanel topPanel = buildProfileSelector(util);
+        add(topPanel, BorderLayout.NORTH);
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("RPi Command Center", new RPiCommandTab(console));
@@ -40,10 +32,44 @@ public class BuildGUI extends JFrame {
         tabs.addTab("Settings", new SettingsTab(console));
         tabs.addTab("?", new HelpTab());
         add(tabs, BorderLayout.CENTER);
+
         add(buildConsolePanel(), BorderLayout.SOUTH);
 
         util.startPythonBackend();
         SwingUtilities.invokeLater(() -> util.sendCommand("reload-config"));
+    }
+
+    private JPanel buildProfileSelector(Utility util) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        File profileDir = new File("profiles");
+        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
+        if (profileNames != null) {
+            for (String name : profileNames) {
+                profileDropdown.addItem(name.replace("_profile.properties", ""));
+            }
+        }
+
+        confirmProfileButton.addActionListener(e -> {
+            String selected = (String) profileDropdown.getSelectedItem();
+            if (selected != null) {
+                File profileFile = new File("profiles", selected + "_profile.properties");
+                Properties props = new Properties();
+                try (FileReader reader = new FileReader(profileFile)) {
+                    props.load(reader);
+                    String rpiName = props.getProperty("rpi_name");
+                    String rpiAddr = props.getProperty("rpi_addr");
+                    util.updateConfigsPy(rpiName, rpiAddr);
+                    JOptionPane.showMessageDialog(this, "Updated configs_ssh.py for profile: " + selected);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(this, "Failed to read selected profile: " + ex.getMessage());
+                }
+            }
+        });
+
+        panel.add(new JLabel("Select RPi Profile:"));
+        panel.add(profileDropdown);
+        panel.add(confirmProfileButton);
+        return panel;
     }
 
     private JPanel buildConsolePanel() {
@@ -81,7 +107,7 @@ public class BuildGUI extends JFrame {
 
     private static String[] getRPIDetailsFromConfigs() {
         try {
-            List<String> lines = Files.readAllLines(Paths.get("../ssh/configs_ssh.py"));
+            List<String> lines = Files.readAllLines(Paths.get("../comms-GUI/configs.py"));
             String name = null, addr = null;
             for (String line : lines) {
                 if (line.startsWith("rpi_name")) {
@@ -97,49 +123,16 @@ public class BuildGUI extends JFrame {
         }
     }
 
-    private static void promptAndRunGUI() {
-        File profileDir = new File("profiles");
-        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
-        if (profileNames == null || profileNames.length == 0) {
-            JOptionPane.showMessageDialog(null, "No RPi profiles found.");
-            return;
-        }
-
-        for (int i = 0; i < profileNames.length; i++) {
-            profileNames[i] = profileNames[i].replace("_profile.properties", "");
-        }
-
-        String selected = (String) JOptionPane.showInputDialog(null, "Select RPi Profile", "RPi Profile Selector",
-                JOptionPane.PLAIN_MESSAGE, null, profileNames, profileNames[0]);
-
-        if (selected != null) {
-            File profileFile = new File("profiles", selected + "_profile.properties");
-            Properties props = new Properties();
-            try (FileReader reader = new FileReader(profileFile)) {
-                props.load(reader);
-                String rpiName = props.getProperty("rpi_name");
-                String rpiAddr = props.getProperty("rpi_addr");
-
-                // update configs_ssh.py
-                Utility util = new Utility();
-                util.updateConfigsPy("host", "host", rpiName, rpiAddr);
-
-                SwingUtilities.invokeLater(() -> {
-                    BuildGUI gui = new BuildGUI(rpiAddr, rpiName);
-                    gui.setVisible(true);
-                });
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, "Failed to read selected profile: " + e.getMessage());
-            }
-        }
-    }
 
     public static void main(String[] args) {
         Path profilesDir = Paths.get("profiles");
         if (Files.notExists(profilesDir)) {
             SwingUtilities.invokeLater(SetupWizard::new);
         } else {
-            promptAndRunGUI();
+            SwingUtilities.invokeLater(() -> {
+                BuildGUI gui = new BuildGUI();
+                gui.setVisible(true);
+            });
         }
     }
 }

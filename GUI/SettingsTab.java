@@ -93,7 +93,7 @@ public class SettingsTab extends JPanel {
                 currentProps.store(writer, null);
                 util.append("[Settings] Profile updated: " + selected);
                 // Update configs_ssh.py as well
-                util.updateConfigsPy("", "", rpiName, rpiAddr);
+                util.updateConfigsPy(rpiName, rpiAddr);
             } catch (IOException ex) {
                 util.append("[Error] Failed to save profile: " + ex.getMessage());
             }

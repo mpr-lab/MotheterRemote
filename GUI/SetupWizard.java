@@ -127,8 +127,9 @@ public class SetupWizard extends JFrame {
 
     private JCheckBox radioBox = new JCheckBox("Using Radios");
     private JCheckBox tailscaleBox = new JCheckBox("Using Tailscale");
-    private JRadioButton sshBtn = new JRadioButton("SSH", true);
-    private JRadioButton socketBtn = new JRadioButton("Socket");
+    private JRadioButton wifiBtn = new JRadioButton("Wifi", true);
+    private JRadioButton ethernetBtn = new JRadioButton("Ethernet");
+    private JRadioButton cellularBtn = new JRadioButton("Cellular");
 
     private JPanel buildConnectionPanel() {
         JPanel panel = new JPanel();
@@ -137,10 +138,12 @@ public class SetupWizard extends JFrame {
 
         panel.add(new JLabel("Choose Connection Type:"));
         ButtonGroup group = new ButtonGroup();
-        group.add(sshBtn);
-        group.add(socketBtn);
-        panel.add(sshBtn);
-        panel.add(socketBtn);
+        group.add(wifiBtn);
+        group.add(ethernetBtn);
+        group.add(cellularBtn);
+        panel.add(wifiBtn);
+        panel.add(ethernetBtn);
+        panel.add(cellularBtn);
 
         panel.add(radioBox);
         panel.add(tailscaleBox);
@@ -215,6 +218,7 @@ public class SetupWizard extends JFrame {
                 }
             }
 
+            // NEED A NEW MESSAGE THAT SHOWS WHETHER OR NOT SSH SETUP ACTUALLY WORKED
             JOptionPane.showMessageDialog(this, "SSH setup complete for all profiles.");
 
         } catch (IOException | InterruptedException ex) {
