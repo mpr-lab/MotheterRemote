@@ -154,6 +154,12 @@ Contains the constructor for the Help Tab
 Contains the utility methods used across all GUI tabs
 
 ---
+## prototype 6
+### Setup Wizard
+
+### RPi Profiles
+
+---
 ## ?
 how to make status update regularly
 
@@ -334,7 +340,18 @@ _**TODO**_ - - - - - - - -
 
 ---
 ### 6/4/2025
+Restructed everything
 
 ---
 ### 6/5/2025
+common methods now contained in `Utility.java`
+worked on help tab
+rewrote `sendCommand()` to now work with the ssh-based backend
+---
+### 6/6/2025
+I was sick... started trying to build out setup wizard
 
+---
+### 6/8/2025
+Setup wizard
+packaging
