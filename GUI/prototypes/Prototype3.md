@@ -19,7 +19,7 @@ import java.util.function.Supplier;   // functional interface for lamdas returni
  * {@value #PORT}).  Tabs are created for Pi commands, sensor commands,
  * data synchronisation, and settings.
  */
-public class piCommandGUI extends JFrame {
+public class prototypes.piCommandGUI extends JFrame {
 
     /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
     /* ---------------- File system paths ---------------- */
@@ -47,7 +47,7 @@ public class piCommandGUI extends JFrame {
     /* --------------------------------------------------------------------
      * Constructor
      * ------------------------------------------------------------------ */
-    private piCommandGUI(String hostAddr) {
+    private prototypes.piCommandGUI(String hostAddr) {
         super("MotheterRemote");
         this.HOST = hostAddr;
 
@@ -714,7 +714,7 @@ public class piCommandGUI extends JFrame {
         if (!initialWriteConfigs(info[0], info[1])) System.exit(0);
 
         SwingUtilities.invokeLater(() -> {
-            piCommandGUI gui = new piCommandGUI(info[1]);  // pass host_addr
+            prototypes.piCommandGUI gui = new prototypes.piCommandGUI(info[1]);  // pass host_addr
             gui.setVisible(true);
 
             // Uncomment to start periodic status polling (needs backend support)

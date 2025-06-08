@@ -1,68 +1,104 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.util.*;
+import java.nio.file.*;
 
+public class SettingsTab extends JPanel {
+    private JTextArea CONSOLE;
+    private final Utility util;
+    private final JComboBox<String> profileSelector;
+    private final JTextField rpiNameField;
+    private final JTextField rpiAddrField;
+    private final Properties currentProps = new Properties();
 
-public class SettingsTab extends JPanel{
-    /* ---------------- Network ---------------- */
-    private String HOST;   // server IP or hostname (user‑supplied)
-    private String NAME;   // human‑friendly host name (user‑supplied)
-    private int PORT;
-    private JTextArea  CONSOLE;      // running log / output
-
-    public SettingsTab(JTextArea Console){
+    public SettingsTab(JTextArea Console) {
         setConfigs(Console);
-        Utility util = new Utility(Console);
+        util = new Utility(Console);
         setSize(800, 560);
         setLayout(new BorderLayout());
-
 
         JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JTextField hostNameField = new JTextField(NAME);       // host_name
-        JTextField hostAddrField = new JTextField(HOST);       // host_addr
-        JTextField rpiNameField  = new JTextField("pi");       // rpi_name
-        JTextField rpiAddrField  = new JTextField("pi");       // rpi_addr
+        // Load profile names
+        File profileDir = new File("profiles");
+        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
+        if (profileNames == null || profileNames.length == 0) {
+            profileNames = new String[] { "No profiles found" };
+        } else {
+            for (int i = 0; i < profileNames.length; i++) {
+                profileNames[i] = profileNames[i].replace("_profile.properties", "");
+            }
+        }
 
-        panel.add(new JLabel("Host Name (host_name):"));
-        panel.add(hostNameField);
-        panel.add(new JLabel("Host Address (host_addr):"));
-        panel.add(hostAddrField);
+        profileSelector = new JComboBox<>(profileNames);
+        profileSelector.addActionListener(e -> loadSelectedProfile());
+
+        rpiNameField = new JTextField();
+        rpiAddrField = new JTextField();
+
+        panel.add(new JLabel("Select RPi Profile:"));
+        panel.add(profileSelector);
         panel.add(new JLabel("RPi Name (rpi_name):"));
         panel.add(rpiNameField);
         panel.add(new JLabel("RPi Address (rpi_addr):"));
         panel.add(rpiAddrField);
 
-        JButton saveButton = new JButton("Save Settings");
-        saveButton.addActionListener(e -> {
-            String newHostName = hostNameField.getText().trim();
-            String newHostAddr = hostAddrField.getText().trim();
-            String newRpiName  = rpiNameField.getText().trim();
-            String newRpiAddr  = rpiAddrField.getText().trim();
-
-            if (!newHostName.isEmpty() && !newHostAddr.isEmpty() &&
-                    !newRpiName.isEmpty()  && !newRpiAddr.isEmpty()) {
-
-                util.updateConfigsPy(newHostName, newHostAddr, newRpiName, newRpiAddr);
-                HOST = newHostAddr;
-                NAME = newHostName;
-                util.append("[Settings] configs.py updated.");
-                util.sendCommand("reload-config");
-            } else {
-                util.append("[Error] One or more fields are empty.");
-            }
-        });
+        JButton saveButton = new JButton("Save Profile");
+        saveButton.addActionListener(e -> saveProfile());
 
         panel.add(new JLabel()); // filler
         panel.add(saveButton);
 
         add(panel, BorderLayout.CENTER);
-    }
-    private void setConfigs(JTextArea console){
-        CONSOLE = console;
-//        HOST = host;
-//        NAME = name;
-//        PORT = port;
+
+        if (profileSelector.getItemCount() > 0) {
+            loadSelectedProfile();
+        }
     }
 
+    private void setConfigs(JTextArea console) {
+        CONSOLE = console;
+    }
+
+    private void loadSelectedProfile() {
+        String selected = (String) profileSelector.getSelectedItem();
+        if (selected == null || selected.equals("No profiles found")) return;
+
+        File profileFile = new File("profiles", selected + "_profile.properties");
+        try (FileReader reader = new FileReader(profileFile)) {
+            currentProps.clear();
+            currentProps.load(reader);
+            rpiNameField.setText(currentProps.getProperty("rpi_name", ""));
+            rpiAddrField.setText(currentProps.getProperty("rpi_addr", ""));
+        } catch (IOException ex) {
+            util.append("[Error] Failed to load profile: " + ex.getMessage());
+        }
+    }
+
+    private void saveProfile() {
+        String selected = (String) profileSelector.getSelectedItem();
+        if (selected == null || selected.equals("No profiles found")) return;
+
+        String rpiName = rpiNameField.getText().trim();
+        String rpiAddr = rpiAddrField.getText().trim();
+
+        if (!rpiName.isEmpty() && !rpiAddr.isEmpty()) {
+            currentProps.setProperty("rpi_name", rpiName);
+            currentProps.setProperty("rpi_addr", rpiAddr);
+            File profileFile = new File("profiles", selected + "_profile.properties");
+            try (FileWriter writer = new FileWriter(profileFile)) {
+                currentProps.store(writer, null);
+                util.append("[Settings] Profile updated: " + selected);
+                // Update configs_ssh.py as well
+                util.updateConfigsPy("", "", rpiName, rpiAddr);
+            } catch (IOException ex) {
+                util.append("[Error] Failed to save profile: " + ex.getMessage());
+            }
+        } else {
+            util.append("[Error] One or more fields are empty.");
+        }
+    }
 }

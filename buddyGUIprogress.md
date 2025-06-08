@@ -316,7 +316,7 @@ Added a Help tab:
   * Settings Help:
     * add a troubleshooting section
 
-Trying and failing to restructure GUI so that each tab is its own java file (right now `piCommandGUI.java` is over 1000 lines of code) &rarr; this would make maintenance a lot easier and make everything more modular.
+Trying and failing to restructure GUI so that each tab is its own java file (right now `prototypes.piCommandGUI.java` is over 1000 lines of code) &rarr; this would make maintenance a lot easier and make everything more modular.
 
 **Problems right now:**
 * moving everything to separate java files kinda fucks with the console connection

@@ -8,7 +8,7 @@ import java.net.Socket;
  * Swing GUI that sends single-line commands to a Python host server
  * and prints any response in a console window.
  */
-public class piCommandGUI extends JFrame {
+public class prototypes.piCommandGUI extends JFrame {
     /* ---------- GUI components ---------- */
     private final JTextField inputField;
     private final JTextArea console;
@@ -20,7 +20,7 @@ public class piCommandGUI extends JFrame {
     private static final int PORT = 12345;    // must match configs.host_server
 
     /* ---------- Constructor sets up the GUI ---------- */
-    public piCommandGUI() {
+    public prototypes.piCommandGUI() {
         setTitle("RPi Command Center");
         setSize(700, 450);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -187,7 +187,7 @@ public class piCommandGUI extends JFrame {
 
     private static Process pythonProcess;
 
-    private static void startPythonBackend(piCommandGUI guiInstance) {
+    private static void startPythonBackend(prototypes.piCommandGUI guiInstance) {
         try {
             String scriptPath = "../comms/host_to_client.py";  // Replace with actual path
 
@@ -223,7 +223,7 @@ public class piCommandGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            piCommandGUI gui = new piCommandGUI();
+            prototypes.piCommandGUI gui = new prototypes.piCommandGUI();
 
             // Show config dialog BEFORE GUI becomes visible
             gui.showConfigDialog();  // sets HOST and updates configs.py

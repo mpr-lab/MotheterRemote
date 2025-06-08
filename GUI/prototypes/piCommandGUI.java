@@ -1,3 +1,5 @@
+package prototypes;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -981,22 +983,22 @@ public class piCommandGUI extends JFrame {
 //        if(!initialWriteConfigs(info[0],info[1])) System.exit(0);
 //
 //        SwingUtilities.invokeLater(() -> {
-//            piCommandGUI gui = new piCommandGUI(info[1]);  // pass host_addr
+//            prototypes.piCommandGUI gui = new prototypes.piCommandGUI(info[1]);  // pass host_addr
 //            gui.setVisible(true);
 //
 //        });
 //    }
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            SetupWizard wizard = new SetupWizard(null);
-            wizard.setVisible(true);
-
-            if (wizard.wasConfirmed()) {
-                piCommandGUI gui = new piCommandGUI(wizard.getHostAddr());
-                gui.setVisible(true);
-            }
-        });
-    }
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() -> {
+//            SetupWizard wizard = new SetupWizard(null);
+//            wizard.setVisible(true);
+//
+//            if (wizard.wasConfirmed()) {
+//                piCommandGUI gui = new piCommandGUI(wizard.getHostAddr());
+//                gui.setVisible(true);
+//            }
+//        });
+//    }
 
 }
 
