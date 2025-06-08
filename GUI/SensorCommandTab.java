@@ -1,16 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 
 public class SensorCommandTab extends JPanel{
     public JPanel rightPanel = new JPanel(new BorderLayout());
@@ -22,7 +15,7 @@ public class SensorCommandTab extends JPanel{
     private int PORT;
     private  JTextArea  CONSOLE;      // running log / output
 
-    public SensorCommandTab(JTextArea Console, String Host, String Name, int Port){
+    public SensorCommandTab(JTextArea Console){
         /*
          * We build a Map<Category name, List<Cmd>> where each Cmd bundles
          * a button label, tooltip, and a Supplier<String> that returns the
@@ -30,8 +23,8 @@ public class SensorCommandTab extends JPanel{
          * those requiring user input pop up a dialog and may return null
          * (indicating the dialog was cancelled or the input invalid).
          */
-        setConfigs(Console, Host, Name, Port);
-        Utility util = new Utility(Console, Host, Name, Port);
+        setConfigs(Console);
+        Utility util = new Utility(Console);
         
         setSize(800, 560);
         setLayout(new BorderLayout());
@@ -138,11 +131,9 @@ public class SensorCommandTab extends JPanel{
         add(util.wrapWithRightPanel(mainPanel, rightPanel));
         
     }
-    private void setConfigs(JTextArea console, String host, String name, int port){
+    private void setConfigs(JTextArea console){
         CONSOLE = console;
-        HOST = host;
-        NAME = name;
-        PORT = port;
+
     }
 //    private void sendCommand(String cmd){
 //        if(cmd==null||cmd.isBlank()) return;
@@ -198,7 +189,7 @@ public class SensorCommandTab extends JPanel{
      * input panel if the operation was cancelled / invalid.
      * ---------------------------------------------------------------- */
     private void promptIntervalPeriod() {
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
@@ -245,7 +236,7 @@ public class SensorCommandTab extends JPanel{
 
 
     private void promptIntervalThreshold() {
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -281,7 +272,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptReturnOneRecord() {
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -317,7 +308,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLightOffset() {                              // zcal5<value>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -353,7 +344,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLightTemp() {                                //zcal6<value>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -389,7 +380,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptDarkPeriod() {                               //zcal7<value>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -425,7 +416,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptDarkTemp() {                                 //zcal8<value>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -461,7 +452,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptSimulation() {                               // S,count.freq,temp x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 2, 5, 5));
@@ -508,7 +499,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptTriggerMode() {                              // LM<mode>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -539,7 +530,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLogIntervalPeriod() {                        // LP[S|M]<value>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(4, 1, 5, 5));
@@ -581,7 +572,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptLogThreshold() {                             // LPT<threshold>x
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(2, 1, 5, 5));
@@ -616,7 +607,7 @@ public class SensorCommandTab extends JPanel{
     }
 
     private void promptSetClock() {                                 // LcYYYY-MM-DD w HH:MM:SSx
-        Utility util = new Utility(CONSOLE, HOST, NAME, PORT);
+        Utility util = new Utility(CONSOLE);
 
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         JPanel inner = new JPanel(new GridLayout(3, 2, 5, 5));

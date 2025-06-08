@@ -15,30 +15,30 @@ public class Utility {
     /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
     /* ---------------- File system paths ---------------- */
     // Path to Python‑side configuration file (relative to project root)
-    private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
+    private static final String CONFIG_PATH  = "../ssh/configs_ssh.py";
     // Path to the Python backend we invoke with ProcessBuilder
-    private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
+    private static final String BACKEND_PATH = "../ssh/host_ssh.py";
     // Folder on host where rsync‑ed data will be stored
     private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
 
     /* ---------------- Network ---------------- */
-    private String HOST;   // server IP or hostname (user‑supplied)
-    private String NAME;   // human‑friendly host name (user‑supplied)
-    // Socket port must match configs.host_server in the Python backend
-    private int PORT = 12345;
+//    private String HOST;   // server IP or hostname (user‑supplied)
+//    private String NAME;   // human‑friendly host name (user‑supplied)
+//    // Socket port must match configs.host_server in the Python backend
+//    private int PORT = 12345;
     private JTextArea  CONSOLE;      // running log / output
 
     private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
     public Utility(){}
-    public Utility(JTextArea Console, String Host, String Name, int Port){
-        setConfigs(Console, Host, Name, Port);
+    public Utility(JTextArea Console){
+        setConfigs(Console);
     }
 
-    private void setConfigs(JTextArea console, String host, String name, int port){
+    private void setConfigs(JTextArea console){
         CONSOLE = console;
-        HOST = host;
-        NAME = name;
-        PORT = port;
+//        HOST = host;
+//        NAME = name;
+//        PORT = port;
     }
 
     public void loadFileList() {
@@ -53,7 +53,7 @@ public class Utility {
     public void updateConfigsPy(String newHostName, String newHostAddr,
                                  String newRpiName,  String newRpiAddr) {
         try {
-            File file = new File("../comms-GUI/configs.py");
+            File file = new File(CONFIG_PATH);
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder content = new StringBuilder();
 
@@ -105,7 +105,7 @@ public class Utility {
         append("\n> " + cmd);
 
         try {
-            ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/ssh/host_ssh.py", cmd);
+            ProcessBuilder pb = new ProcessBuilder("python3", BACKEND_PATH, cmd);
             pb.redirectErrorStream(true);  // merge stderr with stdout
             Process p = pb.start();
 

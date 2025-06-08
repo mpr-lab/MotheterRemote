@@ -31,11 +31,11 @@ public class DataTab extends JPanel{
     private int PORT = 12345;
     private JTextArea CONSOLE;      // running log / output
 
-    public DataTab(JTextArea Console, String Host, int Port){
+    public DataTab(JTextArea Console){
         setSize(800, 560);
         setLayout(new BorderLayout());
 
-        setConfigs(Console, Host, Port);
+        setConfigs(Console);
 
         JList<String> list = new JList<>(fileModel);
         JScrollPane sp = new JScrollPane(list);
@@ -60,10 +60,8 @@ public class DataTab extends JPanel{
         add(root, BorderLayout.CENTER);
     }
 
-    private void setConfigs(JTextArea console, String host, int port){
+    private void setConfigs(JTextArea console){
         CONSOLE = console;
-        HOST = host;
-        PORT = port;
     }
 
     private void loadFileList() {

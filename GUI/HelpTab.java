@@ -1,16 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class HelpTab extends JPanel{
 

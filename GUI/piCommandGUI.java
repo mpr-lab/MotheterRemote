@@ -1,19 +1,3 @@
-/*
- * piCommandGUI.java
- * ------------------------------------------------------------
- * A Swing-based Java GUI for interacting with a RaspberryPi‑hosted
- * sky‑quality meter (SQM) system. The GUI communicates with a local
- * Python backend (host_to_client.py) over a TCP socket and exposes a
- * variety of commands for both the RaspberryPi and the SQM sensor
- * firmware. This heavily‑commented version is intended as a teaching
- * aid: each class member and logic block is annotated to explain its
- * purpose, assumptions, and side effects.
- *
- * Author: Buddy Luong
- * Date: 2025‑06‑02
- * ------------------------------------------------------------------
- */
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -21,12 +5,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class piCommandGUI extends JFrame {
     /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
@@ -993,18 +973,30 @@ public class piCommandGUI extends JFrame {
         }
     }
     /* ------ MAIN ------ */
+//    public static void main(String[] args) {
+//        /*  prompt BEFORE building the GUI */
+//        String[] info = promptForHostInfo();
+//        if(info==null){ System.exit(0); }
+//
+//        if(!initialWriteConfigs(info[0],info[1])) System.exit(0);
+//
+//        SwingUtilities.invokeLater(() -> {
+//            piCommandGUI gui = new piCommandGUI(info[1]);  // pass host_addr
+//            gui.setVisible(true);
+//
+//        });
+//    }
     public static void main(String[] args) {
-        /*  prompt BEFORE building the GUI */
-        String[] info = promptForHostInfo();
-        if(info==null){ System.exit(0); }
-
-        if(!initialWriteConfigs(info[0],info[1])) System.exit(0);
-
         SwingUtilities.invokeLater(() -> {
-            piCommandGUI gui = new piCommandGUI(info[1]);  // pass host_addr
-            gui.setVisible(true);
+            SetupWizard wizard = new SetupWizard(null);
+            wizard.setVisible(true);
 
+            if (wizard.wasConfirmed()) {
+                piCommandGUI gui = new piCommandGUI(wizard.getHostAddr());
+                gui.setVisible(true);
+            }
         });
     }
+
 }
 

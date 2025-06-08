@@ -1,16 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 
 public class RPiCommandTab extends JPanel {
     /* ---------------- Network ---------------- */
@@ -18,9 +8,9 @@ public class RPiCommandTab extends JPanel {
     private String NAME;   // human‑friendly host name (user‑supplied)
     private int PORT;
     private JTextArea  CONSOLE;      // running log / output
-    public RPiCommandTab(JTextArea Console, String Host, String Name, int Port) {
-        setConfigs(Console, Host, Name, Port);
-        Utility util = new Utility(Console, Host, Name, Port);
+    public RPiCommandTab(JTextArea Console) {
+        setConfigs(Console);
+        Utility util = new Utility(Console);
 
         setSize(800, 560);
         setLayout(new BorderLayout());
@@ -69,11 +59,9 @@ public class RPiCommandTab extends JPanel {
         panel.add(south, BorderLayout.SOUTH);
         add(util.wrapWithRightPanel(panel, commandRightPanel));
     }
-    private void setConfigs(JTextArea console, String host, String name, int port){
+    private void setConfigs(JTextArea console){
         CONSOLE = console;
-        HOST = host;
-        NAME = name;
-        PORT = port;
+
     }
 
 //    private void sendCommand(JTextArea console, String HOST, int PORT, String cmd){

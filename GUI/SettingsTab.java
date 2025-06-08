@@ -1,16 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 
 public class SettingsTab extends JPanel{
     /* ---------------- Network ---------------- */
@@ -19,9 +9,9 @@ public class SettingsTab extends JPanel{
     private int PORT;
     private JTextArea  CONSOLE;      // running log / output
 
-    public SettingsTab(JTextArea Console, String Host, String Name, int Port){
-        setConfigs(Console, Host, Name, Port);
-        Utility util = new Utility(Console, Host, Name, Port);
+    public SettingsTab(JTextArea Console){
+        setConfigs(Console);
+        Utility util = new Utility(Console);
         setSize(800, 560);
         setLayout(new BorderLayout());
 
@@ -68,11 +58,11 @@ public class SettingsTab extends JPanel{
 
         add(panel, BorderLayout.CENTER);
     }
-    private void setConfigs(JTextArea console, String host, String name, int port){
+    private void setConfigs(JTextArea console){
         CONSOLE = console;
-        HOST = host;
-        NAME = name;
-        PORT = port;
+//        HOST = host;
+//        NAME = name;
+//        PORT = port;
     }
 
 }

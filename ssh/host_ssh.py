@@ -7,11 +7,6 @@ import importlib
 import subprocess
 import sys
 
-if len(sys.argv) > 1:
-    user_input(sys.argv[1])
-else:
-    print("[ERR] No command provided")
-
 
 # python module imports
 import ui_commands_ssh
@@ -133,7 +128,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        user_input(sys.argv[1])
+    else:
+        main()
+
 
 
 # cat stderr.txt | tr [:cntrl:] "\t" | sed "s/NEW_ENTRY/\n/g" | tail -n 1 | tr "\t" "\n" | sed "1d"

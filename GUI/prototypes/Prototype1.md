@@ -1,11 +1,7 @@
-
 ```java
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.nio.file.*;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.net.Socket;
 
 /**
@@ -15,8 +11,8 @@ import java.net.Socket;
 public class piCommandGUI extends JFrame {
     /* ---------- GUI components ---------- */
     private final JTextField inputField;
-    private final JTextArea  console;
-    private final JButton    statusButton, startButton, sendButton, rsyncButton, killButton,
+    private final JTextArea console;
+    private final JButton statusButton, startButton, sendButton, rsyncButton, killButton,
             uiButton, helpButton, clearButton;
 
     /* ---------- Connection parameters (update to match configs.py) ---------- */
@@ -43,24 +39,24 @@ public class piCommandGUI extends JFrame {
 
         JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.add(inputField, BorderLayout.CENTER);
-        inputPanel.add(sendButton,  BorderLayout.EAST);
+        inputPanel.add(sendButton, BorderLayout.EAST);
         add(inputPanel, BorderLayout.SOUTH);
 
         // ---- Pre-built command buttons ----
         statusButton = new JButton("status");
         startButton = new JButton("start");
         rsyncButton = new JButton("rsync");
-        killButton  = new JButton("kill");
-        uiButton    = new JButton("ui");
-        helpButton  = new JButton("help");
+        killButton = new JButton("kill");
+        uiButton = new JButton("ui");
+        helpButton = new JButton("help");
         clearButton = new JButton("Clear");
 
         statusButton.addActionListener(e -> sendCommand("status"));
         startButton.addActionListener(e -> sendCommand("start"));
         rsyncButton.addActionListener(e -> sendCommand("rsync"));
-        killButton .addActionListener(e -> sendCommand("kill"));
-        uiButton   .addActionListener(e -> sendCommand("ui"));
-        helpButton .addActionListener(e -> sendCommand("help"));
+        killButton.addActionListener(e -> sendCommand("kill"));
+        uiButton.addActionListener(e -> sendCommand("ui"));
+        helpButton.addActionListener(e -> sendCommand("help"));
         clearButton.addActionListener(e -> console.setText(""));
 
         JPanel commandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -84,7 +80,8 @@ public class piCommandGUI extends JFrame {
     /* so keep the assignment format EXACTLY the same in that file.   */
 
     // -------- helper record to bring back two strings -------------
-    private record HostInfo(String addr, String name) {}
+    private record HostInfo(String addr, String name) {
+    }
 
     /* ---------- Start-up dialog that asks for BOTH fields ---- */
     private void showConfigDialog() {
@@ -157,7 +154,7 @@ public class piCommandGUI extends JFrame {
 
         /* Try-with-resources ensures socket closes automatically */
         try (Socket socket = new Socket(HOST, PORT);
-             OutputStream   out   = socket.getOutputStream();
+             OutputStream out = socket.getOutputStream();
              BufferedReader inBuf = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             System.out.println("DEBUG: Connected to " + HOST + ":" + PORT);
 
@@ -189,6 +186,7 @@ public class piCommandGUI extends JFrame {
     }
 
     private static Process pythonProcess;
+
     private static void startPythonBackend(piCommandGUI guiInstance) {
         try {
             String scriptPath = "../comms/host_to_client.py";  // Replace with actual path
@@ -223,20 +221,20 @@ public class piCommandGUI extends JFrame {
     }
 
 
-public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> {
-        piCommandGUI gui = new piCommandGUI();
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            piCommandGUI gui = new piCommandGUI();
 
-        // Show config dialog BEFORE GUI becomes visible
-        gui.showConfigDialog();  // sets HOST and updates configs.py
+            // Show config dialog BEFORE GUI becomes visible
+            gui.showConfigDialog();  // sets HOST and updates configs.py
 
-        // Start the Python backend process
-        gui.setVisible(true);
-        startPythonBackend(gui);  // already defined method
+            // Start the Python backend process
+            gui.setVisible(true);
+            startPythonBackend(gui);  // already defined method
 
-        // Now show the GUI window
-        gui.setVisible(true);
-    });
-}
+            // Now show the GUI window
+            gui.setVisible(true);
+        });
+    }
 }
 ```
