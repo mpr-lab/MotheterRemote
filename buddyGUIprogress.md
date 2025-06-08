@@ -15,11 +15,6 @@ Swing provides a rich set of widgets (buttons, tabs, text areas, dialogs, etc.) 
 * Real-time logs 
 * File listing and settings forms
 
-### robust multithreading
-built-in concurrency makes it easier to handle:
-* Socket communication in the background
-* Live logging and GUI updates
-* Async command responses (e.g., status updates)
 
 ### maintainable and modular
 GUI logic is separated from backend logic (handled in Python), allowing easier development and debugging on both ends.

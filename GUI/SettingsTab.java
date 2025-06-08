@@ -49,8 +49,16 @@ public class SettingsTab extends JPanel {
         JButton saveButton = new JButton("Save Profile");
         saveButton.addActionListener(e -> saveProfile());
 
-        panel.add(new JLabel()); // filler
+        JButton addButton = new JButton("Add Profile");
+        addButton.addActionListener(e -> addProfile());
+
+        JButton deleteButton = new JButton("Delete Profile");
+        deleteButton.addActionListener(e -> deleteProfile());
+
         panel.add(saveButton);
+        panel.add(deleteButton);
+        panel.add(new JLabel());
+        panel.add(addButton);
 
         add(panel, BorderLayout.CENTER);
 
@@ -92,13 +100,61 @@ public class SettingsTab extends JPanel {
             try (FileWriter writer = new FileWriter(profileFile)) {
                 currentProps.store(writer, null);
                 util.append("[Settings] Profile updated: " + selected);
-                // Update configs_ssh.py as well
                 util.updateConfigsPy(rpiName, rpiAddr);
             } catch (IOException ex) {
                 util.append("[Error] Failed to save profile: " + ex.getMessage());
             }
         } else {
             util.append("[Error] One or more fields are empty.");
+        }
+    }
+
+    private void addProfile() {
+        String newProfileName = JOptionPane.showInputDialog(this, "Enter new profile name:");
+        if (newProfileName != null && !newProfileName.trim().isEmpty()) {
+            File newProfileFile = new File("profiles", newProfileName + "_profile.properties");
+            if (newProfileFile.exists()) {
+                util.append("[Error] Profile already exists.");
+                return;
+            }
+            try (FileWriter writer = new FileWriter(newProfileFile)) {
+                Properties props = new Properties();
+                props.setProperty("rpi_name", "");
+                props.setProperty("rpi_addr", "");
+                props.store(writer, null);
+                profileSelector.addItem(newProfileName);
+                profileSelector.setSelectedItem(newProfileName);
+                util.append("[Settings] New profile added: " + newProfileName);
+            } catch (IOException ex) {
+                util.append("[Error] Failed to add profile: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void deleteProfile() {
+        String selected = (String) profileSelector.getSelectedItem();
+        if (selected == null || selected.equals("No profiles found")) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete this profile?",
+                "Confirm Deletion",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            File profileFile = new File("profiles", selected + "_profile.properties");
+            if (profileFile.exists() && profileFile.delete()) {
+                profileSelector.removeItem(selected);
+                util.append("[Settings] Profile deleted: " + selected);
+                if (profileSelector.getItemCount() > 0) {
+                    profileSelector.setSelectedIndex(0);
+                    loadSelectedProfile();
+                } else {
+                    rpiNameField.setText("");
+                    rpiAddrField.setText("");
+                }
+            } else {
+                util.append("[Error] Failed to delete profile file.");
+            }
         }
     }
 }

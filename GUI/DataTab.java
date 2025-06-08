@@ -13,29 +13,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class DataTab extends JPanel{
-    /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
-    /* ---------------- File system paths ---------------- */
-    // Path to Python‑side configuration file (relative to project root)
-    private static final String CONFIG_PATH  = "../comms-GUI/configs.py";
-    // Path to the Python backend we invoke with ProcessBuilder
-    private static final String BACKEND_PATH = "../comms-GUI/host_to_client.py";
-    // Folder on host where rsync‑ed data will be stored
     private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
     private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
 
-
-    /* ---------------- Network ---------------- */
-    private String HOST;   // server IP or hostname (user‑supplied)
-    private String NAME;   // human‑friendly host name (user‑supplied)
-    // Socket port must match configs.host_server in the Python backend
-    private int PORT = 12345;
     private JTextArea CONSOLE;      // running log / output
 
     public DataTab(JTextArea Console){
+        setConfigs(Console);
+        Utility util = new Utility(Console);
         setSize(800, 560);
         setLayout(new BorderLayout());
-
-        setConfigs(Console);
 
         JList<String> list = new JList<>(fileModel);
         JScrollPane sp = new JScrollPane(list);
