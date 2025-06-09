@@ -24,12 +24,16 @@ public class SetupWizard extends JFrame {
         JPanel disclaimerPanel = buildDisclaimerPanel();
         JPanel rpiConfigPanel = buildRpiConfigPanel();
         JPanel connectionPanel = buildConnectionPanel();
+        JPanel tailscalePanel = buildTailscale();
         JPanel sshPanel = buildSSHPanel();
+
+        // TODO: if using radio then include sensor commands in GUI, if not, don't include
 
         cardPanel.add(disclaimerPanel, "0");
         cardPanel.add(rpiConfigPanel, "1");
         cardPanel.add(connectionPanel, "2");
-        cardPanel.add(sshPanel, "3");
+        cardPanel.add(tailscalePanel, "3");
+        cardPanel.add(sshPanel, "4");
 
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         navPanel.add(backButton);
@@ -68,7 +72,7 @@ public class SetupWizard extends JFrame {
         disclaimer.setEditable(false);
         JScrollPane scroll = new JScrollPane(disclaimer);
 
-        JCheckBox acceptBox = new JCheckBox("I have read and accept the above.");
+        JCheckBox acceptBox = new JCheckBox("I have read the above.");
         acceptBox.addItemListener(e -> disclaimerAccepted = acceptBox.isSelected());
 
         panel.add(scroll, BorderLayout.CENTER);
@@ -151,6 +155,22 @@ public class SetupWizard extends JFrame {
         return panel;
     }
 
+    private JPanel buildTailscale(){
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel instructions = new JLabel("Instructions on Using Tailscale:");
+
+        JTextArea info = new JTextArea("This step will configure SSH key-based access to all Raspberry Pi profiles using ED25519.");
+        info.setLineWrap(true);
+        info.setWrapStyleWord(true);
+        info.setEditable(false);
+
+        panel.add(instructions, BorderLayout.NORTH);
+        panel.add(info, BorderLayout.CENTER);
+        return panel;
+    }
+
     private JPanel buildSSHPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -170,6 +190,7 @@ public class SetupWizard extends JFrame {
 
     private JPanel buildFinalPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JButton finishBtn = new JButton("Finish Setup");
 
@@ -180,7 +201,7 @@ public class SetupWizard extends JFrame {
     private void updateNav() {
         cardLayout.show(cardPanel, String.valueOf(currentCard));
         backButton.setEnabled(currentCard > 0);
-        nextButton.setEnabled(currentCard < 3);
+        nextButton.setEnabled(currentCard < 4);
     }
 
     private void setupSSHKeysForAll() {
@@ -237,11 +258,11 @@ public class SetupWizard extends JFrame {
     }
 
     public static void main(String[] args) {
-        Path profilesDir = Paths.get("profiles");
-        if (Files.exists(profilesDir)) {
-            System.out.println("Profiles directory already exists. Skipping setup wizard.");
-            return;
-        }
+//        Path profilesDir = Paths.get("profiles");
+//        if (Files.exists(profilesDir)) {
+//            System.out.println("Profiles directory already exists. Skipping setup wizard.");
+//            return;
+//        }
         SwingUtilities.invokeLater(SetupWizard::new);
     }
 }
