@@ -4,10 +4,12 @@
 dt="$(date '+%d/%m/%Y %H:%M:%S');"
 
 # redirect stdout to log file
+touch /var/tmp/ssh_debug/rpi_out.txt
 echo $dt >> /var/tmp/ssh_debug/rpi_out.txt
 exec 1>> /var/tmp/ssh_debug/rpi_out.txt
 
 # redirect stderr to log file
+touch /var/tmp/ssh_debug/rpi_err.txt
 echo $dt >> /var/tmp/ssh_debug/rpi_err.txt
 exec 2>> /var/tmp/ssh_debug/rpi_err.txt
 

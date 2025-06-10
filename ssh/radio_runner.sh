@@ -4,10 +4,12 @@
 dt="$(date '+%d/%m/%Y %H:%M:%S');"
 
 # redirect stdout to log file
+touch /var/tmp/ssh_debug/radio_out.txt
 echo $dt >> /var/tmp/ssh_debug/radio_out.txt
 exec 1>> /var/tmp/ssh_debug/radio_out.txt
 
 # redirect stderr to log file
+touch /var/tmp/ssh_debug/radio_out.txt
 echo $dt >> /var/tmp/ssh_debug/radio_err.txt
 exec 2>> /var/tmp/ssh_debug/radio_err.txt
 
