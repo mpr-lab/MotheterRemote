@@ -7,6 +7,7 @@ fi
 
 # make log files, if they don't exist
 if [[ ! -e /var/tmp/ssh_debug/radio_out.txt ]]; then
+    echo whoami
     touch /var/tmp/ssh_debug/radio_out.txt
 fi
 if [[ ! -e /var/tmp/ssh_debug/radio_err.txt ]]; then
