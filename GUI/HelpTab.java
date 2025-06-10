@@ -21,30 +21,18 @@ public class HelpTab extends JPanel{
                 "Settings Help"
         });
 
-//        JTextArea helpText = new JTextArea();
-//        helpText.setEditable(false);
-//        helpText.setLineWrap(true);
-//        helpText.setWrapStyleWord(true);
         JScrollPane scroll = new JScrollPane(helpPanel);
 
         helpSelector.addActionListener(e -> {
             String selection = (String) helpSelector.getSelectedItem();
-
-//            helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
-
-//            switch (selection) {
-//                case "General Help" -> helpText.setText("This GUI allows interaction with a Raspberry Pi and sensor system. It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
-//                case "RPi Command Center Help" -> helpText.setText("Use this tab to manage core RPi processes like starting/stopping the listener, checking status, and syncing files with the host.");
-//                case "Sensor Command Center Help" -> helpText.setText("This tab provides an interface for issuing sensor-specific commands. Commands are grouped into categories, and some require additional user input shown in the right panel.");
-//                case "Data Help" -> helpText.setText("Use this tab to view downloaded sensor data. You can refresh the file list and open the data directory directly.");
-//                case "Settings Help" -> helpText.setText("Edit host and RPi identifiers and IP addresses here. Click 'Save Settings' to update and reload the backend configuration.");
-//            }
             switch (selection) {
                 case "General Help" -> setPanel(genHelp());
                 case "RPi Command Center Help" -> setPanel(rpiHelp());
 //                case "Sensor Command Center Help" -> helpText.setText("This tab provides an interface for issuing sensor-specific commands. Commands are grouped into categories, and some require additional user input shown in the right panel.");
 //                case "Data Help" -> helpText.setText("Use this tab to view downloaded sensor data. You can refresh the file list and open the data directory directly.");
                 case "Settings Help" -> setPanel(settingHelp());
+                case null, default -> setPanel(genHelp());
+
             }
         });
 
@@ -83,13 +71,24 @@ public class HelpTab extends JPanel{
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // General description
-        JTextArea description = new JTextArea("This GUI allows interaction with a Raspberry Pi and sensor system. "
-                + "It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.");
+        JTextArea description = new JTextArea("""
+                This GUI allows interaction with a Raspberry Pi and sensor system.
+                It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.
+
+
+                LAYOUT:
+                
+                * The overall GUI contains 4 main sections: The top dropdown menu, the tabs section, the main panel, and the console log.
+                    1) The top dropdown menu located at the very top of the GUI allows you to change which raspberry pi you want to connect to. This feature if useful if you setup multiple RPi profiles during setup.
+                    2) The tabs section located directly below the top dropdown menu allows you to switch what functions are shown on the main panel. Each of the 5 tabs have different features, more support for each tab can be found here in the help tab.
+                    3) The main panel which takes up the majority of the GUI displays the contents of the GUI which will change depending on what tab is selected.
+                    4) The console log can be minimized and restored. Located at the bottom of the GUI, the console log can be viewed from every tab and allows you to see...
+                """);
         description.setEditable(false);
         description.setLineWrap(true);
         description.setWrapStyleWord(true);
         description.setBackground(panel.getBackground());
-        description.setPreferredSize(new Dimension(preferredWidth, 80));
+        description.setPreferredSize(new Dimension(preferredWidth, 300));
         setFullWidth.accept(description);
         inner.add(description);
         inner.add(Box.createRigidArea(new Dimension(0, 10)));

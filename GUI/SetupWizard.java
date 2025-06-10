@@ -22,18 +22,20 @@ public class SetupWizard extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel disclaimerPanel = buildDisclaimerPanel();
-        JPanel rpiConfigPanel = buildRpiConfigPanel();
         JPanel connectionPanel = buildConnectionPanel();
         JPanel tailscalePanel = buildTailscale();
+        JPanel rpiConfigPanel = buildRpiConfigPanel();
         JPanel sshPanel = buildSSHPanel();
+        JPanel finalPanel = buildFinalPanel();
 
         // TODO: if using radio then include sensor commands in GUI, if not, don't include
 
         cardPanel.add(disclaimerPanel, "0");
-        cardPanel.add(rpiConfigPanel, "1");
-        cardPanel.add(connectionPanel, "2");
-        cardPanel.add(tailscalePanel, "3");
+        cardPanel.add(connectionPanel, "1");
+        cardPanel.add(tailscalePanel, "2");
+        cardPanel.add(rpiConfigPanel, "3");
         cardPanel.add(sshPanel, "4");
+        cardPanel.add(sshPanel, "5");
 
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         navPanel.add(backButton);
@@ -92,7 +94,7 @@ public class SetupWizard extends JFrame {
         panel.add(new JScrollPane(profilesPanel), BorderLayout.CENTER);
         panel.add(addProfile, BorderLayout.SOUTH);
 
-        addRpiProfile("pi", "192.168.1.10");
+        addRpiProfile("", "");
         return panel;
     }
 
@@ -201,7 +203,7 @@ public class SetupWizard extends JFrame {
     private void updateNav() {
         cardLayout.show(cardPanel, String.valueOf(currentCard));
         backButton.setEnabled(currentCard > 0);
-        nextButton.setEnabled(currentCard < 4);
+        nextButton.setEnabled(currentCard < 6);
     }
 
     private void setupSSHKeysForAll() {
