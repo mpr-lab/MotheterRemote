@@ -28,7 +28,7 @@ public class BuildGUI extends JFrame {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("RPi Command Center", new RPiCommandTab(console));
         tabs.addTab("Sensor Command Center", new SensorCommandTab(console));
-        tabs.addTab("Data Sync", new DataTab(console));
+//        tabs.addTab("Data Sync", new DataTab(console));
         tabs.addTab("Settings", new SettingsTab(console));
         tabs.addTab("?", new HelpTab());
         add(tabs, BorderLayout.CENTER);
