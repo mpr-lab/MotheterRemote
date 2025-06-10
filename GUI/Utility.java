@@ -152,8 +152,8 @@ public void sendCommand(String cmd) {
 
             Color bgColor;
             switch (type.toLowerCase()) {
-                case "success": bgColor = new Color(0, 128, 0, 220); break;     // Green
-                case "error":   bgColor = new Color(180, 0, 0, 220); break;     // Red
+                case "success": bgColor = new Color(155, 170, 194, 220); break;     // Green
+                case "error":   bgColor = new Color(155, 170, 194, 220); break;     // Red
                 default:        bgColor = new Color(0, 0, 0, 200); break;       // Black
             }
 
@@ -171,7 +171,7 @@ public void sendCommand(String cmd) {
 
             JLabel label = new JLabel(message);
             label.setForeground(Color.WHITE);
-            label.setFont(new Font("Monospace", Font.PLAIN, 13));
+            label.setFont(new Font(Font.MONOSPACED, Font.ITALIC, 13));
             panel.add(label);
 
             toast.add(panel);

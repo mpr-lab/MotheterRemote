@@ -6,90 +6,109 @@ import java.util.*;
 import java.nio.file.*;
 
 public class SettingsTab extends JPanel {
-    private JTextArea CONSOLE;
     private final Utility util;
-    private final JComboBox<String> profileSelector;
-    private final JTextField rpiNameField;
-    private final JTextField rpiAddrField;
+    private final DefaultListModel<String> profileListModel = new DefaultListModel<>();
+    private final JList<String> profileList = new JList<>(profileListModel);
+    private final JTextField rpiNameField = new JTextField();
+    private final JTextField rpiAddrField = new JTextField();
     private final Properties currentProps = new Properties();
+    private String currentProfile;
 
     public SettingsTab(Utility util) {
-//        setConfigs(Console);
-//        util = new Utility(Console);
         this.util = util;
-        setSize(800, 560);
         setLayout(new BorderLayout());
 
-        JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Load profile names
-        File profileDir = new File("profiles");
-        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
-        if (profileNames == null || profileNames.length == 0) {
-            profileNames = new String[] { "No profiles found" };
-        } else {
-            for (int i = 0; i < profileNames.length; i++) {
-                profileNames[i] = profileNames[i].replace("_profile.properties", "");
+        // Left panel: profile list and add button
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        profileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        profileList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                loadProfile(profileList.getSelectedValue());
             }
-        }
+        });
+        JScrollPane listScroll = new JScrollPane(profileList);
+        leftPanel.add(listScroll, BorderLayout.CENTER);
 
-        profileSelector = new JComboBox<>(profileNames);
-        profileSelector.addActionListener(e -> loadSelectedProfile());
+        JPanel topLeft = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JLabel rpis = new JLabel("Raspberry Pi Profiles:");
+        topLeft.add(rpis);
 
-        rpiNameField = new JTextField();
-        rpiAddrField = new JTextField();
-
-        panel.add(new JLabel("Select RPi Profile:"));
-        panel.add(profileSelector);
-        panel.add(new JLabel("RPi Name (rpi_name):"));
-        panel.add(rpiNameField);
-        panel.add(new JLabel("RPi Address (rpi_addr):"));
-        panel.add(rpiAddrField);
-
-        JButton saveButton = new JButton("Save Profile");
-        saveButton.addActionListener(e -> saveProfile());
-
-        JButton addButton = new JButton("Add Profile");
+        JButton addButton = new JButton("+");
+        addButton.setToolTipText("Add new profile");
         addButton.addActionListener(e -> addProfile());
+        JPanel bottomLeft = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bottomLeft.add(addButton);
+        leftPanel.add(topLeft, BorderLayout.NORTH);
+        leftPanel.add(bottomLeft, BorderLayout.SOUTH);
 
-        JButton deleteButton = new JButton("Delete Profile");
+        // Right panel: profile details and action buttons
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        rightPanel.add(new JLabel("RPi Name (rpi_name):"));
+        rightPanel.add(rpiNameField);
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        rightPanel.add(new JLabel("RPi Address (rpi_addr):"));
+        rightPanel.add(rpiAddrField);
+        rightPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(e -> saveProfile());
+        JButton deleteButton = new JButton("Delete");
         deleteButton.addActionListener(e -> deleteProfile());
 
-        panel.add(saveButton);
-        panel.add(deleteButton);
-        panel.add(new JLabel());
-        panel.add(addButton);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(saveButton);
 
-        add(panel, BorderLayout.CENTER);
+        rightPanel.add(Box.createVerticalGlue());
+        rightPanel.add(buttonPanel);
 
-        if (profileSelector.getItemCount() > 0) {
-            loadSelectedProfile();
+        // Split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
+        splitPane.setDividerLocation(200);
+        add(splitPane, BorderLayout.CENTER);
+
+        loadAllProfiles();
+    }
+
+    private void loadAllProfiles() {
+        profileListModel.clear();
+        File profileDir = new File("profiles");
+        if (!profileDir.exists()) return;
+
+        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
+        if (profileNames != null) {
+            Arrays.stream(profileNames)
+                    .map(name -> name.replace("_profile.properties", ""))
+                    .sorted()
+                    .forEach(profileListModel::addElement);
         }
     }
 
-    private void setConfigs(JTextArea console) {
-        CONSOLE = console;
-    }
+    private void loadProfile(String profileName) {
+        if (profileName == null || profileName.isEmpty()) return;
 
-    private void loadSelectedProfile() {
-        String selected = (String) profileSelector.getSelectedItem();
-        if (selected == null || selected.equals("No profiles found")) return;
-
-        File profileFile = new File("profiles", selected + "_profile.properties");
+        currentProfile = profileName;
+        File profileFile = new File("profiles", profileName + "_profile.properties");
         try (FileReader reader = new FileReader(profileFile)) {
             currentProps.clear();
             currentProps.load(reader);
             rpiNameField.setText(currentProps.getProperty("rpi_name", ""));
             rpiAddrField.setText(currentProps.getProperty("rpi_addr", ""));
+            util.append("[Settings] Loaded profile: " + profileName);
         } catch (IOException ex) {
             util.append("[Error] Failed to load profile: " + ex.getMessage());
         }
     }
 
     private void saveProfile() {
-        String selected = (String) profileSelector.getSelectedItem();
-        if (selected == null || selected.equals("No profiles found")) return;
+        if (currentProfile == null) {
+            util.append("[Error] No profile selected.");
+            return;
+        }
 
         String rpiName = rpiNameField.getText().trim();
         String rpiAddr = rpiAddrField.getText().trim();
@@ -97,10 +116,10 @@ public class SettingsTab extends JPanel {
         if (!rpiName.isEmpty() && !rpiAddr.isEmpty()) {
             currentProps.setProperty("rpi_name", rpiName);
             currentProps.setProperty("rpi_addr", rpiAddr);
-            File profileFile = new File("profiles", selected + "_profile.properties");
+            File profileFile = new File("profiles", currentProfile + "_profile.properties");
             try (FileWriter writer = new FileWriter(profileFile)) {
                 currentProps.store(writer, null);
-                util.append("[Settings] Profile updated: " + selected);
+                util.append("[Settings] Profile saved: " + currentProfile);
                 util.updateConfigsPy(rpiName, rpiAddr);
             } catch (IOException ex) {
                 util.append("[Error] Failed to save profile: " + ex.getMessage());
@@ -123,8 +142,8 @@ public class SettingsTab extends JPanel {
                 props.setProperty("rpi_name", "");
                 props.setProperty("rpi_addr", "");
                 props.store(writer, null);
-                profileSelector.addItem(newProfileName);
-                profileSelector.setSelectedItem(newProfileName);
+                profileListModel.addElement(newProfileName);
+                profileList.setSelectedValue(newProfileName, true);
                 util.append("[Settings] New profile added: " + newProfileName);
             } catch (IOException ex) {
                 util.append("[Error] Failed to add profile: " + ex.getMessage());
@@ -133,26 +152,24 @@ public class SettingsTab extends JPanel {
     }
 
     private void deleteProfile() {
-        String selected = (String) profileSelector.getSelectedItem();
-        if (selected == null || selected.equals("No profiles found")) return;
+        if (currentProfile == null) {
+            util.append("[Error] No profile selected to delete.");
+            return;
+        }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete this profile?",
+                "Are you sure? This cannot be undone.",
                 "Confirm Deletion",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            File profileFile = new File("profiles", selected + "_profile.properties");
+            File profileFile = new File("profiles", currentProfile + "_profile.properties");
             if (profileFile.exists() && profileFile.delete()) {
-                profileSelector.removeItem(selected);
-                util.append("[Settings] Profile deleted: " + selected);
-                if (profileSelector.getItemCount() > 0) {
-                    profileSelector.setSelectedIndex(0);
-                    loadSelectedProfile();
-                } else {
-                    rpiNameField.setText("");
-                    rpiAddrField.setText("");
-                }
+                util.append("[Settings] Profile deleted: " + currentProfile);
+                profileListModel.removeElement(currentProfile);
+                rpiNameField.setText("");
+                rpiAddrField.setText("");
+                currentProfile = null;
             } else {
                 util.append("[Error] Failed to delete profile file.");
             }

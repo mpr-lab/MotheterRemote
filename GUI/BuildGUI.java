@@ -1,19 +1,17 @@
+// Refactored BuildGUI.java to include Refresh Button in Profile Selector Header
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.lang.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
+import java.util.*;
 
 public class BuildGUI extends JFrame {
     private final JTextArea console = new JTextArea();
     private final JComboBox<String> profileDropdown = new JComboBox<>();
     private final JButton confirmProfileButton = new JButton("Confirm");
 
-    BuildGUI() {
+    public BuildGUI() {
         super("MotheterRemote");
 
         Utility util = new Utility(console);
@@ -28,7 +26,6 @@ public class BuildGUI extends JFrame {
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("RPi Command Center", new RPiCommandTab(util));
         tabs.addTab("Sensor Command Center", new SensorCommandTab(util));
-//        tabs.addTab("Data Sync", new DataTab(console));
         tabs.addTab("Settings", new SettingsTab(util));
         tabs.addTab("?", new HelpTab());
         add(tabs, BorderLayout.CENTER);
@@ -41,13 +38,13 @@ public class BuildGUI extends JFrame {
 
     private JPanel buildProfileSelector(Utility util) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        File profileDir = new File("profiles");
-        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
-        if (profileNames != null) {
-            for (String name : profileNames) {
-                profileDropdown.addItem(name.replace("_profile.properties", ""));
-            }
-        }
+
+        JLabel label = new JLabel("Select RPi Profile:");
+        JButton refreshButton = new JButton("⟳");
+        refreshButton.setToolTipText("Refresh Profile List");
+        refreshButton.addActionListener(e -> refreshProfileList());
+
+        loadProfileList();
 
         confirmProfileButton.addActionListener(e -> {
             String selected = (String) profileDropdown.getSelectedItem();
@@ -66,10 +63,34 @@ public class BuildGUI extends JFrame {
             }
         });
 
-        panel.add(new JLabel("Select RPi Profile:"));
+        panel.add(label);
         panel.add(profileDropdown);
         panel.add(confirmProfileButton);
+        panel.add(refreshButton);
+
         return panel;
+    }
+
+    private void refreshProfileList() {
+        profileDropdown.removeAllItems();
+        File profileDir = new File("profiles");
+        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
+        if (profileNames != null) {
+            for (String name : profileNames) {
+                profileDropdown.addItem(name.replace("_profile.properties", ""));
+            }
+        }
+    }
+
+    private void loadProfileList() {
+        profileDropdown.removeAllItems();
+        File profileDir = new File("profiles");
+        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
+        if (profileNames != null) {
+            for (String name : profileNames) {
+                profileDropdown.addItem(name.replace("_profile.properties", ""));
+            }
+        }
     }
 
     private JPanel buildConsolePanel() {
@@ -78,18 +99,17 @@ public class BuildGUI extends JFrame {
         JScrollPane scroll = new JScrollPane(console);
         scroll.setPreferredSize(new Dimension(0, 150));
 
-        scroll.setVisible(false);
-
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
-
-        JButton toggleButton = new JButton("Show Console");  // Initial state matches hidden scroll
+        JButton toggleButton = new JButton("Minimize");
         toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
 
         btnRow.add(toggleButton);
         btnRow.add(clear);
+
+        scroll.setVisible(false);
 
         JPanel p = new JPanel(new BorderLayout());
         p.add(btnRow, BorderLayout.NORTH);
@@ -97,7 +117,6 @@ public class BuildGUI extends JFrame {
 
         return p;
     }
-
 
     private void toggleConsoleVisibility(JScrollPane scrollPane, JButton toggleButton) {
         if (scrollPane.isVisible()) {
@@ -108,25 +127,6 @@ public class BuildGUI extends JFrame {
             toggleButton.setText("Hide Console");
         }
     }
-
-    private static String[] getRPIDetailsFromConfigs() {
-        try {
-            List<String> lines = Files.readAllLines(Paths.get("../comms-GUI/configs.py"));
-            String name = null, addr = null;
-            for (String line : lines) {
-                if (line.startsWith("rpi_name")) {
-                    name = line.split("=")[1].trim().replaceAll("['\"]", "");
-                } else if (line.startsWith("rpi_addr")) {
-                    addr = line.split("=")[1].trim().replaceAll("['\"]", "");
-                }
-            }
-            return (name != null && addr != null) ? new String[]{addr, name} : null;
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error reading configs.py: " + e.getMessage());
-            return null;
-        }
-    }
-
 
     public static void main(String[] args) {
         Path profilesDir = Paths.get("profiles");

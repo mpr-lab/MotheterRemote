@@ -1,3 +1,5 @@
+// Refactored SetupWizard.java with Sectional Flow, Progress Saving, and Progress Bar
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -9,14 +11,19 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
 public class SetupWizard extends JFrame {
-    private CardLayout cardLayout = new CardLayout();
-    private JPanel cardPanel = new JPanel(cardLayout);
-    private JButton nextButton = new JButton("Next");
-    private JButton backButton = new JButton("Back");
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cardLayout);
+    private final JButton nextButton = new JButton("Next");
+    private final JButton backButton = new JButton("Back");
+    private final JProgressBar progressBar = new JProgressBar(0, 5);
+    private final Map<String, Integer> sectionStart = new LinkedHashMap<>();
     private int currentCard = 0;
 
-    private java.util.List<RPiProfile> profiles = new ArrayList<>();
+    private final java.util.List<RPiProfile> profiles = new ArrayList<>();
     private JPanel profilesPanel;
+
+    private boolean disclaimerAccepted = false;
+    private final Path progressFile = Paths.get(".setup_progress");
 
     public SetupWizard() {
         super("Initial Setup Wizard");
@@ -24,145 +31,114 @@ public class SetupWizard extends JFrame {
         setSize(600, 500);
         setLocationRelativeTo(null);
 
-        JPanel disclaimerPanel = buildDisclaimerPanel();
-        JPanel connectionPanel = buildConnectionPanel();
-        JPanel tailscalePanel = buildTailscale();
-        JPanel rpiConfigPanel = buildRpiConfigPanel();
-        JPanel sshPanel = buildSSHPanel();
-        JPanel finalPanel = buildFinalPanel();
+        // Sections
+        sectionStart.put("Host Setup", 0);
+        sectionStart.put("RPi Setup", 2);
+        sectionStart.put("SSH Setup", 4);
 
-        // TODO: if using radio then include sensor commands in GUI, if not, don't include
+        // Panels per step
+        cardPanel.add(buildDisclaimerPanel(), "0");       // Host Setup
+        cardPanel.add(buildConnectionPanel(), "1");
+        cardPanel.add(buildTailscale(), "2");             // RPi Setup
+        cardPanel.add(buildRpiConfigPanel(), "3");
+        cardPanel.add(buildSSHPanel(), "4");              // SSH Setup
+        cardPanel.add(buildFinalPanel(), "5");
 
-        cardPanel.add(disclaimerPanel, "0");
-        cardPanel.add(connectionPanel, "1");
-        cardPanel.add(tailscalePanel, "2");
-        cardPanel.add(rpiConfigPanel, "3");
-        cardPanel.add(sshPanel, "4");
-        cardPanel.add(finalPanel, "5");
+        JPanel navPanel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(backButton);
+        buttonPanel.add(nextButton);
 
-        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        navPanel.add(backButton);
-        navPanel.add(nextButton);
+        progressBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        progressBar.setValue(0);
+        progressBar.setStringPainted(true);
+
+        navPanel.add(progressBar, BorderLayout.CENTER);
+        navPanel.add(buttonPanel, BorderLayout.EAST);
 
         add(cardPanel, BorderLayout.CENTER);
         add(navPanel, BorderLayout.SOUTH);
 
         backButton.setEnabled(false);
+        nextButton.addActionListener(e -> nextCard());
+        backButton.addActionListener(e -> prevCard());
 
-        nextButton.addActionListener(e -> {
-            if (currentCard == 0 && !disclaimerAccepted) {
-                JOptionPane.showMessageDialog(this, "Please read and accept the disclaimer to continue.");
-                return;
-            }
-            currentCard++;
-            updateNav();
-        });
-
-        backButton.addActionListener(e -> {
-            currentCard--;
-            updateNav();
-        });
-
+        loadProgress();
         setVisible(true);
     }
 
-    private boolean disclaimerAccepted = false;
+    private void nextCard() {
+        if (currentCard == 0 && !disclaimerAccepted) {
+            JOptionPane.showMessageDialog(this, "Please accept the disclaimer to continue.");
+            return;
+        }
+        if (currentCard < 5) currentCard++;
+        updateNav();
+    }
+
+    private void prevCard() {
+        if (currentCard > 0) currentCard--;
+        updateNav();
+    }
+
+    private void updateNav() {
+        cardLayout.show(cardPanel, String.valueOf(currentCard));
+        backButton.setEnabled(currentCard > 0);
+        nextButton.setEnabled(currentCard < 5);
+        progressBar.setValue(currentCard);
+        progressBar.setString("Step " + (currentCard + 1) + " of 6");
+        saveProgress();
+    }
+
+    private void saveProgress() {
+        try {
+            Files.writeString(progressFile, String.valueOf(currentCard));
+        } catch (IOException e) {
+            System.err.println("[Setup] Failed to save progress: " + e.getMessage());
+        }
+    }
+
+    private void loadProgress() {
+        if (Files.exists(progressFile)) {
+            try {
+                currentCard = Integer.parseInt(Files.readString(progressFile).trim());
+                updateNav();
+            } catch (IOException | NumberFormatException ignored) {}
+        }
+    }
 
     private JPanel buildDisclaimerPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        JTextArea disclaimer = new JTextArea();
-        disclaimer.setText("IMPORTANT: Please read this disclaimer fully before continuing...\n(Insert content here)");
+        JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing...");
         disclaimer.setWrapStyleWord(true);
         disclaimer.setLineWrap(true);
         disclaimer.setEditable(false);
-        JScrollPane scroll = new JScrollPane(disclaimer);
+        panel.add(new JScrollPane(disclaimer), BorderLayout.CENTER);
 
         JCheckBox acceptBox = new JCheckBox("I have read the above.");
         acceptBox.addItemListener(e -> disclaimerAccepted = acceptBox.isSelected());
-
-        panel.add(scroll, BorderLayout.CENTER);
         panel.add(acceptBox, BorderLayout.SOUTH);
         return panel;
     }
-
-    private JPanel buildRpiConfigPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        profilesPanel = new JPanel();
-        profilesPanel.setLayout(new BoxLayout(profilesPanel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JButton addProfile = new JButton("Add RPi Profile");
-        addProfile.addActionListener(e -> addRpiProfile(null, null));
-
-        panel.add(new JScrollPane(profilesPanel), BorderLayout.CENTER);
-        panel.add(addProfile, BorderLayout.SOUTH);
-
-        addRpiProfile("", "");
-
-
-        return panel;
-    }
-
-    private void addRpiProfile(String defaultName, String defaultAddr) {
-        JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
-        container.setMaximumSize(new Dimension(500, 40));
-
-        JTextField nameField = new JTextField(defaultName != null ? defaultName : "");
-        JTextField addrField = new JTextField(defaultAddr != null ? defaultAddr : "");
-
-        container.add(new JLabel("Name:"));
-        container.add(Box.createRigidArea(new Dimension(5, 0)));
-        container.add(nameField);
-        container.add(Box.createRigidArea(new Dimension(10, 0)));
-        container.add(new JLabel("Address:"));
-        container.add(Box.createRigidArea(new Dimension(5, 0)));
-        container.add(addrField);
-
-        JButton deleteBtn = new JButton("Delete");
-        deleteBtn.addActionListener(e -> {
-            profilesPanel.remove(container);
-            profiles.removeIf(p -> p.nameField == nameField && p.addrField == addrField);
-            profilesPanel.revalidate();
-            profilesPanel.repaint();
-        });
-        container.add(Box.createRigidArea(new Dimension(10, 0)));
-        container.add(deleteBtn);
-
-        profilesPanel.add(container);
-        profiles.add(new RPiProfile(nameField, addrField));
-
-        profilesPanel.revalidate();
-        profilesPanel.repaint();
-    }
-
-    private JCheckBox radioBox = new JCheckBox("Using Radios");
-    private JCheckBox tailscaleBox = new JCheckBox("Using Tailscale");
-    private JRadioButton wifiBtn = new JRadioButton("Wifi", true);
-    private JRadioButton ethernetBtn = new JRadioButton("Ethernet");
-    private JRadioButton cellularBtn = new JRadioButton("Cellular");
 
     private JPanel buildConnectionPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        panel.add(new JLabel("Choose Connection Type:"));
+        JRadioButton wifi = new JRadioButton("WiFi", true);
+        JRadioButton ethernet = new JRadioButton("Ethernet");
+        JRadioButton cellular = new JRadioButton("Cellular");
         ButtonGroup group = new ButtonGroup();
-        group.add(wifiBtn);
-        group.add(ethernetBtn);
-        group.add(cellularBtn);
-        panel.add(wifiBtn);
-        panel.add(ethernetBtn);
-        panel.add(cellularBtn);
-
-        panel.add(radioBox);
-        panel.add(tailscaleBox);
-
+        group.add(wifi); group.add(ethernet); group.add(cellular);
+        panel.add(new JLabel("Select connection method:"));
+        panel.add(wifi); panel.add(ethernet); panel.add(cellular);
+        panel.add(new JCheckBox("Using Tailscale"));
+        panel.add(new JCheckBox("Using Radios"));
         return panel;
     }
 
-    private JPanel buildTailscale(){
+    private JPanel buildTailscale() {
         Utility util = new Utility();
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -182,22 +158,57 @@ public class SetupWizard extends JFrame {
         panel.add(info, BorderLayout.CENTER);
         return panel;
     }
-    private JPanel buildCopyRow(String command){
-        Utility util = new Utility();
 
-        JPanel row = new JPanel();
-        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
-        JTextField cmdField = new JTextField(command);
-        cmdField.setEditable(false);
-        JButton copyBtn = new JButton("Copy");
-        copyBtn.addActionListener(e -> copyToClipboard(command));
-        row.add(cmdField);
-        row.add(Box.createRigidArea(new Dimension(10, 0)));
-        row.add(copyBtn);
-        row.setMaximumSize(new Dimension(500, 30));
-        util.setFullWidth.accept(row);
+    private JPanel buildRpiConfigPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        profilesPanel = new JPanel();
+        profilesPanel.setLayout(new BoxLayout(profilesPanel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        return row;
+
+        JButton addProfile = new JButton("Add RPi Profile");
+        addProfile.addActionListener(e -> addRpiProfile("", ""));
+
+        panel.add(new JScrollPane(profilesPanel), BorderLayout.CENTER);
+        panel.add(addProfile, BorderLayout.SOUTH);
+
+        addRpiProfile("", "");
+        return panel;
+
+    }
+
+    private void addRpiProfile(String name, String addr) {
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
+        container.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        container.setMaximumSize(new Dimension(500, 40));
+
+        JTextField nameField = new JTextField(name != null ? name : "");
+        JTextField addrField = new JTextField(addr != null ? addr : "");
+
+        container.add(new JLabel("Name:"));
+        container.add(Box.createRigidArea(new Dimension(5, 0)));
+        container.add(nameField);
+        container.add(Box.createRigidArea(new Dimension(10, 0)));
+        container.add(new JLabel("Address:"));
+        container.add(Box.createRigidArea(new Dimension(5, 0)));
+        container.add(addrField);
+
+        JButton deleteBtn = new JButton(" X ");
+        deleteBtn.addActionListener(e -> {
+            profilesPanel.remove(container);
+            profiles.removeIf(p -> p.nameField == nameField && p.addrField == addrField);
+            profilesPanel.revalidate();
+            profilesPanel.repaint();
+        });
+        container.add(Box.createRigidArea(new Dimension(10, 0)));
+        container.add(deleteBtn);
+
+        profilesPanel.add(container);
+        profiles.add(new RPiProfile(nameField, addrField));
+
+        profilesPanel.revalidate();
+        profilesPanel.repaint();
     }
 
     private JPanel buildSSHPanel() {
@@ -307,192 +318,71 @@ public class SetupWizard extends JFrame {
         return panel;
     }
 
-    //    private JPanel buildSSHPanel() {
-//        JPanel panel = new JPanel(new BorderLayout(10, 10));
-//        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-//
-//        JTextArea info = new JTextArea("This step will configure SSH key-based access to all Raspberry Pi profiles using ED25519.");
-//        info.setLineWrap(true);
-//        info.setWrapStyleWord(true);
-//        info.setEditable(false);
-//
-//        JButton setupBtn = new JButton("Setup SSH for All Profiles");
-//        setupBtn.addActionListener(e -> setupSSHKeysForAll());
-//
-//        panel.add(new JScrollPane(info), BorderLayout.CENTER);
-//        panel.add(setupBtn, BorderLayout.SOUTH);
-//        return panel;
-//    }
     private JPanel buildFinalPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        panel.add(new JLabel("Setup Complete"));
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(new JLabel("Click Finish to save your Raspberry Pi profiles."));
-
-        JButton finishBtn = new JButton("Finish Setup");
-        finishBtn.addActionListener(e -> {
-            Path profilesDir = Paths.get("profiles");
-            try {
-                Files.createDirectories(profilesDir);
-
-                int saved = 0;
-                for (RPiProfile profile : profiles) {
-                    String name = profile.nameField.getText().trim();
-                    String addr = profile.addrField.getText().trim();
-
-                    if (!name.isEmpty() && !addr.isEmpty()) {
-                        Properties props = new Properties();
-                        props.setProperty("rpi_name", name);
-                        props.setProperty("rpi_addr", addr);
-
-                        File file = profilesDir.resolve(name + "_profile.properties").toFile();
-                        try (FileWriter writer = new FileWriter(file)) {
-                            props.store(writer, "RPi Profile");
-                            saved++;
-                        }
-                    }
-                }
-
-                JOptionPane.showMessageDialog(this,
-                        "Saved " + saved + " profile(s) to 'profiles/' folder.",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-
-                dispose();  // Close the wizard
-
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to save profiles: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        finishBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(Box.createRigidArea(new Dimension(0, 20)));
-        panel.add(finishBtn);
-
+        JLabel label = new JLabel("Setup complete.");
+        JButton finish = new JButton("Finish");
+        finish.addActionListener(e -> saveProfilesAndExit());
+        panel.add(label);
+        panel.add(finish);
         return panel;
     }
+    private JPanel buildCopyRow(String command){
+        Utility util = new Utility();
 
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+        JTextField cmdField = new JTextField(command);
+        cmdField.setEditable(false);
+        JButton copyBtn = new JButton("Copy");
+        copyBtn.addActionListener(e -> copyToClipboard(command));
+        row.add(cmdField);
+        row.add(Box.createRigidArea(new Dimension(10, 0)));
+        row.add(copyBtn);
+        row.setMaximumSize(new Dimension(500, 30));
+        util.setFullWidth.accept(row);
 
-    private void updateNav() {
-        cardLayout.show(cardPanel, String.valueOf(currentCard));
-        backButton.setEnabled(currentCard > 0);
-        nextButton.setEnabled(currentCard < 5);
+        return row;
     }
-
     private void copyToClipboard(String text) {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
                 new StringSelection(text), null
         );
     }
 
-
-
-    // AUTO SSH SETUP --> SECURITY ISSUE?
-//    private void setupSSHKeysForAll() {
-//        String home = System.getProperty("user.home");
-//        Path privateKey = Paths.get(home, ".ssh", "id_ed25519");
-//        Path publicKey = privateKey.resolveSibling("id_ed25519.pub");
-//        Path profilesDir = Paths.get("profiles");
-//
-//        try {
-//            // Check for sshpass
-//            ProcessBuilder checkSshpass = new ProcessBuilder("which", "sshpass");
-//            if (checkSshpass.start().waitFor() != 0) {
-//                JOptionPane.showMessageDialog(this, "'sshpass' is not installed. Please install it before continuing.");
-//                return;
-//            }
-//
-//            // Ensure SSH key exists
-//            if (!Files.exists(privateKey)) {
-//                ProcessBuilder genKey = new ProcessBuilder(
-//                        "ssh-keygen", "-t", "ed25519", "-f", privateKey.toString(), "-N", ""
-//                );
-//                genKey.inheritIO().start().waitFor();
-//            }
-//
-//            // Load public key
-//            String pubKey = Files.readString(publicKey);
-//            Files.createDirectories(profilesDir);
-//
-//            StringBuilder resultSummary = new StringBuilder();
-//
-//            for (RPiProfile profile : profiles) {
-//                String rpiName = profile.nameField.getText().trim();
-//                String rpiAddr = profile.addrField.getText().trim();
-//
-//                if (rpiName.isEmpty() || rpiAddr.isEmpty()) {
-//                    resultSummary.append("Skipped profile with empty name or address.\n");
-//                    continue;
-//                }
-//
-//                String password = JOptionPane.showInputDialog(this, "Enter password for '" + rpiName + "' at " + rpiAddr);
-//                if (password == null || password.isEmpty()) {
-//                    resultSummary.append("Skipped ").append(rpiName).append(" — no password provided.\n");
-//                    continue;
-//                }
-//
-//                // Send public key to Pi
-//                String sendKeyCmd = "echo '" + pubKey + "' | sshpass -p '" + password + "' ssh -o StrictHostKeyChecking=no " +
-//                        rpiName + "@" + rpiAddr +
-//                        " 'mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys'";
-//
-//                ProcessBuilder sendKeyPB = new ProcessBuilder("bash", "-c", sendKeyCmd);
-//                int sendExit = sendKeyPB.inheritIO().start().waitFor();
-//                if (sendExit != 0) {
-//                    resultSummary.append("Failed to push key to ").append(rpiName).append(" at ").append(rpiAddr).append("\n");
-//                    continue;
-//                }
-//
-//                // Verify key works
-//                String verifyCmd = "ssh -o BatchMode=yes -o ConnectTimeout=5 " + rpiName + "@" + rpiAddr + " 'echo success'";
-//                ProcessBuilder verifyPB = new ProcessBuilder("bash", "-c", verifyCmd);
-//                int verifyExit = verifyPB.start().waitFor();
-//
-//                if (verifyExit == 0) {
-//                    // Save profile
-//                    Properties props = new Properties();
-//                    props.setProperty("rpi_name", rpiName);
-//                    props.setProperty("rpi_addr", rpiAddr);
-//                    try (FileWriter writer = new FileWriter(profilesDir.resolve(rpiName + "_profile.properties").toFile())) {
-//                        props.store(writer, "RPi Profile");
-//                    }
-//                    resultSummary.append("SSH setup verified for ").append(rpiName).append(" at ").append(rpiAddr).append("\n");
-//                } else {
-//                    resultSummary.append("SSH verification failed for ").append(rpiName).append(" at ").append(rpiAddr).append("\n");
-//                }
-//            }
-//
-//            JOptionPane.showMessageDialog(this, resultSummary.toString(), "SSH Setup Results", JOptionPane.INFORMATION_MESSAGE);
-//
-//        } catch (IOException | InterruptedException ex) {
-//            JOptionPane.showMessageDialog(this, "SSH setup failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-//            ex.printStackTrace();
-//        }
-//    }
-
+    private void saveProfilesAndExit() {
+        try {
+            Files.createDirectories(Paths.get("profiles"));
+            for (RPiProfile p : profiles) {
+                String name = p.nameField.getText().trim();
+                String addr = p.addrField.getText().trim();
+                if (!name.isEmpty() && !addr.isEmpty()) {
+                    Properties props = new Properties();
+                    props.setProperty("rpi_name", name);
+                    props.setProperty("rpi_addr", addr);
+                    props.store(new FileWriter("profiles/" + name + "_profile.properties"), "RPi Profile");
+                }
+            }
+            Files.deleteIfExists(progressFile);
+            JOptionPane.showMessageDialog(this, "Profiles saved. Wizard complete.");
+            dispose();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving profiles: " + e.getMessage());
+        }
+    }
 
     static class RPiProfile {
-        JTextField nameField;
-        JTextField addrField;
-
-        RPiProfile(JTextField nameField, JTextField addrField) {
-            this.nameField = nameField;
-            this.addrField = addrField;
+        JTextField nameField, addrField;
+        RPiProfile(JTextField name, JTextField addr) {
+            this.nameField = name;
+            this.addrField = addr;
         }
     }
 
     public static void main(String[] args) {
-//        Path profilesDir = Paths.get("profiles");
-//        if (Files.exists(profilesDir)) {
-//            System.out.println("Profiles directory already exists. Skipping setup wizard.");
-//            return;
-//        }
         SwingUtilities.invokeLater(SetupWizard::new);
     }
 }
