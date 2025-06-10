@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# make log file directory, if it doesn't exist
+if [[ ! -e /var/tmp/ssh_debug ]]; then
+    mkdir -p /var/tmp/ssh_debug
+fi
+
+# make log files, if they don't exist
+if [[ ! -e /var/tmp/ssh_debug/radio_out.txt ]]; then
+    touch /var/tmp/ssh_debug/radio_out.txt
+fi
+if [[ ! -e /var/tmp/ssh_debug/radio_err.txt ]]; then
+    touch /var/tmp/ssh_debug/radio_err.txt
+fi
+
 # get date/time
 dt="$(date '+%d/%m/%Y %H:%M:%S');"
 
