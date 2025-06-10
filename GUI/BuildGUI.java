@@ -26,10 +26,10 @@ public class BuildGUI extends JFrame {
         add(topPanel, BorderLayout.NORTH);
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("RPi Command Center", new RPiCommandTab(console));
-        tabs.addTab("Sensor Command Center", new SensorCommandTab(console));
+        tabs.addTab("RPi Command Center", new RPiCommandTab(util));
+        tabs.addTab("Sensor Command Center", new SensorCommandTab(util));
 //        tabs.addTab("Data Sync", new DataTab(console));
-        tabs.addTab("Settings", new SettingsTab(console));
+        tabs.addTab("Settings", new SettingsTab(util));
         tabs.addTab("?", new HelpTab());
         add(tabs, BorderLayout.CENTER);
 
@@ -78,11 +78,14 @@ public class BuildGUI extends JFrame {
         JScrollPane scroll = new JScrollPane(console);
         scroll.setPreferredSize(new Dimension(0, 150));
 
+        scroll.setVisible(false);
+
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
-        JButton toggleButton = new JButton("Minimize");
+
+        JButton toggleButton = new JButton("Show Console");  // Initial state matches hidden scroll
         toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
 
         btnRow.add(toggleButton);
@@ -94,6 +97,7 @@ public class BuildGUI extends JFrame {
 
         return p;
     }
+
 
     private void toggleConsoleVisibility(JScrollPane scrollPane, JButton toggleButton) {
         if (scrollPane.isVisible()) {

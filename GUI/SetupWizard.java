@@ -163,15 +163,20 @@ public class SetupWizard extends JFrame {
     }
 
     private JPanel buildTailscale(){
+        Utility util = new Utility();
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel instructions = new JLabel("Instructions on Using Tailscale:");
+        JLabel instructions = new JLabel("Tailscale Setup:");
 
-        JTextArea info = new JTextArea("This step will configure SSH key-based access to all Raspberry Pi profiles using ED25519.");
-        info.setLineWrap(true);
-        info.setWrapStyleWord(true);
-        info.setEditable(false);
+        JTextArea info = util.buildTextArea(panel, 300);
+        info.setText("""
+                Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device
+                
+                Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan
+                
+                On your computer, go to the Tailscale download page (https://tailscale.com/download) and get the app. Up to one hundred devices can be added for free, so don't worry about having too many devices online.
+                """);
 
         panel.add(instructions, BorderLayout.NORTH);
         panel.add(info, BorderLayout.CENTER);

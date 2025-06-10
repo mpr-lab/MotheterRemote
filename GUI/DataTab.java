@@ -17,10 +17,13 @@ public class DataTab extends JPanel{
     private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
 
     private JTextArea CONSOLE;      // running log / output
+    private final Utility util;
 
-    public DataTab(JTextArea Console){
-        setConfigs(Console);
-        Utility util = new Utility(Console);
+
+    public DataTab(Utility util){
+//        setConfigs(Console);
+//        Utility util = new Utility(Console);
+        this.util = util;
         setSize(800, 560);
         setLayout(new BorderLayout());
 
@@ -33,7 +36,7 @@ public class DataTab extends JPanel{
         JButton openDir = new JButton("Open Folder");
         openDir.addActionListener(e -> {
             try { Desktop.getDesktop().open(DATA_DIR.toFile()); }
-            catch (IOException ex){ append("[GUI] "+ex.getMessage()); }
+            catch (IOException ex){ util.append("[GUI] "+ex.getMessage()); }
         });
 
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -55,16 +58,16 @@ public class DataTab extends JPanel{
         fileModel.clear();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(DATA_DIR)) {
             for (Path p : ds) fileModel.addElement(p.getFileName().toString());
-            append("[GUI] File list loaded");
-        } catch (IOException ex){ append("[GUI] Data dir error: "+ex.getMessage()); }
+            util.append("[GUI] File list loaded");
+        } catch (IOException ex){ util.append("[GUI] Data dir error: "+ex.getMessage()); }
     }
 
 
-    private void append(String txt){
-        SwingUtilities.invokeLater(() -> {
-            CONSOLE.append(txt+"\n");
-            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
-        });
-    }
+//    private void append(String txt){
+//        SwingUtilities.invokeLater(() -> {
+//            CONSOLE.append(txt+"\n");
+//            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
+//        });
+//    }
 
 }

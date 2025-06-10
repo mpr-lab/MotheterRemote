@@ -20,7 +20,7 @@ public class Utility {
     private final DefaultListModel<String> fileModel = new DefaultListModel<>(); // for JList in Data tab
     public Utility(){}
     public Utility(JTextArea Console){
-        setConfigs(Console);
+        this.CONSOLE = Console;
     }
 
     private void setConfigs(JTextArea console){
@@ -71,26 +71,129 @@ public class Utility {
         return wrapper;
     }
 
-    public void sendCommand(String cmd) {
-        if (cmd == null || cmd.isBlank()) return;
-        append("\n> " + cmd);
+//    public void sendCommand(String cmd) {
+//        if (cmd == null || cmd.isBlank()) return;
+//        append("\n> " + cmd);
+//
+//        try {
+//            ProcessBuilder pb = new ProcessBuilder("python3", BACKEND_PATH, cmd);
+//            pb.redirectErrorStream(true);  // merge stderr with stdout
+//            Process p = pb.start();
+//
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                append(line);
+//            }
+//
+//            p.waitFor();
+//        } catch (IOException | InterruptedException ex) {
+//            append("[ERR] " + ex.getMessage());
+//        }
+//    }
+public void sendCommand(String cmd) {
+    if (cmd == null || cmd.isBlank()) {
+        System.out.println("[DEBUG] Command is null or blank — skipping.");
+        return;
+    }
 
-        try {
-            ProcessBuilder pb = new ProcessBuilder("python3", BACKEND_PATH, cmd);
-            pb.redirectErrorStream(true);  // merge stderr with stdout
-            Process p = pb.start();
+    System.out.println("[DEBUG] Sending command: " + cmd);
+    append("\n> " + cmd);
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                append(line);
+    try {
+        File backendFile = new File(BACKEND_PATH);
+        System.out.println("[DEBUG] BACKEND_PATH = " + BACKEND_PATH);
+        System.out.println("[DEBUG] BACKEND_PATH absolute = " + backendFile.getAbsolutePath());
+        System.out.println("[DEBUG] File exists? " + backendFile.exists());
+
+        // Prepare command
+        ProcessBuilder pb = new ProcessBuilder("python3", BACKEND_PATH, cmd);
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+
+        System.out.println("[DEBUG] Process started.");
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line;
+        int lineCount = 0;
+
+        while ((line = reader.readLine()) != null) {
+            System.out.println("[DEBUG] Python output: " + line);
+            append(line);
+            lineCount++;
+        }
+
+        int exitCode = p.waitFor();
+        System.out.println("[DEBUG] Process exited with code: " + exitCode);
+
+        if (lineCount == 0) {
+            System.out.println("[DEBUG] No output received from backend.");
+        }
+
+        if (exitCode == 0) {
+            showToast(CONSOLE, "Command sent: " + cmd, "success", 2000);
+        } else {
+            showToast(CONSOLE, "Command failed: " + cmd, "error", 2000);
+        }
+
+    } catch (IOException | InterruptedException ex) {
+        System.out.println("[DEBUG] Exception thrown: " + ex.getMessage());
+        ex.printStackTrace();
+        append("[ERR] " + ex.getMessage());
+        showToast(CONSOLE, "Error: " + ex.getMessage(), "error", 2000);
+    }
+}
+
+
+    public void showToast(Component parentComponent, String message, String type, int durationMillis) {
+        SwingUtilities.invokeLater(() -> {
+            JWindow toast = new JWindow(SwingUtilities.getWindowAncestor(parentComponent));
+            toast.setBackground(new Color(0, 0, 0, 0));
+
+            Color bgColor;
+            switch (type.toLowerCase()) {
+                case "success": bgColor = new Color(0, 128, 0, 220); break;     // Green
+                case "error":   bgColor = new Color(180, 0, 0, 220); break;     // Red
+                default:        bgColor = new Color(0, 0, 0, 200); break;       // Black
             }
 
-            p.waitFor();
-        } catch (IOException | InterruptedException ex) {
-            append("[ERR] " + ex.getMessage());
-        }
+            JPanel panel = new JPanel() {
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(bgColor);
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                    super.paintComponent(g);
+                }
+            };
+            panel.setOpaque(false);
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+            JLabel label = new JLabel(message);
+            label.setForeground(Color.WHITE);
+            label.setFont(new Font("Monospace", Font.PLAIN, 13));
+            panel.add(label);
+
+            toast.add(panel);
+            toast.pack();
+
+            // Position: bottom-right corner *within* the parent window
+            if (parentComponent instanceof Component) {
+                Component parent = SwingUtilities.getWindowAncestor(parentComponent);
+                Point parentLoc = parent.getLocationOnScreen();
+                Dimension parentSize = parent.getSize();
+                int x = parentLoc.x + parentSize.width - toast.getWidth() - 30;
+                int y = parentLoc.y + parentSize.height - toast.getHeight() - 50;
+                toast.setLocation(x, y);
+            }
+
+            toast.setVisible(true);
+
+            // Auto-dismiss after duration
+            new Timer(durationMillis, e -> toast.setVisible(false)).start();
+        });
     }
+
 
 
     public void startPythonBackend(){

@@ -13,9 +13,10 @@ public class SettingsTab extends JPanel {
     private final JTextField rpiAddrField;
     private final Properties currentProps = new Properties();
 
-    public SettingsTab(JTextArea Console) {
-        setConfigs(Console);
-        util = new Utility(Console);
+    public SettingsTab(Utility util) {
+//        setConfigs(Console);
+//        util = new Utility(Console);
+        this.util = util;
         setSize(800, 560);
         setLayout(new BorderLayout());
 

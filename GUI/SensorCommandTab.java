@@ -6,16 +6,15 @@ import java.util.LinkedHashMap;
 
 
 public class SensorCommandTab extends JPanel{
+    private final Utility util;
+
     public JPanel rightPanel = new JPanel(new BorderLayout());
     
     /* ---------------- Network ---------------- */
-    private String HOST;   // server IP or hostname (user‑supplied)
-    private String NAME;   // human‑friendly host name (user‑supplied)
-    // Socket port must match configs.host_server in the Python backend
     private int PORT;
     private  JTextArea  CONSOLE;      // running log / output
 
-    public SensorCommandTab(JTextArea Console){
+    public SensorCommandTab(Utility util){
         /*
          * We build a Map<Category name, List<Cmd>> where each Cmd bundles
          * a button label, tooltip, and a Supplier<String> that returns the
@@ -23,8 +22,9 @@ public class SensorCommandTab extends JPanel{
          * those requiring user input pop up a dialog and may return null
          * (indicating the dialog was cancelled or the input invalid).
          */
-        setConfigs(Console);
-        Utility util = new Utility(Console);
+//        setConfigs(Console);
+//        Utility util = new Utility(Console);
+        this.util = util;
         
         setSize(800, 560);
         setLayout(new BorderLayout());

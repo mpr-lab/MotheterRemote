@@ -3,14 +3,12 @@ import java.awt.*;
 
 
 public class RPiCommandTab extends JPanel {
-    /* ---------------- Network ---------------- */
-    private String HOST;   // server IP or hostname (user‑supplied)
-    private String NAME;   // human‑friendly host name (user‑supplied)
-    private int PORT;
+    private final Utility util;
     private JTextArea  CONSOLE;      // running log / output
-    public RPiCommandTab(JTextArea Console) {
-        setConfigs(Console);
-        Utility util = new Utility(Console);
+    public RPiCommandTab(Utility util) {
+        this.util = util;
+//        setConfigs(Console);
+//        Utility util = new Utility(Console);
 
         setSize(800, 560);
         setLayout(new BorderLayout());
@@ -64,27 +62,4 @@ public class RPiCommandTab extends JPanel {
 
     }
 
-//    private void sendCommand(JTextArea console, String HOST, int PORT, String cmd){
-//        if(cmd==null||cmd.isBlank()) return;
-//        append(console, "\n> "+cmd);
-//        try(Socket s=new Socket(HOST,PORT);
-//            OutputStream o=s.getOutputStream();
-//            BufferedReader in=new BufferedReader(new InputStreamReader(s.getInputStream()))){
-//            o.write((cmd+"\n").getBytes(StandardCharsets.UTF_8)); o.flush();
-//            String line; while((line=in.readLine())!=null) append(console, line);
-//        }catch(IOException ex){ append(console, "[ERR] "+ex.getMessage()); }
-//    }
-//    private JPanel wrapWithRightPanel(JPanel main, JPanel side) {
-//        JPanel wrapper = new JPanel(new BorderLayout());
-//        wrapper.add(main, BorderLayout.CENTER);
-//        side.setPreferredSize(new Dimension(300, 0));
-//        wrapper.add(side, BorderLayout.EAST);
-//        return wrapper;
-//    }
-//    private void append(JTextArea console, String txt){
-//        SwingUtilities.invokeLater(() -> {
-//            console.append(txt+"\n");
-//            console.setCaretPosition(console.getDocument().getLength());
-//        });
-//    }
 }

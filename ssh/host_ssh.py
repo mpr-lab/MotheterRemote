@@ -29,7 +29,7 @@ def send_to_rpi(m: str) -> str:
     os.system(run_command)
 
     read_command = (
-        f"ssh {rpi_name}@{rpi_addr} 'tail -n 1 /var/tmp/ssh_debug/stdout.txt'"
+        f"ssh {rpi_name}@{rpi_addr} 'tail -n 1 /var/tmp/ssh_debug/rpi_out.txt'"
     )
     output = subprocess.check_output(read_command, shell=True).decode()
 
