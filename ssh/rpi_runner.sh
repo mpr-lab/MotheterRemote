@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "rpi_runner.sh running"
+
 # make log file directory, if it doesn't exist
 if [[ ! -e /var/tmp/ssh_debug ]]; then
     mkdir -p /var/tmp/ssh_debug

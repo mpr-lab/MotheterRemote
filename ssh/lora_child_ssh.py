@@ -74,7 +74,7 @@ class Ser:
                 for msg in msg_arr:  # go through each message
                     time.sleep(short_s)
                     m = msg.strip()  # strip whitespace
-                    print(f"Received over radio: {m}", flush=True, file=sys.stdout)
+                    print(f"Radio: {m}", flush=True, file=sys.stdout)
                     if "rsync" in m:
                         self._rsync(m)  # deal with rsync
                     else:
@@ -109,9 +109,9 @@ class Ser:
         }
 
         response_prefix = resp[0:2]
-        print(f"response prefix {response_prefix}", flush=True, file=sys.stderr)
+        # print(f"response prefix {response_prefix}", flush=True, file=sys.stderr)
         message_prefix = pairs.get(response_prefix)  # get original message prefix
-        print(f"message prefix {message_prefix}", flush=True, file=sys.stderr)
+        # print(f"message prefix {message_prefix}", flush=True, file=sys.stderr)
 
         if message_prefix == None:  # if not there, ignore
             print("return", flush=True, file=sys.stderr)
@@ -149,7 +149,7 @@ class Ser:
             time.sleep(mid_s)
             resp = self.device.client_to_rpi()  # get response from device
             if len(resp) != 0:  # if response has data
-                print(f"Received from sensor: {resp}", flush=True, file=sys.stdout)
+                print(f"Sensor: {resp}", flush=True, file=sys.stdout)
                 m = EOL.join(resp)
                 if self._get_pair(m) != "":
                     self._send(m)
@@ -164,7 +164,7 @@ class Ser:
             m = EOL.join(msg)  # if list, collate into string
         else:
             m = msg
-        print(f"Sending over radio: {m}", flush=True, file=sys.stdout)
+        print(f"Sending over radio: {m}", flush=True, file=sys.stderr)
         self.s.write((m + EOF).encode(utf8))
 
     def _send_loop(self) -> None:
