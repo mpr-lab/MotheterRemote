@@ -114,6 +114,33 @@ public class Utility {
     }
 
 
+    private JPanel buildTemplate(){
+        JPanel template = new JPanel();
+        template.setLayout(new BoxLayout(template, BoxLayout.Y_AXIS));
+        template.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Helper to unify width and alignment
+        return template;
+    }
+    int preferredWidth = 450;
+    java.util.function.Consumer<JComponent> setFullWidth = comp -> {
+        comp.setAlignmentX(Component.LEFT_ALIGNMENT);
+        Dimension d = comp.getPreferredSize();
+        d.width = preferredWidth;
+        comp.setMaximumSize(d);
+    };
+
+    JTextArea buildTextArea(JPanel panel, int height){
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setBackground(panel.getBackground());
+        textArea.setPreferredSize(new Dimension(preferredWidth, height));
+        setFullWidth.accept(textArea);
+
+        return textArea;
+    }
 
 
 

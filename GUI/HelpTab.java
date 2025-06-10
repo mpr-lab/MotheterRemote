@@ -28,7 +28,7 @@ public class HelpTab extends JPanel{
             switch (selection) {
                 case "General Help" -> setPanel(genHelp());
                 case "RPi Command Center Help" -> setPanel(rpiHelp());
-//                case "Sensor Command Center Help" -> helpText.setText("This tab provides an interface for issuing sensor-specific commands. Commands are grouped into categories, and some require additional user input shown in the right panel.");
+                case "Sensor Command Center Help" -> setPanel(sensorHelp());
 //                case "Data Help" -> helpText.setText("Use this tab to view downloaded sensor data. You can refresh the file list and open the data directory directly.");
                 case "Settings Help" -> setPanel(settingHelp());
                 case null, default -> setPanel(genHelp());
@@ -58,6 +58,18 @@ public class HelpTab extends JPanel{
         comp.setMaximumSize(d);
     };
 
+    private JTextArea buildTextArea(JPanel panel, int height){
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setBackground(panel.getBackground());
+        textArea.setPreferredSize(new Dimension(preferredWidth, height));
+        setFullWidth.accept(textArea);
+
+        return textArea;
+    }
+
     private JPanel genHelp() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setSize(800, 560);
@@ -71,29 +83,24 @@ public class HelpTab extends JPanel{
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // General description
-        JTextArea description = new JTextArea("""
+        JTextArea description = buildTextArea(inner, 375);
+        description.setText("""
                 This GUI allows interaction with a Raspberry Pi and sensor system.
                 It includes tabs for sending commands, syncing data, configuring settings, and monitoring backend responses.
 
 
                 LAYOUT:
-                
+
                 The overall GUI contains 4 main sections: The top dropdown menu, the tabs section, the main panel, and the console log.
-                    
+
                     * The top dropdown menu located at the very top of the GUI allows you to change which raspberry pi you want to connect to. This feature if useful if you setup multiple RPi profiles during setup.
-                    
+
                     * The tabs section located directly below the top dropdown menu allows you to switch what functions are shown on the main panel. Each of the 5 tabs have different features, more support for each tab can be found here in the help tab.
-                    
+
                     * The main panel which takes up the majority of the GUI displays the contents of the GUI which will change depending on what tab is selected.
-                    
+
                     * The console log can be minimized and restored. Located at the bottom of the GUI, the console log can be viewed from every tab and allows you to see...
                 """);
-        description.setEditable(false);
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-        description.setBackground(panel.getBackground());
-        description.setPreferredSize(new Dimension(preferredWidth, 375));
-        setFullWidth.accept(description);
         inner.add(description);
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
 
@@ -101,16 +108,11 @@ public class HelpTab extends JPanel{
         JLabel howTO = new JLabel("How To Use:");
         setFullWidth.accept(howTO);
         inner.add(howTO);
-        inner.add(Box.createRigidArea(new Dimension(0, 5)));
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Instructional text
-        JTextArea h2 = new JTextArea("The GUI uses tabbed panels to access different commands/functions. These tabs are as follows:");
-        h2.setEditable(false);
-        h2.setLineWrap(true);
-        h2.setWrapStyleWord(true);
-        h2.setBackground(panel.getBackground());
-        h2.setPreferredSize(new Dimension(preferredWidth, 60));
-        setFullWidth.accept(h2);
+        JTextArea h2 = buildTextArea(inner, 60);
+        h2.setText("The GUI uses tabbed panels to access different commands/functions. These tabs are as follows:");
         inner.add(h2);
         inner.add(Box.createRigidArea(new Dimension(0, 5)));
 
@@ -144,7 +146,8 @@ public class HelpTab extends JPanel{
         inner.add(title);
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextArea description = new JTextArea("""
+        JTextArea description = buildTextArea(inner, 300);
+        description.setText("""
                 Use this tab to manage core RPi processes like starting/stopping the listener, checking status, and syncing files with the host.
 
 
@@ -158,12 +161,6 @@ public class HelpTab extends JPanel{
                 
                 * The output viewer located on the right side of the RPi Command Tab allows you to view...
                 """);
-        description.setEditable(false);
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-        description.setBackground(panel.getBackground()); // blend with background
-        description.setPreferredSize(new Dimension(500, 300));
-        setFullWidth.accept(description);
         inner.add(description);
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
 
@@ -172,19 +169,15 @@ public class HelpTab extends JPanel{
         setFullWidth.accept(commands);
         inner.add(commands);
         inner.add(Box.createRigidArea(new Dimension(0, 5)));
-        JTextArea cmdBio = new JTextArea("Click on the commands below to see what they do and how to use them:");
-        cmdBio.setEditable(false);
-        cmdBio.setLineWrap(true);
-        cmdBio.setWrapStyleWord(true);
-        cmdBio.setBackground(panel.getBackground()); // blend with background
-        cmdBio.setPreferredSize(new Dimension(500, 30));
-        setFullWidth.accept(cmdBio);
+
+        JTextArea cmdBio = buildTextArea(inner, 30);
+        cmdBio.setText("Click on the commands below to see what they do and how to use them:");
         inner.add(cmdBio);
 
         // Command descriptions
         String[] cmds = {"status", "start", "rsync", "kill"};
         JList<String> list = new JList<>(cmds);
-        list.setPreferredSize(new Dimension(150, 80));
+        list.setPreferredSize(new Dimension(150, 100));
         JPanel cmdList = new JPanel(new BorderLayout());
         cmdList.add(list, BorderLayout.CENTER);
 
@@ -221,6 +214,56 @@ public class HelpTab extends JPanel{
         setFullWidth.accept(troubleshoot);
         inner.add(troubleshoot);
 
+        JTextArea tblsht = buildTextArea(inner, 300);
+        inner.add(tblsht);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(inner, BorderLayout.CENTER);
+        return panel;
+    }
+    private JPanel sensorHelp(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setSize(800, 560);
+
+        JPanel inner = buildTemplate();
+
+        // Title
+        JLabel title = new JLabel("SENSOR COMMAND CENTER HELP");
+        setFullWidth.accept(title);
+        inner.add(title);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Sensor Description
+        JTextArea description = buildTextArea(inner, 300);
+        description.setText("""
+                This tab provides an interface for issuing sensor-specific commands.
+                Commands are grouped into categories which can be accessed by the dropdown menu, and some require additional user input shown in the right panel.
+
+                LAYOUT:
+                
+                This tab of the GUI contains 3 main parts: the command category dropdown, the command panel, and the user input panel.
+                
+                * There are 4 built in commands located at the top of the RPi Command Center Tab, for more help with these, see the commands section of this help page.
+                
+                * The manual command field located at the bottom of the RPi Command Tab allows you to type in a command.
+                
+                * The output viewer located on the right side of the RPi Command Tab allows you to view...
+                """);
+        inner.add(description);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Commands
+
+
+        // Troubleshooting label
+        JLabel troubleshoot = new JLabel("Troubleshooting");
+        setFullWidth.accept(troubleshoot);
+        inner.add(troubleshoot);
+
+        JTextArea tblsht = buildTextArea(inner, 300);
+        inner.add(tblsht);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+
         panel.add(inner, BorderLayout.CENTER);
         return panel;
     }
@@ -250,34 +293,6 @@ public class HelpTab extends JPanel{
         setFullWidth.accept(description);
         inner.add(description);
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
-
-//        // "How to Use" label
-//        JLabel howTO = new JLabel("How To Use:");
-//        setFullWidth.accept(howTO);
-//        inner.add(howTO);
-//        inner.add(Box.createRigidArea(new Dimension(0, 5)));
-//
-//        // Instructional text
-//        JTextArea h2 = new JTextArea("The GUI uses tabbed panels to access different commands/functions. These tabs are as follows:");
-//        h2.setEditable(false);
-//        h2.setLineWrap(true);
-//        h2.setWrapStyleWord(true);
-//        h2.setBackground(panel.getBackground());
-//        h2.setPreferredSize(new Dimension(preferredWidth, 60));
-//        setFullWidth.accept(h2);
-//        inner.add(h2);
-//        inner.add(Box.createRigidArea(new Dimension(0, 5)));
-//
-//        // Optional: tab names as JList
-//        String[] tabs = { "RPi Command Center", "Sensor Command Center", "Data Sync", "Settings" };
-//        JList<String> listTabs = new JList<>(tabs);
-//        listTabs.setVisibleRowCount(4);
-//        listTabs.setFixedCellHeight(20);
-//        JScrollPane tabScroll = new JScrollPane(listTabs);
-//        tabScroll.setPreferredSize(new Dimension(preferredWidth, 80));
-//        tabScroll.setMaximumSize(new Dimension(preferredWidth, 80));
-//        tabScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-//        inner.add(tabScroll);
 
         panel.add(inner, BorderLayout.CENTER);
         return panel;

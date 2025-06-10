@@ -4,6 +4,9 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 
 public class SetupWizard extends JFrame {
     private CardLayout cardLayout = new CardLayout();
@@ -25,10 +28,7 @@ public class SetupWizard extends JFrame {
         JPanel connectionPanel = buildConnectionPanel();
         JPanel tailscalePanel = buildTailscale();
         JPanel rpiConfigPanel = buildRpiConfigPanel();
-        JPanel sshStep1Panel = buildSSHKeyGenPanel();
-        JPanel sshStep2Panel = buildSSHCopyKeyPanel();
-        JPanel sshStep3Panel = buildSSHVerifyPanel();
-
+        JPanel sshPanel = buildSSHPanel();
         JPanel finalPanel = buildFinalPanel();
 
         // TODO: if using radio then include sensor commands in GUI, if not, don't include
@@ -37,10 +37,8 @@ public class SetupWizard extends JFrame {
         cardPanel.add(connectionPanel, "1");
         cardPanel.add(tailscalePanel, "2");
         cardPanel.add(rpiConfigPanel, "3");
-        cardPanel.add(sshStep1Panel, "4");
-        cardPanel.add(sshStep2Panel, "5");
-        cardPanel.add(sshStep3Panel, "6");
-        cardPanel.add(finalPanel, "7");
+        cardPanel.add(sshPanel, "4");
+        cardPanel.add(finalPanel, "5");
 
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         navPanel.add(backButton);
@@ -100,6 +98,8 @@ public class SetupWizard extends JFrame {
         panel.add(addProfile, BorderLayout.SOUTH);
 
         addRpiProfile("", "");
+
+
         return panel;
     }
 
@@ -177,95 +177,132 @@ public class SetupWizard extends JFrame {
         panel.add(info, BorderLayout.CENTER);
         return panel;
     }
-    private JPanel buildSSHKeyGenPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    private JPanel buildCopyRow(String command){
+        Utility util = new Utility();
 
-        JTextArea info = new JTextArea();
-        info.setEditable(false);
-        info.setLineWrap(true);
-        info.setWrapStyleWord(true);
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+        JTextField cmdField = new JTextField(command);
+        cmdField.setEditable(false);
+        JButton copyBtn = new JButton("Copy");
+        copyBtn.addActionListener(e -> copyToClipboard(command));
+        row.add(cmdField);
+        row.add(Box.createRigidArea(new Dimension(10, 0)));
+        row.add(copyBtn);
+        row.setMaximumSize(new Dimension(500, 30));
+        util.setFullWidth.accept(row);
 
-        Path publicKey = Paths.get(System.getProperty("user.home"), ".ssh", "id_ed25519.pub");
-        boolean exists = Files.exists(publicKey);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("🔐 Step 1: Generate SSH Key\n\n");
-
-        if (exists) {
-            sb.append("✅ You already have an SSH key at:\n  ").append(publicKey).append("\n\n");
-        } else {
-            sb.append("❌ No SSH key found.\n\nTo generate one, open your terminal and run:\n\n");
-            sb.append("    ssh-keygen -t ed25519\n\n");
-            sb.append("Press Enter at each prompt to accept the defaults.");
-        }
-
-        info.setText(sb.toString());
-
-        panel.add(new JScrollPane(info), BorderLayout.CENTER);
-        return panel;
-    }
-    private JPanel buildSSHCopyKeyPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JTextArea info = new JTextArea();
-        info.setEditable(false);
-        info.setLineWrap(true);
-        info.setWrapStyleWord(true);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("📤 Step 2: Copy Your SSH Key to Each Raspberry Pi\n\n");
-
-        if (profiles.isEmpty()) {
-            sb.append("⚠️ No Raspberry Pi profiles added.\n");
-        } else {
-            sb.append("Run the following commands in your terminal for each Pi:\n\n");
-            for (RPiProfile profile : profiles) {
-                String name = profile.nameField.getText().trim();
-                String addr = profile.addrField.getText().trim();
-                if (!name.isEmpty() && !addr.isEmpty()) {
-                    sb.append("    ssh-copy-id ").append(name).append("@").append(addr).append("\n");
-                }
-            }
-            sb.append("\nIf ssh-copy-id isn't available, use:\n");
-            sb.append("    cat ~/.ssh/id_ed25519.pub | ssh pi@<IP_ADDRESS> 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys'\n");
-        }
-
-        info.setText(sb.toString());
-
-        panel.add(new JScrollPane(info), BorderLayout.CENTER);
-        return panel;
-    }
-    private JPanel buildSSHVerifyPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JTextArea info = new JTextArea();
-        info.setEditable(false);
-        info.setLineWrap(true);
-        info.setWrapStyleWord(true);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("✅ Step 3: Test SSH Access\n\n");
-        sb.append("To verify that key-based SSH works, run:\n\n");
-
-        for (RPiProfile profile : profiles) {
-            String name = profile.nameField.getText().trim();
-            String addr = profile.addrField.getText().trim();
-            if (!name.isEmpty() && !addr.isEmpty()) {
-                sb.append("    ssh ").append(name).append("@").append(addr).append(" 'echo SSH connection successful'\n");
-            }
-        }
-
-        sb.append("\nIf you see 'SSH connection successful' with no password prompt, you're all set.");
-
-        info.setText(sb.toString());
-        panel.add(new JScrollPane(info), BorderLayout.CENTER);
-        return panel;
+        return row;
     }
 
-//    private JPanel buildSSHPanel() {
+    private JPanel buildSSHPanel() {
+        Utility util = new Utility();
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+
+        JTextArea instructions = util.buildTextArea(panel, 50);
+        instructions.setText("The next step of setup involves setting up a secure shell access to the raspberry pis. For this step, you will need to open the terminal on your computer and run some commands. Follow each step carefully:");
+
+        inner.add(instructions);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // STEP 1: CHECK IS SSH INSTALLED< IF IT's NOT, INSTALL IT
+        JPanel step1 = new JPanel();
+        step1.setLayout(new BoxLayout(step1, BoxLayout.Y_AXIS));
+        step1.add(new JLabel("Step 1: Check is SSH is installed"));
+        step1.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea copyI1 = util.buildTextArea(step1, 30);
+        copyI1.setText("Open up a new terminal. First, check whether or not you have ssh installed. To do this, run the following command:");
+
+        String sshCmd = "ssh";
+        JPanel checkSSHRow = buildCopyRow(sshCmd);
+
+        step1.add(copyI1);
+        step1.add(Box.createRigidArea(new Dimension(0, 10)));
+        step1.add(checkSSHRow);
+        step1.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // STEP 2 GENERATE SSH KEY
+        JPanel step2 = new JPanel();
+        step2.setLayout(new BoxLayout(step2, BoxLayout.Y_AXIS));
+        step2.add(new JLabel("Step 2: Generate a SSH Key"));
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea copyI2 = util.buildTextArea(step2, 75);
+        copyI2.setText("Now that you have SSH, you must establish yourself as a known host for the RPi. This will allow you to connect remotely to the RPi without having to enter a password. We must generate a new SSH key which will be copied to the rpi. Copy the following command into your terminal:");
+
+        String generateCmd = "ssh-keygen -t ed25519";
+        JPanel genSSHRow = buildCopyRow(generateCmd);
+
+        step2.add(copyI2);
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2.add(genSSHRow);
+        step2.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // STEP 3: COPY SSH KEY
+        JPanel step3 = new JPanel();
+        step3.setLayout(new BoxLayout(step3, BoxLayout.Y_AXIS));
+        step3.add(new JLabel("Step 3: Copy SSH Key to Each Raspberry Pi"));
+        step3.add(Box.createRigidArea(new Dimension(0, 10)));
+
+
+        JTextArea copyI3 = util.buildTextArea(step3, 30);
+        copyI3.setText("Next, we must copy the key that you just generated over to the RPi. In the terminal, run the following command:");
+
+        String copyCmd = "ssh-copy-id <rpi_name>@<rpi_addr>";
+        JPanel copySSHRow = buildCopyRow(copyCmd);
+
+        JTextArea changeI3 = util.buildTextArea(step3, 30);
+        changeI3.setText("Make sure to change <rpi_name> and <rpi_addr> with the correct information. You may need to input the RPi's password on this step.");
+
+        step3.add(copyI3);
+        step3.add(Box.createRigidArea(new Dimension(0, 10)));
+        step3.add(copySSHRow);
+        step3.add(Box.createRigidArea(new Dimension(0, 10)));
+        step3.add(changeI3);
+        step3.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // STEP 4: VERIFY SSH CONNECTION
+        JPanel step4 = new JPanel();
+        step4.setLayout(new BoxLayout(step4, BoxLayout.Y_AXIS));
+        step4.add(new JLabel("Step 3: Copy SSH Key to Each Raspberry Pi"));
+        step4.add(Box.createRigidArea(new Dimension(0, 10)));
+
+
+        JTextArea copyI4 = util.buildTextArea(step4, 30);
+        copyI4.setText("Finally, check to make sure that the SSH connection is working properly. In the terminal, run the following command:");
+
+        String verifyCmd = "ssh <rpi_name>@<rpi_addr>";
+        JPanel verifySSHRow = buildCopyRow(verifyCmd);
+
+        JTextArea changeI4 = util.buildTextArea(step4, 45);
+        changeI4.setText("Make sure to change <rpi_name> and <rpi_addr> with the correct information. If you setup the ssh connection correctly, you should be able to access the RPi without having to input a password. you should now see");
+
+        step4.add(copyI4);
+        step4.add(Box.createRigidArea(new Dimension(0, 10)));
+        step4.add(verifySSHRow);
+        step4.add(Box.createRigidArea(new Dimension(0, 10)));
+        step4.add(changeI4);
+        step4.add(Box.createRigidArea(new Dimension(0, 20)));
+
+
+        inner.add(step1);
+        inner.add(step2);
+        inner.add(step3);
+        inner.add(step4);
+
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.setBorder(null);
+
+        panel.add(scroll);
+        return panel;
+    }
+
+    //    private JPanel buildSSHPanel() {
 //        JPanel panel = new JPanel(new BorderLayout(10, 10));
 //        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 //
@@ -282,20 +319,73 @@ public class SetupWizard extends JFrame {
 //        return panel;
 //    }
     private JPanel buildFinalPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JButton finishBtn = new JButton("Finish Setup");
+        panel.add(new JLabel("Setup Complete"));
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(new JLabel("Click Finish to save your Raspberry Pi profiles."));
 
+        JButton finishBtn = new JButton("Finish Setup");
+        finishBtn.addActionListener(e -> {
+            Path profilesDir = Paths.get("profiles");
+            try {
+                Files.createDirectories(profilesDir);
+
+                int saved = 0;
+                for (RPiProfile profile : profiles) {
+                    String name = profile.nameField.getText().trim();
+                    String addr = profile.addrField.getText().trim();
+
+                    if (!name.isEmpty() && !addr.isEmpty()) {
+                        Properties props = new Properties();
+                        props.setProperty("rpi_name", name);
+                        props.setProperty("rpi_addr", addr);
+
+                        File file = profilesDir.resolve(name + "_profile.properties").toFile();
+                        try (FileWriter writer = new FileWriter(file)) {
+                            props.store(writer, "RPi Profile");
+                            saved++;
+                        }
+                    }
+                }
+
+                JOptionPane.showMessageDialog(this,
+                        "Saved " + saved + " profile(s) to 'profiles/' folder.",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                dispose();  // Close the wizard
+
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to save profiles: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        finishBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(finishBtn);
+
         return panel;
     }
+
 
     private void updateNav() {
         cardLayout.show(cardPanel, String.valueOf(currentCard));
         backButton.setEnabled(currentCard > 0);
-        nextButton.setEnabled(currentCard < 7);
+        nextButton.setEnabled(currentCard < 5);
     }
+
+    private void copyToClipboard(String text) {
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+                new StringSelection(text), null
+        );
+    }
+
 
 
     // AUTO SSH SETUP --> SECURITY ISSUE?
