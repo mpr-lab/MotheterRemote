@@ -18,7 +18,7 @@ def main():
             "Configs don't list device as sensor; sensor_stream.py shouldn't run.",
             file=sys.stderr,
         )
-        return
+        quit()
 
     print(
         "sensor_stream.py running. Will monitor sensor over serial until killed. Output is directed to stdout (should be appended to a log file via bash script).",
