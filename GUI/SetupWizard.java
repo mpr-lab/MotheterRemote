@@ -15,7 +15,7 @@ public class SetupWizard extends JFrame {
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final JButton nextButton = new JButton("Next");
     private final JButton backButton = new JButton("Back");
-    private final JProgressBar progressBar = new JProgressBar(0, 7);
+    private final JProgressBar progressBar = new JProgressBar(0, 11);
     private final Map<String, Integer> sectionStart = new LinkedHashMap<>();
     private int currentCard = 0;
 
@@ -30,7 +30,7 @@ public class SetupWizard extends JFrame {
     private final java.util.List<JPanel> wizardSteps = new ArrayList<>();
     private final Set<String> addedPanels = new HashSet<>(); // prevent duplicate inserts
 
-    private int numCards = 9;
+    private int numCards = 12;
 
     public SetupWizard() {
         super("Initial Setup Wizard");
@@ -90,15 +90,8 @@ public class SetupWizard extends JFrame {
             return;
         }
 
-        // Inject tailscale panel after user selection
-        if (currentCard == 1 && yTailscale.isSelected() && !addedPanels.contains("tailscale")) {
-            insertPanel(buildTailscaleSetup(), currentCard + 1, "tailscale");
-        }
-
-        // Inject radio panel after user selection
-        if (currentCard == 2 && yRadio.isSelected() && !addedPanels.contains("radio")) {
-            insertPanel(buildRadioSetup(), currentCard + 1, "radio");
-        }
+        // Always check and maintain order of optional panels before navigating
+        manageOptionalPanels();
 
         if (currentCard < numCards - 1) {
             currentCard++;
@@ -106,18 +99,60 @@ public class SetupWizard extends JFrame {
         }
     }
 
+    private void manageOptionalPanels() {
+        // Remove all optional panels first
+        if (addedPanels.contains("tailscale")) {
+            removePanel("tailscale");
+        }
+        if (addedPanels.contains("radio")) {
+            removePanel("radio");
+        }
+
+        // Re-insert panels in correct order based on user selection
+        int insertIndex = 2; // after disclaimer and connection
+
+        if (yTailscale.isSelected()) {
+            insertPanel(buildTailscaleSetup(), insertIndex++, "tailscale");
+        }
+
+        // The radio panel must come after the rpi config panel, which is always present at index 2 (or 3 if tailscale is inserted)
+        int radioIndex = yTailscale.isSelected() ? insertIndex + 1 : insertIndex;
+        if (yRadio.isSelected()) {
+            insertPanel(buildRadioSetup(), radioIndex, "radio");
+        }
+    }
+
     private void insertPanel(JPanel panel, int index, String key) {
+        panel.setName(key);
         wizardSteps.add(index, panel);
-        // Rebuild cardPanel
+        addedPanels.add(key);
+        rebuildCardPanel();
+    }
+
+    private void removePanel(String key) {
+        for (int i = 0; i < wizardSteps.size(); i++) {
+            JPanel p = wizardSteps.get(i);
+            if (p.getName() != null && p.getName().equals(key)) {
+                wizardSteps.remove(i);
+                break;
+            }
+        }
+        addedPanels.remove(key);
+        rebuildCardPanel();
+    }
+
+    private void rebuildCardPanel() {
         cardPanel.removeAll();
         for (int i = 0; i < wizardSteps.size(); i++) {
             cardPanel.add(wizardSteps.get(i), String.valueOf(i));
         }
-        addedPanels.add(key);
         numCards = wizardSteps.size();
+        cardLayout.first(cardPanel);
+        cardLayout.show(cardPanel, String.valueOf(currentCard));
         cardPanel.revalidate();
         cardPanel.repaint();
     }
+
 
     private void prevCard() {
         if (currentCard > 0) currentCard--;
@@ -129,7 +164,6 @@ public class SetupWizard extends JFrame {
         backButton.setEnabled(currentCard > 0);
         nextButton.setEnabled(currentCard < numCards);
         progressBar.setValue(currentCard);
-        progressBar.setString("Step " + (currentCard + 1) + " of " + numCards);
         saveProgress();
     }
     private void autoDetectSystem() {
@@ -247,7 +281,7 @@ public class SetupWizard extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel title = new JLabel("Tailscale");
+        JLabel title = new JLabel("TAILSCALE");
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
@@ -317,7 +351,7 @@ public class SetupWizard extends JFrame {
         JScrollPane scroll = new JScrollPane(inner);
         scroll.setBorder(null);
 
-        panel.add(new JLabel("Tailscale Setup"), BorderLayout.NORTH);
+        panel.add(new JLabel("TAILSCALE SETUP"), BorderLayout.NORTH);
         panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
@@ -328,7 +362,7 @@ public class SetupWizard extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel title = new JLabel("Radio");
+        JLabel title = new JLabel("RADIO");
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
@@ -359,7 +393,7 @@ public class SetupWizard extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel title = new JLabel("Radio Setup");
+        JLabel title = new JLabel("RADIO SETUP");
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
@@ -375,12 +409,24 @@ public class SetupWizard extends JFrame {
         profilesPanel.setLayout(new BoxLayout(profilesPanel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        panel.add(new JLabel("Configure Raspberry Pi Profiles"), BorderLayout.NORTH);
+        JPanel north = new JPanel();
+        north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
+        north.add(new JLabel("CONFIGURE RASPBERRY PI PROFILES"));
+        north.add(Box.createRigidArea(new Dimension(0, 10)));
 
+        JTextArea rpiConfig = util.buildTextArea(north, 75);
+        rpiConfig.setText("""
+                Here is where you will set up new raspberry pi profiles. Input your rpi's name and ip address.
+                
+                If you are using tailscale, you can simply use the rpi's name as its address.
+                """);
+        north.add(rpiConfig);
+        north.add(Box.createRigidArea(new Dimension(0, 10)));
 
         JButton addProfile = new JButton("Add RPi Profile");
         addProfile.addActionListener(e -> addRpiProfile("", ""));
 
+        panel.add(north, BorderLayout.NORTH);
         panel.add(new JScrollPane(profilesPanel), BorderLayout.CENTER);
         panel.add(addProfile, BorderLayout.SOUTH);
 
@@ -442,7 +488,7 @@ public class SetupWizard extends JFrame {
         JScrollPane scroll = new JScrollPane(inner);
         scroll.setBorder(null);
 
-        panel.add(new JLabel("SSH Setup"), BorderLayout.NORTH);
+        panel.add(new JLabel("SSH SETUP"), BorderLayout.NORTH);
         panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
@@ -533,7 +579,7 @@ public class SetupWizard extends JFrame {
                 step1a.add(Box.createRigidArea(new Dimension(0, 10)));
             }
             case "linux"   -> {
-                JTextArea download = util.buildTextArea(step1, 60);
+                JTextArea download = util.buildTextArea(step1, 45);
                 download.setText("""
                 If the terminal says anything along the lines of "Unit file sshd.service does not exist", then you do not have ssh installed. Run the following command in your terminal to install SSH:
                 """);
@@ -582,7 +628,7 @@ public class SetupWizard extends JFrame {
         step2.add(new JLabel("Step 2: SSH Key"));
         step2.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextArea copyI2 = util.buildTextArea(step2, 75);
+        JTextArea copyI2 = util.buildTextArea(step2, 60);
         copyI2.setText("Now that SSH is downloaded, you must establish yourself as a known host for the RPi. This will allow you to connect remotely to the RPi without having to enter a password. First, let's check to see if you already have an SSH key. Run the following command in your terminal:");
 
         String checkCmd = "ls -al ~/.ssh";
@@ -694,10 +740,21 @@ public class SetupWizard extends JFrame {
         step4.add(verifySSHRow);
         step4.add(Box.createRigidArea(new Dimension(0, 10)));
         step4.add(changeI4);
-        step4.add(Box.createRigidArea(new Dimension(0, 20)));
+        step4.add(Box.createRigidArea(new Dimension(0, 30)));
+
+        // STEP 4: VERIFY SSH CONNECTION
+        JPanel step5 = new JPanel();
+        step5.setLayout(new BoxLayout(step5, BoxLayout.Y_AXIS));
+        step5.add(new JLabel("Step 5: Verify SSH Connection"));
+        step5.add(Box.createRigidArea(new Dimension(0, 10)));
+
+
+        JTextArea I5 = util.buildTextArea(step5, 30);
+        I5.setText("You have successfully set up the SSH connection for your RPi. Remember to repeat steps 1-4 of the SSH setup for each raspberry pi you have.");
 
         // Add to Panel
         inner.add(step4);
+        inner.add(step5);
 
         JScrollPane scroll = new JScrollPane(inner);
         scroll.setBorder(null);

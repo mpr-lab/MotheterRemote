@@ -217,7 +217,7 @@ public void sendCommand(String cmd) {
         // Helper to unify width and alignment
         return template;
     }
-    int preferredWidth = 450;
+    int preferredWidth = 475;
     java.util.function.Consumer<JComponent> setFullWidth = comp -> {
         comp.setAlignmentX(Component.LEFT_ALIGNMENT);
         Dimension d = comp.getPreferredSize();
