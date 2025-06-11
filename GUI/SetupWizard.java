@@ -15,7 +15,7 @@ public class SetupWizard extends JFrame {
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final JButton nextButton = new JButton("Next");
     private final JButton backButton = new JButton("Back");
-    private final JProgressBar progressBar = new JProgressBar(0, 11);
+    private final JProgressBar progressBar = new JProgressBar(0, 9);
     private final Map<String, Integer> sectionStart = new LinkedHashMap<>();
     private int currentCard = 0;
 
@@ -30,7 +30,7 @@ public class SetupWizard extends JFrame {
     private final java.util.List<JPanel> wizardSteps = new ArrayList<>();
     private final Set<String> addedPanels = new HashSet<>(); // prevent duplicate inserts
 
-    private int numCards = 12;
+    private int numCards = 9;
 
     public SetupWizard() {
         super("Initial Setup Wizard");
@@ -149,6 +149,8 @@ public class SetupWizard extends JFrame {
         numCards = wizardSteps.size();
         cardLayout.first(cardPanel);
         cardLayout.show(cardPanel, String.valueOf(currentCard));
+        progressBar.setMaximum(numCards - 1);
+        progressBar.setValue(currentCard);
         cardPanel.revalidate();
         cardPanel.repaint();
     }
