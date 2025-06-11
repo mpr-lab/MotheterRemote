@@ -39,8 +39,8 @@ SITE location
 """
 
 _observatory_name = "MacLeish"
-_observatory_latitude = 42.4475
-_observatory_longitude = -72.681
+_observatory_latitude = -33.8688  # 42.4475
+_observatory_longitude = 151.2093  # -72.681
 _observatory_altitude = 52
 _observatory_horizon = 10  # If Sun is below this altitude, the program will take data
 
