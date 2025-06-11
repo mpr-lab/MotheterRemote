@@ -27,17 +27,8 @@ public class Utility {
         CONSOLE = console;
     }
 
-    public void loadFileList() {
 
-        fileModel.clear();
-        try (DirectoryStream<Path> ds = Files.newDirectoryStream(DATA_DIR)) {
-            for (Path p : ds) fileModel.addElement(p.getFileName().toString());
-            append("[GUI] File list loaded");
-        } catch (IOException ex){ append("[GUI] Data dir error: "+ex.getMessage()); }
-    }
-
-    public void updateConfigsPy(
-                                 String newRpiName,  String newRpiAddr) {
+    public void updateConfigsPy(String newRpiName,  String newRpiAddr) {
         try {
             File file = new File(CONFIG_PATH);
             BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -151,11 +142,12 @@ public void sendCommand(String cmd) {
             toast.setBackground(new Color(0, 0, 0, 0));
 
             Color bgColor;
-            switch (type.toLowerCase()) {
-                case "success": bgColor = new Color(155, 170, 194, 220); break;     // Green
-                case "error":   bgColor = new Color(155, 170, 194, 220); break;     // Red
-                default:        bgColor = new Color(0, 0, 0, 200); break;       // Black
-            }
+//            switch (type.toLowerCase()) {
+//                case "success": bgColor = new Color(155, 170, 194, 220); break;     // Green
+//                case "error":   bgColor = new Color(155, 170, 194, 220); break;     // Red
+//                default:        bgColor = new Color(0, 0, 0, 200); break;       // Black
+//            }
+            bgColor = new Color(155, 170, 194, 220);
 
             JPanel panel = new JPanel() {
                 protected void paintComponent(Graphics g) {

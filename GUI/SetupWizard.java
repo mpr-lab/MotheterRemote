@@ -15,7 +15,7 @@ public class SetupWizard extends JFrame {
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final JButton nextButton = new JButton("Next");
     private final JButton backButton = new JButton("Back");
-    private final JProgressBar progressBar = new JProgressBar(0, 5);
+    private final JProgressBar progressBar = new JProgressBar(0, 7);
     private final Map<String, Integer> sectionStart = new LinkedHashMap<>();
     private int currentCard = 0;
 
@@ -23,7 +23,14 @@ public class SetupWizard extends JFrame {
     private JPanel profilesPanel;
 
     private boolean disclaimerAccepted = false;
-    private final Path progressFile = Paths.get(".setup_progress");
+    private final Path progressFile = Paths.get(".setup_progress.properties");
+    private String detectedOS = "";
+    Utility util = new Utility();
+
+    private final java.util.List<JPanel> wizardSteps = new ArrayList<>();
+    private final Set<String> addedPanels = new HashSet<>(); // prevent duplicate inserts
+
+    private int numCards = 9;
 
     public SetupWizard() {
         super("Initial Setup Wizard");
@@ -36,13 +43,24 @@ public class SetupWizard extends JFrame {
         sectionStart.put("RPi Setup", 2);
         sectionStart.put("SSH Setup", 4);
 
-        // Panels per step
-        cardPanel.add(buildDisclaimerPanel(), "0");       // Host Setup
-        cardPanel.add(buildConnectionPanel(), "1");
-        cardPanel.add(buildTailscale(), "2");             // RPi Setup
-        cardPanel.add(buildRpiConfigPanel(), "3");
-        cardPanel.add(buildSSHPanel(), "4");              // SSH Setup
-        cardPanel.add(buildFinalPanel(), "5");
+        wizardSteps.add(buildDisclaimerPanel());    // 0
+        wizardSteps.add(buildTailscale());          // 1
+        wizardSteps.add(buildRadio());              // 2
+        wizardSteps.add(buildRpiConfigPanel());     // 3
+        wizardSteps.add(buildSSH());                // 4
+        wizardSteps.add(buildSSH_Step1());          // 5
+        wizardSteps.add(buildSSH_Step2());          // 6
+        wizardSteps.add(buildSSH_Step3());          // 7
+        wizardSteps.add(buildSSH_Step4());          // 8
+        wizardSteps.add(buildFinalPanel());         // 9
+
+        autoDetectSystem();
+
+        // Add all to cardPanel
+        for (int i = 0; i < wizardSteps.size(); i++) {
+            cardPanel.add(wizardSteps.get(i), String.valueOf(i));
+        }
+        numCards = wizardSteps.size();
 
         JPanel navPanel = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -66,14 +84,39 @@ public class SetupWizard extends JFrame {
         loadProgress();
         setVisible(true);
     }
-
     private void nextCard() {
         if (currentCard == 0 && !disclaimerAccepted) {
             JOptionPane.showMessageDialog(this, "Please accept the disclaimer to continue.");
             return;
         }
-        if (currentCard < 5) currentCard++;
-        updateNav();
+
+        // Inject tailscale panel after user selection
+        if (currentCard == 1 && yTailscale.isSelected() && !addedPanels.contains("tailscale")) {
+            insertPanel(buildTailscaleSetup(), currentCard + 1, "tailscale");
+        }
+
+        // Inject radio panel after user selection
+        if (currentCard == 2 && yRadio.isSelected() && !addedPanels.contains("radio")) {
+            insertPanel(buildRadioSetup(), currentCard + 1, "radio");
+        }
+
+        if (currentCard < numCards - 1) {
+            currentCard++;
+            updateNav();
+        }
+    }
+
+    private void insertPanel(JPanel panel, int index, String key) {
+        wizardSteps.add(index, panel);
+        // Rebuild cardPanel
+        cardPanel.removeAll();
+        for (int i = 0; i < wizardSteps.size(); i++) {
+            cardPanel.add(wizardSteps.get(i), String.valueOf(i));
+        }
+        addedPanels.add(key);
+        numCards = wizardSteps.size();
+        cardPanel.revalidate();
+        cardPanel.repaint();
     }
 
     private void prevCard() {
@@ -84,28 +127,106 @@ public class SetupWizard extends JFrame {
     private void updateNav() {
         cardLayout.show(cardPanel, String.valueOf(currentCard));
         backButton.setEnabled(currentCard > 0);
-        nextButton.setEnabled(currentCard < 5);
+        nextButton.setEnabled(currentCard < numCards);
         progressBar.setValue(currentCard);
-        progressBar.setString("Step " + (currentCard + 1) + " of 6");
+        progressBar.setString("Step " + (currentCard + 1) + " of " + numCards);
         saveProgress();
     }
+    private void autoDetectSystem() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/auto_setup.py");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("OS=")) {
+                    detectedOS = line.substring(3).trim().toLowerCase();
+                }
+            }
+
+            process.waitFor();
+
+            System.out.println("[AutoDetect] OS = " + detectedOS);
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("[Auto-Detect] Failed to run auto_setup.py: " + e.getMessage());
+        }
+    }
+
+
 
     private void saveProgress() {
         try {
-            Files.writeString(progressFile, String.valueOf(currentCard));
+            Properties props = new Properties();
+
+            // Navigation state
+            props.setProperty("currentCard", String.valueOf(currentCard));
+            props.setProperty("disclaimerAccepted", String.valueOf(disclaimerAccepted));
+            props.setProperty("tailscaleEnabled", String.valueOf(yTailscale.isSelected()));
+            props.setProperty("radioEnabled", String.valueOf(yRadio.isSelected()));
+
+            // OS selection
+            props.setProperty("os", detectedOS);
+
+            // RPi profiles
+            for (int i = 0; i < profiles.size(); i++) {
+                RPiProfile p = profiles.get(i);
+                props.setProperty("profile." + i + ".name", p.nameField.getText().trim());
+                props.setProperty("profile." + i + ".addr", p.addrField.getText().trim());
+            }
+
+            try (FileWriter fw = new FileWriter(progressFile.toFile())) {
+                props.store(fw, "Wizard Progress");
+            }
+
         } catch (IOException e) {
             System.err.println("[Setup] Failed to save progress: " + e.getMessage());
         }
     }
 
+
     private void loadProgress() {
-        if (Files.exists(progressFile)) {
-            try {
-                currentCard = Integer.parseInt(Files.readString(progressFile).trim());
-                updateNav();
-            } catch (IOException | NumberFormatException ignored) {}
+        if (!Files.exists(progressFile)) return;
+
+        Properties props = new Properties();
+        try (FileReader fr = new FileReader(progressFile.toFile())) {
+            props.load(fr);
+
+            // Current position
+            currentCard = Integer.parseInt(props.getProperty("currentCard", "0"));
+            disclaimerAccepted = Boolean.parseBoolean(props.getProperty("disclaimerAccepted", "false"));
+            yTailscale.setSelected(Boolean.parseBoolean(props.getProperty("tailscaleEnabled", "false")));
+            yRadio.setSelected(Boolean.parseBoolean(props.getProperty("radioEnabled", "false")));
+
+            // OS selection
+            String os = props.getProperty("os", "").toLowerCase();
+            if (!os.isEmpty()) {
+                detectedOS = os;
+            } else {
+                autoDetectSystem(); // fallback if not present
+            }
+            System.out.println("[LoadProgress] Loaded OS = " + detectedOS);
+
+            // Restore RPi profiles
+            profilesPanel.removeAll();
+            profiles.clear();
+            int i = 0;
+            while (props.containsKey("profile." + i + ".name")) {
+                String name = props.getProperty("profile." + i + ".name", "");
+                String addr = props.getProperty("profile." + i + ".addr", "");
+                addRpiProfile(name, addr);
+                i++;
+            }
+
+            updateNav();
+
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("[Setup] Failed to load progress: " + e.getMessage());
         }
     }
+
 
     private JPanel buildDisclaimerPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -121,41 +242,91 @@ public class SetupWizard extends JFrame {
         return panel;
     }
 
-    private JPanel buildConnectionPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JRadioButton wifi = new JRadioButton("WiFi", true);
-        JRadioButton ethernet = new JRadioButton("Ethernet");
-        JRadioButton cellular = new JRadioButton("Cellular");
-        ButtonGroup group = new ButtonGroup();
-        group.add(wifi); group.add(ethernet); group.add(cellular);
-        panel.add(new JLabel("Select connection method:"));
-        panel.add(wifi); panel.add(ethernet); panel.add(cellular);
-        panel.add(new JCheckBox("Using Tailscale"));
-        panel.add(new JCheckBox("Using Radios"));
-        return panel;
-    }
-
+    private final JCheckBox yTailscale = new JCheckBox("yes");
     private JPanel buildTailscale() {
-        Utility util = new Utility();
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel instructions = new JLabel("Tailscale Setup:");
+        JLabel title = new JLabel("Tailscale");
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+
+        JTextArea info = util.buildTextArea(panel, 200);
+        info.setText("""
+                Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device
+                """);
+
+        JLabel question = new JLabel("Will you be using Tailscale?");
+
+        inner.add(info);
+        inner.add(question);
+        inner.add(yTailscale);
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(inner, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel buildTailscaleSetup(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+        // STEP 1:
+
+
+        // add to panel
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.setBorder(null);
+
+        panel.add(new JLabel("Tailscale Setup"), BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private final JCheckBox yRadio = new JCheckBox("yes");
+    private JPanel buildRadio(){
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel title = new JLabel("Radio");
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
         JTextArea info = util.buildTextArea(panel, 300);
         info.setText("""
                 Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device
-                
-                Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan
-                
-                On your computer, go to the Tailscale download page (https://tailscale.com/download) and get the app. Up to one hundred devices can be added for free, so don't worry about having too many devices online.
                 """);
 
-        panel.add(instructions, BorderLayout.NORTH);
-        panel.add(info, BorderLayout.CENTER);
+        JLabel question = new JLabel("Will you be using Radios?");
+
+        inner.add(info);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+        inner.add(question);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+        inner.add(yRadio);
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(inner, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel buildRadioSetup(){
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel title = new JLabel("Radio Setup");
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(inner, BorderLayout.CENTER);
         return panel;
     }
 
@@ -174,7 +345,6 @@ public class SetupWizard extends JFrame {
 
         addRpiProfile("", "");
         return panel;
-
     }
 
     private void addRpiProfile(String name, String addr) {
@@ -211,19 +381,37 @@ public class SetupWizard extends JFrame {
         profilesPanel.repaint();
     }
 
-    private JPanel buildSSHPanel() {
-        Utility util = new Utility();
+    private JPanel buildSSH(){
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
-        JTextArea instructions = util.buildTextArea(panel, 50);
-        instructions.setText("The next step of setup involves setting up a secure shell access to the raspberry pis. For this step, you will need to open the terminal on your computer and run some commands. Follow each step carefully:");
-
-        inner.add(instructions);
+        JTextArea description = util.buildTextArea(inner, 30);
+        description.setText("This GUI uses Secure Shell to remotely access and run commands on the raspberry pi. This section of the setup will walk you through setting up Secure Shell (SSH), and using it to connect to a raspberry pi.");
+        inner.add(description);
         inner.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea terminal = util.buildTextArea(inner, 30);
+        terminal.setText("In order to set up SSH, you will need to use the terminal on your computer. In order to open the terminal");
+        inner.add(terminal);
+        inner.add(Box.createRigidArea(new Dimension(0, 10)));
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.setBorder(null);
+
+        panel.add(new JLabel("SSH Setup"), BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel buildSSH_Step1(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
         // STEP 1: CHECK IS SSH INSTALLED< IF IT's NOT, INSTALL IT
         JPanel step1 = new JPanel();
@@ -231,33 +419,122 @@ public class SetupWizard extends JFrame {
         step1.add(new JLabel("Step 1: Check is SSH is installed"));
         step1.add(Box.createRigidArea(new Dimension(0, 10)));
 
+        // TODO: INSTRUCTIONS BASED ON OPERATING SYSTEM
         JTextArea copyI1 = util.buildTextArea(step1, 30);
-        copyI1.setText("Open up a new terminal. First, check whether or not you have ssh installed. To do this, run the following command:");
+        copyI1.setText("Open up a new terminal. First, check whether or not you have ssh installed. This looks different on different operating systems.");
 
-        String sshCmd = "ssh";
+//        // Windows
+//        String sshCmd = "systemctl status sshd";
+//        JPanel checkSSHRow = buildCopyRow(sshCmd);
+
+//        // Mac
+//        String sshCmd = "sudo systemsetup -getremotelogin";
+//        JPanel checkSSHRow = buildCopyRow(sshCmd);
+
+        // Linux
+        String sshCmd = "systemctl status sshd";
         JPanel checkSSHRow = buildCopyRow(sshCmd);
+
+        JTextArea proceedI1 = util.buildTextArea(step1, 30);
+        proceedI1.setText("If there is a file called id_ed_25519, then you already have an SSH key. Proceed to [STEP 2]. If you do not have a file called id_ed_25519, proceed to [STEP 2a].");
 
         step1.add(copyI1);
         step1.add(Box.createRigidArea(new Dimension(0, 10)));
         step1.add(checkSSHRow);
         step1.add(Box.createRigidArea(new Dimension(0, 20)));
+        step1.add(proceedI1);
+        step1.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // STEP 1a: DOWNLOAD SSH IF NOT DOWNLOADED
+        JPanel step1a = new JPanel();
+        step1a.setLayout(new BoxLayout(step1a, BoxLayout.Y_AXIS));
+        step1a.add(new JLabel("Step 1a: Download SSH"));
+        step1a.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea copyI1a = util.buildTextArea(step1, 30);
+        copyI1.setText("If you do not already have ssh installed: ");
+
+        String downloadCmd = "ssh";
+        JPanel downloadSSHRow = buildCopyRow(downloadCmd);
+
+        step1a.add(copyI1a);
+        step1a.add(Box.createRigidArea(new Dimension(0, 10)));
+        step1a.add(downloadSSHRow);
+        step1a.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        inner.add(step1);
+        inner.add(step1a);
+
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.setBorder(null);
+
+        panel.add(scroll);
+        return panel;
+    }
+
+    private JPanel buildSSH_Step2(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
         // STEP 2 GENERATE SSH KEY
         JPanel step2 = new JPanel();
         step2.setLayout(new BoxLayout(step2, BoxLayout.Y_AXIS));
-        step2.add(new JLabel("Step 2: Generate a SSH Key"));
+        step2.add(new JLabel("Step 2: SSH Key"));
         step2.add(Box.createRigidArea(new Dimension(0, 10)));
 
         JTextArea copyI2 = util.buildTextArea(step2, 75);
-        copyI2.setText("Now that you have SSH, you must establish yourself as a known host for the RPi. This will allow you to connect remotely to the RPi without having to enter a password. We must generate a new SSH key which will be copied to the rpi. Copy the following command into your terminal:");
+        copyI2.setText("Now that SSH is downloaded, you must establish yourself as a known host for the RPi. This will allow you to connect remotely to the RPi without having to enter a password. First, let's check to see if you already have an SSH key. Run the following command in your terminal:");
+
+        String checkCmd = "ls -al ~/.ssh";
+        JPanel checkKeySSHRow = buildCopyRow(checkCmd);
+
+        JTextArea proceedI2 = util.buildTextArea(step2, 30);
+        proceedI2.setText("If there is a file called id_ed_25519, then you already have an SSH key. Proceed to [STEP 3]. If you do not have a file called id_ed_25519, proceed to [STEP 2a].");
+
+        step2.add(copyI2);
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2.add(checkKeySSHRow);
+        step2.add(Box.createRigidArea(new Dimension(0, 20)));
+        step2.add(proceedI2);
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // STEP 2 GENERATE SSH KEY
+        JPanel step2a = new JPanel();
+        step2a.setLayout(new BoxLayout(step2a, BoxLayout.Y_AXIS));
+        step2a.add(new JLabel("Step 2: Generate a SSH Key"));
+        step2a.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea copyI2a = util.buildTextArea(step2, 30);
+        copyI2a.setText("If the SSH key does not exist yet, we must generate one to be copied to the RPi. Run the following command into your terminal:");
 
         String generateCmd = "ssh-keygen -t ed25519";
         JPanel genSSHRow = buildCopyRow(generateCmd);
 
-        step2.add(copyI2);
-        step2.add(Box.createRigidArea(new Dimension(0, 10)));
-        step2.add(genSSHRow);
-        step2.add(Box.createRigidArea(new Dimension(0, 20)));
+        step2a.add(copyI2a);
+        step2a.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2a.add(genSSHRow);
+        step2a.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Add to Panel
+        inner.add(step2);
+        inner.add(step2a);
+
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.setBorder(null);
+
+        panel.add(scroll);
+        return panel;
+    }
+
+    private JPanel buildSSH_Step3(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
         // STEP 3: COPY SSH KEY
         JPanel step3 = new JPanel();
@@ -282,10 +559,27 @@ public class SetupWizard extends JFrame {
         step3.add(changeI3);
         step3.add(Box.createRigidArea(new Dimension(0, 20)));
 
+        // Add to Panel
+        inner.add(step3);
+
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.setBorder(null);
+
+        panel.add(scroll);
+        return panel;
+    }
+
+    private JPanel buildSSH_Step4(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+
         // STEP 4: VERIFY SSH CONNECTION
         JPanel step4 = new JPanel();
         step4.setLayout(new BoxLayout(step4, BoxLayout.Y_AXIS));
-        step4.add(new JLabel("Step 3: Copy SSH Key to Each Raspberry Pi"));
+        step4.add(new JLabel("Step 4: Verify SSH Connection"));
         step4.add(Box.createRigidArea(new Dimension(0, 10)));
 
 
@@ -296,7 +590,7 @@ public class SetupWizard extends JFrame {
         JPanel verifySSHRow = buildCopyRow(verifyCmd);
 
         JTextArea changeI4 = util.buildTextArea(step4, 45);
-        changeI4.setText("Make sure to change <rpi_name> and <rpi_addr> with the correct information. If you setup the ssh connection correctly, you should be able to access the RPi without having to input a password. you should now see");
+        changeI4.setText("Make sure to change <rpi_name> and <rpi_addr> with the correct information. If you setup the ssh connection correctly, you should be able to access the RPi without having to input a password.");
 
         step4.add(copyI4);
         step4.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -305,10 +599,7 @@ public class SetupWizard extends JFrame {
         step4.add(changeI4);
         step4.add(Box.createRigidArea(new Dimension(0, 20)));
 
-
-        inner.add(step1);
-        inner.add(step2);
-        inner.add(step3);
+        // Add to Panel
         inner.add(step4);
 
         JScrollPane scroll = new JScrollPane(inner);

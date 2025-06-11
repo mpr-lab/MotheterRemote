@@ -1,4 +1,4 @@
-// Refactored BuildGUI.java to include Refresh Button in Profile Selector Header
+// Refactored BuildGUI.java with Auto-Refreshing Profile List via Static Reference
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +8,7 @@ import java.util.*;
 
 public class BuildGUI extends JFrame {
     private final JTextArea console = new JTextArea();
-    private final JComboBox<String> profileDropdown = new JComboBox<>();
+    private static JComboBox<String> profileDropdown = new JComboBox<>();
     private final JButton confirmProfileButton = new JButton("Confirm");
 
     public BuildGUI() {
@@ -71,7 +71,7 @@ public class BuildGUI extends JFrame {
         return panel;
     }
 
-    private void refreshProfileList() {
+    public static void refreshProfileList() {
         profileDropdown.removeAllItems();
         File profileDir = new File("profiles");
         String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
@@ -83,14 +83,7 @@ public class BuildGUI extends JFrame {
     }
 
     private void loadProfileList() {
-        profileDropdown.removeAllItems();
-        File profileDir = new File("profiles");
-        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
-        if (profileNames != null) {
-            for (String name : profileNames) {
-                profileDropdown.addItem(name.replace("_profile.properties", ""));
-            }
-        }
+        refreshProfileList();
     }
 
     private JPanel buildConsolePanel() {

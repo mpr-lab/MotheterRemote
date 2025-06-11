@@ -145,6 +145,8 @@ public class SettingsTab extends JPanel {
                 profileListModel.addElement(newProfileName);
                 profileList.setSelectedValue(newProfileName, true);
                 util.append("[Settings] New profile added: " + newProfileName);
+                BuildGUI.refreshProfileList();
+
             } catch (IOException ex) {
                 util.append("[Error] Failed to add profile: " + ex.getMessage());
             }
@@ -170,6 +172,7 @@ public class SettingsTab extends JPanel {
                 rpiNameField.setText("");
                 rpiAddrField.setText("");
                 currentProfile = null;
+                BuildGUI.refreshProfileList();
             } else {
                 util.append("[Error] Failed to delete profile file.");
             }
