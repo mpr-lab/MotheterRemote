@@ -203,14 +203,17 @@ class Radio:
                 fullPath = os.path.join(path, entry)
                 if os.path.isdir(fullPath):  # if directory, recurse on it
                     to_return.extend(_all_file_list(fullPath))
-                if fullPath.endswith(".dat"):  # if .dat file, add to list
+                # if .dat/.txt file, add to list
+                if fullPath.endswith(".dat") or fullPath.endswith(".txt"):
                     to_return.append(fullPath)
+
             return to_return
 
         l = _all_file_list(rpi_data_path)
         d: dict[str, int] = {}
         for file in l:
-            if file.endswith(".dat"):  # filter for dat files
+            # filter for dat/txt files
+            if file.endswith(".dat") or file.endswith(".txt"):
                 ctime = os.path.getctime(file)  # seconds since 1970
                 d.update({file: int(ctime)})  # new dict entry for name and date
         return d

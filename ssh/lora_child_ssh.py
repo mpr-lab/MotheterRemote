@@ -203,7 +203,7 @@ class Ser:
             self.s.write(b)  # send bytearray
 
     def _get_file_list(self) -> str:
-        """Gets string list of all .dat files in the data directory on this RPi, with the corresponding date of modification
+        """Gets string list of all .dat files in the data directory on this RPi, with the corresponding date of modification.
 
         Returns:
             str: name and modified date for each file, concatenated
@@ -238,10 +238,16 @@ class Ser:
             return to_return
 
         l = _all_file_list(acc_data_path)
+        l2 = _all_file_list("/var/tmp/ssh_debug")
+        l.extend(l2)
         a: list[str] = []
         a.append("rsync files")  # prepend header for parent processing
         for file in l:
             if file.endswith(".dat"):  # filter for dat files
+                ctime = os.path.getmtime(file)  # seconds since 1970
+                s = f"{file};{ctime}"  # entry with name and time
+                a.append(s)
+            if file.endswith(".txt"):  # filter for txt files
                 ctime = os.path.getmtime(file)  # seconds since 1970
                 s = f"{file};{ctime}"  # entry with name and time
                 a.append(s)

@@ -68,13 +68,12 @@ def main():
         )
         return
 
-    if "rsync" in command:
-        print("radio rsync not implemented yet", file=sys.stderr)
-        return
-
     if "status" in command:
         print("AOK", file=sys.stdout)
         return
+
+    if "rsync" in command:
+        print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
 
     try:
         _device_search()  # connect if possible
