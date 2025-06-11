@@ -637,6 +637,10 @@ class SQMLE(SQM):
 
         read_err = False
         msg = self.read_buffer().decode()
+        print("DEBUG TIME")
+        print(msg)
+        print(str(msg))
+        print(type(msg))
 
         # Check metadata
         try:
