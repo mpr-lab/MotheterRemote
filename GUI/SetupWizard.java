@@ -257,8 +257,8 @@ public class SetupWizard extends JFrame {
 
         JTextArea info = util.buildTextArea(panel, 200);
         info.setText("""
-                Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device
-                """);
+            Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device. Tailscale is only required for cellular connections but may be useful in WiFi setups as well, because it lets you maintain a static IP address.
+            """);
 
         JLabel question = new JLabel("Will you be using Tailscale?");
 
@@ -280,9 +280,40 @@ public class SetupWizard extends JFrame {
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
         // STEP 1:
+        JPanel step1 = new JPanel();
+        step1.setLayout(new BoxLayout(step1, BoxLayout.Y_AXIS));
+        step1.add(new JLabel("Step 1: Create a Tailscale Account"));
+        step1.add(Box.createRigidArea(new Dimension(0, 10)));
 
+        JTextArea I1 = util.buildTextArea(step1, 75);
+        I1.setText("Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan.");
+        step1.add(I1);
+        step1.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // STEP 1:
+        JPanel step2 = new JPanel();
+        step2.setLayout(new BoxLayout(step2, BoxLayout.Y_AXIS));
+        step2.add(new JLabel("Step 2: Download Tailscale on your computer"));
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea I2a = util.buildTextArea(step1, 30);
+        I2a.setText("On your computer, open up a browser, go to the Tailscale download page and get the app. The link can be found below:");
+        String link = "https://tailscale.com/download";
+        JPanel tailscaleDwnld = buildCopyRow(link);
+        JTextArea I2b = util.buildTextArea(step1, 30);
+        I2b.setText("Up to a hundred devices can be added for free, so don't worry about having too many devices online.");
+
+        step2.add(I2a);
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2.add(tailscaleDwnld);
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2.add(I2b);
+        step2.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // add to panel
+        inner.add(step1);
+        inner.add(step2);
+
         JScrollPane scroll = new JScrollPane(inner);
         scroll.setBorder(null);
 
@@ -332,7 +363,6 @@ public class SetupWizard extends JFrame {
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
-
 
         panel.add(title, BorderLayout.NORTH);
         panel.add(inner, BorderLayout.CENTER);

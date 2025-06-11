@@ -133,7 +133,7 @@ Contains the constructor for the full GUI
 ### `RPiCommandTab.java`
 Contains the constructor for the RPi Command Center Tab
 
-### `SensorCommandTab.java`
+### `prototypes.SensorCommandTab.java`
 Contains the constructor for the Sensor Command Center Tab
 
 ### `DataTab.java`

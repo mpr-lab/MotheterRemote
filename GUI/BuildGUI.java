@@ -1,5 +1,7 @@
 // Refactored BuildGUI.java with Auto-Refreshing Profile List via Static Reference
 
+import prototypes.SensorCommandTab;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -24,8 +26,9 @@ public class BuildGUI extends JFrame {
         add(topPanel, BorderLayout.NORTH);
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("RPi Command Center", new RPiCommandTab(util));
-        tabs.addTab("Sensor Command Center", new SensorCommandTab(util));
+        tabs.addTab("Command Center", new RPiCommandTab(util));
+//        tabs.addTab("Sensor Command Center", new SensorCommandTab(util));
+        tabs.addTab("Data Sync", new DataTab(util));
         tabs.addTab("Settings", new SettingsTab(util));
         tabs.addTab("?", new HelpTab());
         add(tabs, BorderLayout.CENTER);

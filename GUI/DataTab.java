@@ -1,16 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.function.Supplier;   // the lambda-returning-string type
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class DataTab extends JPanel{
     private static final Path   DATA_DIR     = Paths.get(System.getProperty("user.home"), "SQMdata");
@@ -63,11 +57,5 @@ public class DataTab extends JPanel{
     }
 
 
-//    private void append(String txt){
-//        SwingUtilities.invokeLater(() -> {
-//            CONSOLE.append(txt+"\n");
-//            CONSOLE.setCaretPosition(CONSOLE.getDocument().getLength());
-//        });
-//    }
-
 }
+
