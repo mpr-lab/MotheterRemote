@@ -637,10 +637,6 @@ class SQMLE(SQM):
 
         read_err = False
         msg = self.read_buffer().decode()
-        print("DEBUG TIME")
-        print(msg)
-        print(str(msg))
-        print(type(msg))
 
         # Check metadata
         try:
@@ -868,6 +864,10 @@ class SQMLU(SQM):
         # Check that msg contains data
         if read_err == True:
             print(("ERR. Reading the photometer!: %s" % str(msg)))
+                print("DEBUG TIME")
+                print(msg)
+                print(str(msg))
+                print(type(msg))
             if DEBUG:
                 raise
             return -1

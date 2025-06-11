@@ -37,7 +37,7 @@ ____________________________
 SITE location
 -------------
 """
-
+DEBUG = True  # delete later
 _observatory_name = "MacLeish"
 _observatory_latitude = -33.8688  # 42.4475
 _observatory_longitude = 151.2093  # -72.681
