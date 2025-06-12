@@ -1,10 +1,14 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 public class Utility {
     /* ====  GLOBAL CONSTANTS & STATE  ==================================== */
     /* ---------------- File system paths ---------------- */
@@ -277,6 +281,27 @@ public void sendCommand(String cmd) {
         });
     }
 
+    private void copyToClipboard(String text) {
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+                new StringSelection(text), null
+        );
+    }
+
+    JPanel buildCopyRow(String command, int height){
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+        JTextField cmdField = new JTextField(command);
+        cmdField.setEditable(false);
+        JButton copyBtn = new JButton("Copy");
+        copyBtn.addActionListener(e -> copyToClipboard(command));
+        row.add(cmdField);
+        row.add(Box.createRigidArea(new Dimension(10, 0)));
+        row.add(copyBtn);
+        row.setMaximumSize(new Dimension(500, height));
+        setFullWidth.accept(row);
+
+        return row;
+    }
 
     private JPanel buildTemplate(){
         JPanel template = new JPanel();
