@@ -61,6 +61,75 @@ public class Utility {
         wrapper.add(side, BorderLayout.EAST);
         return wrapper;
     }
+    public void sendCommand(String cmd) {
+        if (cmd == null || cmd.isBlank()) {
+            System.out.println("[DEBUG] Command is null or blank — skipping.");
+            return;
+        }
+
+        System.out.println("[DEBUG] Sending command: " + cmd);
+        append("\n> " + cmd);
+
+        try {
+            File backendFile = new File(BACKEND_PATH);
+            System.out.println("[DEBUG] BACKEND_PATH = " + BACKEND_PATH);
+            System.out.println("[DEBUG] BACKEND_PATH absolute = " + backendFile.getAbsolutePath());
+            System.out.println("[DEBUG] File exists? " + backendFile.exists());
+
+            String detectedOS = getDetectedOSType();
+
+            // Use detectedOS to choose Python command
+            String pythonCmd;
+            switch (detectedOS) {
+                case "windows":
+                    pythonCmd = "python";
+                    break;
+                case "linux", "mac":
+                    pythonCmd = "python3";
+                    break;
+                default:
+                    pythonCmd = "python3"; // Fallback
+                    System.err.println("[WARN] Unknown OS, defaulting to 'python3'");
+            }
+
+            // Prepare command
+            ProcessBuilder pb = new ProcessBuilder(pythonCmd, BACKEND_PATH, cmd);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+
+            System.out.println("[DEBUG] Process started.");
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            int lineCount = 0;
+
+            while ((line = reader.readLine()) != null) {
+                System.out.println("[DEBUG] Python output: " + line);
+                append(line);
+                lineCount++;
+            }
+
+            int exitCode = p.waitFor();
+            System.out.println("[DEBUG] Process exited with code: " + exitCode);
+
+            if (lineCount == 0) {
+                System.out.println("[DEBUG] No output received from backend.");
+            }
+
+            if (exitCode == 0) {
+                showToast(CONSOLE, "Command sent: " + cmd, "success", 2000);
+            } else {
+                showToast(CONSOLE, "Command failed: " + cmd, "error", 2000);
+            }
+
+        } catch (IOException | InterruptedException ex) {
+            System.out.println("[DEBUG] Exception thrown: " + ex.getMessage());
+            ex.printStackTrace();
+            append("[ERR] " + ex.getMessage());
+            showToast(CONSOLE, "Error: " + ex.getMessage(), "error", 2000);
+        }
+    }
+
 
 //    public void sendCommand(String cmd) {
 //        if (cmd == null || cmd.isBlank()) return;
@@ -82,58 +151,58 @@ public class Utility {
 //            append("[ERR] " + ex.getMessage());
 //        }
 //    }
-public void sendCommand(String cmd) {
-    if (cmd == null || cmd.isBlank()) {
-        System.out.println("[DEBUG] Command is null or blank — skipping.");
-        return;
-    }
-
-    System.out.println("[DEBUG] Sending command: " + cmd);
-    append("\n> " + cmd);
-
-    try {
-        File backendFile = new File(BACKEND_PATH);
-        System.out.println("[DEBUG] BACKEND_PATH = " + BACKEND_PATH);
-        System.out.println("[DEBUG] BACKEND_PATH absolute = " + backendFile.getAbsolutePath());
-        System.out.println("[DEBUG] File exists? " + backendFile.exists());
-
-        // Prepare command
-        ProcessBuilder pb = new ProcessBuilder("python3", BACKEND_PATH, cmd);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-
-        System.out.println("[DEBUG] Process started.");
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        int lineCount = 0;
-
-        while ((line = reader.readLine()) != null) {
-            System.out.println("[DEBUG] Python output: " + line);
-            append(line);
-            lineCount++;
-        }
-
-        int exitCode = p.waitFor();
-        System.out.println("[DEBUG] Process exited with code: " + exitCode);
-
-        if (lineCount == 0) {
-            System.out.println("[DEBUG] No output received from backend.");
-        }
-
-        if (exitCode == 0) {
-            showToast(CONSOLE, "Command sent: " + cmd, "success", 2000);
-        } else {
-            showToast(CONSOLE, "Command failed: " + cmd, "error", 2000);
-        }
-
-    } catch (IOException | InterruptedException ex) {
-        System.out.println("[DEBUG] Exception thrown: " + ex.getMessage());
-        ex.printStackTrace();
-        append("[ERR] " + ex.getMessage());
-        showToast(CONSOLE, "Error: " + ex.getMessage(), "error", 2000);
-    }
-}
+//public void sendCommand(String cmd) {
+//    if (cmd == null || cmd.isBlank()) {
+//        System.out.println("[DEBUG] Command is null or blank — skipping.");
+//        return;
+//    }
+//
+//    System.out.println("[DEBUG] Sending command: " + cmd);
+//    append("\n> " + cmd);
+//
+//    try {
+//        File backendFile = new File(BACKEND_PATH);
+//        System.out.println("[DEBUG] BACKEND_PATH = " + BACKEND_PATH);
+//        System.out.println("[DEBUG] BACKEND_PATH absolute = " + backendFile.getAbsolutePath());
+//        System.out.println("[DEBUG] File exists? " + backendFile.exists());
+//
+//        // Prepare command
+//        ProcessBuilder pb = new ProcessBuilder("python3", BACKEND_PATH, cmd);
+//        pb.redirectErrorStream(true);
+//        Process p = pb.start();
+//
+//        System.out.println("[DEBUG] Process started.");
+//
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+//        String line;
+//        int lineCount = 0;
+//
+//        while ((line = reader.readLine()) != null) {
+//            System.out.println("[DEBUG] Python output: " + line);
+//            append(line);
+//            lineCount++;
+//        }
+//
+//        int exitCode = p.waitFor();
+//        System.out.println("[DEBUG] Process exited with code: " + exitCode);
+//
+//        if (lineCount == 0) {
+//            System.out.println("[DEBUG] No output received from backend.");
+//        }
+//
+//        if (exitCode == 0) {
+//            showToast(CONSOLE, "Command sent: " + cmd, "success", 2000);
+//        } else {
+//            showToast(CONSOLE, "Command failed: " + cmd, "error", 2000);
+//        }
+//
+//    } catch (IOException | InterruptedException ex) {
+//        System.out.println("[DEBUG] Exception thrown: " + ex.getMessage());
+//        ex.printStackTrace();
+//        append("[ERR] " + ex.getMessage());
+//        showToast(CONSOLE, "Error: " + ex.getMessage(), "error", 2000);
+//    }
+//}
 
 
     public void showToast(Component parentComponent, String message, String type, int durationMillis) {
@@ -237,6 +306,29 @@ public void sendCommand(String cmd) {
         return textArea;
     }
 
+    String getDetectedOSType() {
+        File configFile = new File("profiles/host_config.properties");
+
+        if (!configFile.exists()) {
+            System.err.println("[OS Detect] Config file does not exist.");
+            return "unknown";
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(configFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("OS=")) {
+                    String os = line.substring(3).trim().toLowerCase();
+                    System.out.println("[OS Detect] Detected OS: " + os);
+                    return os;
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("[OS Detect] Failed to read config: " + e.getMessage());
+        }
+
+        return "unknown";
+    }
 
 
 }

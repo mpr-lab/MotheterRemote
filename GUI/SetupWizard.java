@@ -38,6 +38,7 @@ public class SetupWizard extends JFrame {
         setSize(600, 500);
         setLocationRelativeTo(null);
         autoDetectSystem();
+        detectedOS = util.getDetectedOSType();
 
         // Sections
         sectionStart.put("Host Setup", 0);
@@ -170,26 +171,54 @@ public class SetupWizard extends JFrame {
     }
     private void autoDetectSystem() {
         try {
+            File configOut = new File("profiles/host_config.properties");
             ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/auto_setup.py");
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(configOut));
+
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("OS=")) {
-                    detectedOS = line.substring(3).trim().toLowerCase();
-                }
+                System.out.println("[AutoDetect] " + line);
+                writer.write(line);
+                writer.newLine();
             }
 
+            writer.close();
             process.waitFor();
-
-            System.out.println("[AutoDetect] OS = " + detectedOS);
+            System.out.println("[AutoDetect] System info saved to " + configOut.getAbsolutePath());
 
         } catch (IOException | InterruptedException e) {
             System.err.println("[Auto-Detect] Failed to run auto_setup.py: " + e.getMessage());
         }
     }
+
+
+
+//    private void autoDetectSystem() {
+//        try {
+//            ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/auto_setup.py");
+//            pb.redirectErrorStream(true);
+//            Process process = pb.start();
+//
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                if (line.startsWith("OS=")) {
+//                    detectedOS = line.substring(3).trim().toLowerCase();
+//                }
+//            }
+//
+//            process.waitFor();
+//
+//            System.out.println("[AutoDetect] OS = " + detectedOS);
+//
+//        } catch (IOException | InterruptedException e) {
+//            System.err.println("[Auto-Detect] Failed to run auto_setup.py: " + e.getMessage());
+//        }
+//    }
 
 
 
@@ -242,6 +271,7 @@ public class SetupWizard extends JFrame {
                 detectedOS = os;
             } else {
                 autoDetectSystem(); // fallback if not present
+                detectedOS = util.getDetectedOSType();
             }
             System.out.println("[LoadProgress] Loaded OS = " + detectedOS);
 

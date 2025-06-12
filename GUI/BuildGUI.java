@@ -1,7 +1,5 @@
 // Refactored BuildGUI.java with Auto-Refreshing Profile List via Static Reference
 
-import prototypes.SensorCommandTab;
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
