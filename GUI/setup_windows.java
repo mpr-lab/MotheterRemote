@@ -16,7 +16,7 @@ public class setup_windows {
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
-        // STEP 1: CHECK IS SSH INSTALLED< IF IT's NOT, INSTALL IT
+        // STEP 1: CHECK IS SSH INSTALLED < IF IT's NOT, INSTALL IT
         JPanel step1 = new JPanel();
         step1.setLayout(new BoxLayout(step1, BoxLayout.Y_AXIS));
         step1.add(new JLabel("Step 1: Check if SSH is installed"));
@@ -27,7 +27,7 @@ public class setup_windows {
         String sshCmd = "ssh";
         JPanel checkSSHRow = util.buildCopyRow(sshCmd, 30);
 
-        JTextArea proceedI1 = util.buildTextArea(step1, 75);
+        JTextArea proceedI1 = util.buildTextArea(step1, 90);
         proceedI1.setText("For windows users, there should be a line printed in the output of the terminal after running the first command that begins with 'usage: ssh' followed by a list of commands if SSH is active. If this is the case, then move onto [STEP 2]. If not, move on to [STEP 1a].");
 
         step1.add(copyI1);
