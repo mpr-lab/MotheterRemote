@@ -335,7 +335,7 @@ _**TODO**_ - - - - - - - -
 
 ---
 ### 6/4/2025
-Restructed everything
+Restructured everything (this took a while)
 
 ---
 ### 6/5/2025
@@ -348,5 +348,56 @@ I was sick... started trying to build out setup wizard
 
 ---
 ### 6/8/2025
-Setup wizard
+Setup wizard main framework
 packaging
+
+---
+### 6/9/2025
+more to setup wizard, added save and load progress, making new changes compatible with GUI:
+* multiple rpi profiles, can switch between them with a dropdown menu
+* can add/delete profiles from settings tab
+
+Did a lot of work the help tab:
+* general instructions pretty much done
+* rpi instructions pretty much done
+* sensor in progress
+* data in progress
+* settings instructions done
+
+---
+### 6/10/2025
+added hide/show console button and made it so that the console starts minimized
+
+added a toast popup at the bottom of the GUI that confirms to the user if a command was sent
+* separate colors for state of command? (red &rarr; error, green &rarr; success)
+ 
+Coded out auto ssh setup that automatically generate a new ssh key if the user doesn't have it already then copies it to the raspberry pi using `sshpass`. If prompted for the password, a popup window will appear where user can type in their password
+
+\
+\
+\
+_**TODO**_ - - - - - - - -
+* continue workshopping help center
+* finish tailscale and radio instructions
+* display information about status and about rsync
+
+---
+### 6/11/2025
+got rid of connection page: that can all be configured automatically with `auto_setup.py`
+* added functionaliy to autosetup, the setup wizrd gives different instructions based on the operating system that the host computer is using
+* need to have a fallback just incase auto setup is incorrect: maybe a separate button that shows all instructions?
+
+auto ssh function poses secuirity threat, switched to step-by-step instructions for ssh. updated ssh instructions to have each step be on a page. Wrote tailscale instructions and figured out logic for inserting cardpanels only when button is selected
+
+combined RPiCommandCenter and SensorCommandCenter to be on one single tab, did not make sense for them to be separated because you need would need to switch screens to access rsync and such buttons which would become annoying when trying fetch data.
+* thinking about maybe adding a function that automatically sends rsync after like 10 seconds when user runs any sensor command 
+* need to update the help tab to accommodate this change
+
+\
+\
+\
+  _**TODO**_ - - - - - - - -
+* continue work help center
+* radio instructions
+* display information about status and about rsync
+* data tab fix
