@@ -48,7 +48,7 @@ elif test $num_inst == 0; then # grep didn't find program
     # $1 is first argument when script is called
     # run python file with first arg
     exec python3 ~/MotheterRemote/ssh/lora_child_ssh.py $1 2>> /var/tmp/ssh_debug/radio_err.txt 1>>/var/tmp/ssh_debug/radio_out.txt &
-elif test $num_inst >= 1; then
+elif test $num_inst > 1; then
     echo "More than one instance of lora_child_ssh.py is running!"
 else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."

@@ -30,9 +30,9 @@ all_procs=$(ps -ef)
 num_inst=$(echo "$all_procs" | grep [r]pi_ssh | wc -l)
 
 if test $num_inst == 1; then # grep found one thing (the actual program)
-    echo "Already running rpi_ssh.py"
+    echo "Already running rpi_ssh.py. It should die after completing, instead of staying alive."
 elif test $num_inst == 0; then # grep didn't find program
-    echo "Rpi program not running! Attempting to start now."
+    echo "Starting new rpi_ssh.py instance now."
 
     # redirect stdout to log file
     echo $dt >> /var/tmp/ssh_debug/rpi_out.txt
