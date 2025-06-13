@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Running sensor_runner.sh"
+
 # make log file directory, if it doesn't exist
 if [[ ! -e /var/tmp/ssh_debug ]]; then
     mkdir -p /var/tmp/ssh_debug
@@ -22,8 +24,6 @@ fi
 # get date/time
 dt="$(date '+%d/%m/%Y %H:%M:%S');"
 
-echo "Running sensor_runner.sh"
-
 all_procs=$(ps -ef)
 num_inst=$(echo "$all_procs" | grep [s]ensor_stream | wc -l)
 
@@ -42,6 +42,8 @@ elif test $num_inst == 0; then # grep didn't find program
 
     # run python program in background (don't wait for it to finish, just let shell die)
     /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py 2>> /var/tmp/ssh_debug/sensor_err.txt 1>>/var/tmp/ssh_debug/sensor_out.txt &
+elif test $num_inst >= 1; then
+    echo "More than one instance of sensor_streaming.py is running!"
 else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."
 fi
@@ -67,7 +69,8 @@ elif test $num_inst == 0; then # grep didn't find program
 
     num_inst=$(echo "$all_procs" | grep [p]ysqm | wc -l)
     echo $num_inst
-
+elif test $num_inst >= 1; then
+    echo "More than one instance of pysqm is running!"
 else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."
 fi
