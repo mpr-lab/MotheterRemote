@@ -48,6 +48,10 @@ else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."
 fi
 
+# try to get stdout/err back on terminal?
+exec 1>> /dev/stdout
+exec 2>> /dev/stderr
+
 num_inst=$(echo "$all_procs" | grep [p]ysqm | wc -l)
 
 if test $num_inst == 1 ; then # grep found one thing (the actual program)
