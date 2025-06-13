@@ -22,7 +22,7 @@ rpi_name = "pi"
 rpi_repo = "~/MotheterRemote"  # path to this repo directory
 # rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
 # rpi_addr = "10.10.32.91"  # ip or ddns address
-rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
+rpi_data_path = "sqmdata"  # where sensor stores its data (NOT in repo)
 rpi_addr = "pi"
 
 

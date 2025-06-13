@@ -45,7 +45,7 @@ def rsync(output: lora_parent_ssh.Radio):
     print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
     output.rpi_to_client("rsync")
     print("Waiting to ensure rsync completes", file=sys.stderr)
-    time.sleep(60)
+    time.sleep(5)
     print("Rsync should be done by now.", file=sys.stderr)
     return
 
