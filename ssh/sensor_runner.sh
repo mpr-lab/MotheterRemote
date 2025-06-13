@@ -34,11 +34,11 @@ elif test $num_inst == 0; then # grep didn't find program
 
     # redirect stdout to log file
     echo $dt >> /var/tmp/ssh_debug/sensor_out.txt
-    exec 1>> /var/tmp/ssh_debug/sensor_out.txt
+    # exec 1>> /var/tmp/ssh_debug/sensor_out.txt
 
     # redirect stderr to log file
     echo $dt >> /var/tmp/ssh_debug/sensor_err.txt
-    exec 2>> /var/tmp/ssh_debug/sensor_err.txt
+    # exec 2>> /var/tmp/ssh_debug/sensor_err.txt
 
     # run python program in background (don't wait for it to finish, just let shell die)
     /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py 2>> /var/tmp/ssh_debug/sensor_err.txt 1>>/var/tmp/ssh_debug/sensor_out.txt &
@@ -49,8 +49,8 @@ else # something else went wrong
 fi
 
 # try to get stdout/err back on terminal?
-exec 1>&1
-exec 2>&2
+# exec 1>&1
+# exec 2>&2
 
 num_inst=$(echo "$all_procs" | grep [p]ysqm | wc -l)
 
@@ -61,11 +61,11 @@ elif test $num_inst == 0; then # grep didn't find program
 
     # redirect stdout to log file
     echo $dt >> /var/tmp/ssh_debug/pysqm_out.txt
-    exec 1>> /var/tmp/ssh_debug/pysqm_out.txt
+    # exec 1>> /var/tmp/ssh_debug/pysqm_out.txt
 
     # redirect stderr to log file
     echo $dt >> /var/tmp/ssh_debug/pysqm_err.txt
-    exec 2>> /var/tmp/ssh_debug/pysqm_err.txt
+    # exec 2>> /var/tmp/ssh_debug/pysqm_err.txt
 
     # run python program in background (don't wait for it to finish, just let shell die)
     cd ~/MotheterRemote/Py3SQM
