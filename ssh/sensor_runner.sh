@@ -49,8 +49,8 @@ else # something else went wrong
 fi
 
 # try to get stdout/err back on terminal?
-exec 1>> /dev/stdout
-exec 2>> /dev/stderr
+exec 1>&1
+exec 2>&2
 
 num_inst=$(echo "$all_procs" | grep [p]ysqm | wc -l)
 
