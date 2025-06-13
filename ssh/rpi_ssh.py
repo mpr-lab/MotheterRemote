@@ -6,6 +6,7 @@ import sys
 import sensor_ssh
 import lora_parent_ssh
 import configs_ssh
+import time
 
 device = sensor_ssh.SQMLE | sensor_ssh.SQMLU | lora_parent_ssh.Radio
 
@@ -37,6 +38,16 @@ def _device_search() -> None:
         print(f"No radio found at port {configs_ssh.R_ADDR}", file=sys.stderr)
 
     print("No radio or sensor found. Please check connection!", file=sys.stderr)
+
+
+def rsync(output: lora_parent_ssh.Radio):
+    print("ATTEMPTING RADIO RSYNC", file=sys.stdout)
+    print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
+    output.rpi_to_client("rsync")
+    print("Waiting to ensure rsync completes", file=sys.stderr)
+    time.sleep(60)
+    print("Rsync should be done by now.", file=sys.stderr)
+    return
 
 
 def main():
@@ -72,9 +83,6 @@ def main():
         print("AOK", file=sys.stdout)
         return
 
-    if "rsync" in command:
-        print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
-
     try:
         _device_search()  # connect if possible
         global output
@@ -93,7 +101,11 @@ def main():
             return
 
         try:
+            if "rsync" in command and isinstance(output, lora_parent_ssh.Radio):
+                rsync(output)
+                return
             output.rpi_to_client(command)
+
         except Exception as e:
             print(f"Communication failed!\n{e}", file=sys.stderr)
 

@@ -13,8 +13,8 @@ host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
 
 # import auto_setup
 
-# host_name = auto_setup.host_name  # host server's username, auto-filled
-# host_addr = auto_setup.host_addr  # ip or ddns for host computer, auto-filled
+host_name = "skyeworster"  # host server's username, auto-filled
+host_addr = "Executor"  # ip or ddns for host computer, auto-filled
 
 """Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one
 attached to the sensor device."""
