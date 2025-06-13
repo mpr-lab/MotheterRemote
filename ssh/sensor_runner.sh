@@ -42,7 +42,7 @@ elif test $num_inst == 0; then # grep didn't find program
 
     # run python program in background (don't wait for it to finish, just let shell die)
     /usr/bin/python3 ~/MotheterRemote/ssh/sensor_stream.py 2>> /var/tmp/ssh_debug/sensor_err.txt 1>>/var/tmp/ssh_debug/sensor_out.txt &
-elif test $num_inst >= 1; then
+elif test $num_inst > 1; then
     echo "More than one instance of sensor_streaming.py is running!"
 else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."
@@ -66,7 +66,7 @@ elif test $num_inst == 0; then # grep didn't find program
     # run python program in background (don't wait for it to finish, just let shell die)
     cd ~/MotheterRemote/Py3SQM
     /usr/bin/python3 -m pysqm 2>> /var/tmp/ssh_debug/pysqm_err.txt 1>>/var/tmp/ssh_debug/pysqm_out.txt &
-elif test $num_inst >= 1; then
+elif test $num_inst > 1; then
     echo "More than one instance of pysqm is running!"
 else # something else went wrong
     echo "Command failed for unknown reasons; manual debugging required."
