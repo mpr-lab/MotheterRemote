@@ -1,21 +1,20 @@
-// Refactored SetupWizard.java with Sectional Flow, Progress Saving, and Progress Bar
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
 public class SetupWizard extends JFrame {
+    private Path profileSaveDir = Paths.get(System.getProperty("user.home"), "profiles");
+    private Path SQMSaveDir = Paths.get(System.getProperty("user.home"), "SQMdata");
+
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardPanel = new JPanel(cardLayout);
     private final JButton nextButton = new JButton("Next");
     private final JButton backButton = new JButton("Back");
-    private final JProgressBar progressBar = new JProgressBar(0, 9);
+    private final JProgressBar progressBar = new JProgressBar(0, 10);
     private final Map<String, Integer> sectionStart = new LinkedHashMap<>();
     private int currentCard = 0;
 
@@ -30,7 +29,7 @@ public class SetupWizard extends JFrame {
     private final java.util.List<JPanel> wizardSteps = new ArrayList<>();
     private final Set<String> addedPanels = new HashSet<>(); // prevent duplicate inserts
 
-    private int numCards = 9;
+    private int numCards = 10;
 
     public SetupWizard() {
         super("Initial Setup Wizard");
@@ -38,23 +37,28 @@ public class SetupWizard extends JFrame {
         setSize(600, 500);
         setLocationRelativeTo(null);
         autoDetectSystem();
+        System.out.println(detectedOS);
         detectedOS = util.getDetectedOSType();
+        System.out.println("after update" + detectedOS);
+
 
         // Sections
         sectionStart.put("Host Setup", 0);
         sectionStart.put("RPi Setup", 2);
         sectionStart.put("SSH Setup", 4);
 
-        wizardSteps.add(buildDisclaimerPanel());    // 0
-        wizardSteps.add(buildTailscale());          // 1
-        wizardSteps.add(buildRadio());              // 2
-        wizardSteps.add(buildRpiConfigPanel());     // 3
-        wizardSteps.add(buildSSH());                // 4
-        wizardSteps.add(buildSSH_Step1());          // 5
-        wizardSteps.add(buildSSH_Step2());          // 6
-        wizardSteps.add(buildSSH_Step3());          // 7
-        wizardSteps.add(buildSSH_Step4());          // 8
-        wizardSteps.add(buildFinalPanel());         // 9
+        wizardSteps.add(buildDisclaimerPanel());                // 0
+        wizardSteps.add(buildTailscale());                      // 1
+        wizardSteps.add(buildRadio());                          // 2
+        wizardSteps.add(buildRpiConfigPanel());                 // 3
+        wizardSteps.add(buildProfileDirectoryPanel());          // 4
+        wizardSteps.add(buildSQMDirectoryPanel());          // 4
+        wizardSteps.add(buildSSH());                            // 5
+        wizardSteps.add(buildSSH_Step1());                      // 6
+        wizardSteps.add(buildSSH_Step2());                      // 7
+        wizardSteps.add(buildSSH_Step3());          // 8
+        wizardSteps.add(buildSSH_Step4());          // 9
+        wizardSteps.add(buildFinalPanel());         // 10
 
 
         // Add all to cardPanel
@@ -170,8 +174,8 @@ public class SetupWizard extends JFrame {
     }
     private void autoDetectSystem() {
         try {
-            File configOut = new File("profiles/host_config.properties");
-            ProcessBuilder pb = new ProcessBuilder("python3", "../comms-GUI/auto_setup.py");
+            File configOut = new File("host_config.properties");
+            ProcessBuilder pb = new ProcessBuilder("python3", "../ssh/auto_setup.py");
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
@@ -204,16 +208,13 @@ public class SetupWizard extends JFrame {
             props.setProperty("tailscaleEnabled", String.valueOf(yTailscale.isSelected()));
             props.setProperty("radioEnabled", String.valueOf(yRadio.isSelected()));
 
-            // OS selection
+            // OS detection
             props.setProperty("os", detectedOS);
 
-            // RPi profiles
-            for (int i = 0; i < profiles.size(); i++) {
-                RPiProfile p = profiles.get(i);
-                props.setProperty("profile." + i + ".name", p.nameField.getText().trim());
-                props.setProperty("profile." + i + ".addr", p.addrField.getText().trim());
-            }
+            // Profile save directory
+            props.setProperty("profileSaveDir", profileSaveDir.toString());
 
+            // Write to file
             try (FileWriter fw = new FileWriter(progressFile.toFile())) {
                 props.store(fw, "Wizard Progress");
             }
@@ -223,6 +224,7 @@ public class SetupWizard extends JFrame {
         }
     }
 
+
     private void loadProgress() {
         if (!Files.exists(progressFile)) return;
 
@@ -230,31 +232,46 @@ public class SetupWizard extends JFrame {
         try (FileReader fr = new FileReader(progressFile.toFile())) {
             props.load(fr);
 
-            // Current position
+            // Restore navigation state
             currentCard = Integer.parseInt(props.getProperty("currentCard", "0"));
             disclaimerAccepted = Boolean.parseBoolean(props.getProperty("disclaimerAccepted", "false"));
             yTailscale.setSelected(Boolean.parseBoolean(props.getProperty("tailscaleEnabled", "false")));
             yRadio.setSelected(Boolean.parseBoolean(props.getProperty("radioEnabled", "false")));
 
-            // OS selection
+            // Restore OS selection
             String os = props.getProperty("os", "").toLowerCase();
             if (!os.isEmpty()) {
                 detectedOS = os;
             } else {
-                autoDetectSystem(); // fallback if not present
+                autoDetectSystem();
                 detectedOS = util.getDetectedOSType();
             }
-            System.out.println("[LoadProgress] Loaded OS = " + detectedOS);
 
-            // Restore RPi profiles
+            // Restore user-chosen profile save directory
+            String savedDir = props.getProperty("profileSaveDir");
+            if (savedDir != null && !savedDir.isBlank()) {
+                profileSaveDir = Paths.get(savedDir);
+            }
+
+            // Load profiles from chosen directory
             profilesPanel.removeAll();
             profiles.clear();
-            int i = 0;
-            while (props.containsKey("profile." + i + ".name")) {
-                String name = props.getProperty("profile." + i + ".name", "");
-                String addr = props.getProperty("profile." + i + ".addr", "");
-                addRpiProfile(name, addr);
-                i++;
+            if (Files.exists(profileSaveDir)) {
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(profileSaveDir, "*_profile.properties")) {
+                    for (Path file : stream) {
+                        Properties p = new Properties();
+                        try (FileReader reader = new FileReader(file.toFile())) {
+                            p.load(reader);
+                            String name = p.getProperty("rpi_name", "");
+                            String addr = p.getProperty("rpi_addr", "");
+                            if (!name.isEmpty() && !addr.isEmpty()) {
+                                addRpiProfile(name, addr);
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    System.err.println("[Setup] Failed to read profiles: " + e.getMessage());
+                }
             }
 
             updateNav();
@@ -264,9 +281,10 @@ public class SetupWizard extends JFrame {
         }
     }
 
+
     private JPanel buildDisclaimerPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing...");
+        JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing... NEED JAVA 24javac --release 21 ...\n");
         disclaimer.setWrapStyleWord(true);
         disclaimer.setLineWrap(true);
         disclaimer.setEditable(false);
@@ -469,6 +487,119 @@ public class SetupWizard extends JFrame {
         profilesPanel.revalidate();
         profilesPanel.repaint();
     }
+
+    private JPanel buildProfileDirectoryPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel label = new JLabel("Select a directory where your Raspberry Pi profiles will be saved:");
+        JTextField pathField = new JTextField(profileSaveDir.toString(), 30);
+        pathField.setEditable(false);
+
+        JButton toggleChooserButton = new JButton("Show File Chooser");
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.X_AXIS));
+        inputPanel.add(pathField);
+        inputPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        inputPanel.add(toggleChooserButton);
+
+        // Create the embedded file chooser
+        JFileChooser embeddedChooser = new JFileChooser();
+        embeddedChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        embeddedChooser.setPreferredSize(new Dimension(500, 275));  // smaller height
+        embeddedChooser.setVisible(false);  // initially hidden
+
+        // Toggle visibility of file chooser
+        toggleChooserButton.addActionListener(e -> {
+            boolean isVisible = embeddedChooser.isVisible();
+            embeddedChooser.setVisible(!isVisible);
+            toggleChooserButton.setText(isVisible ? "Show File Chooser" : "Hide File Chooser");
+            panel.revalidate();
+            panel.repaint();
+        });
+
+        // Handle selection or cancel
+        embeddedChooser.addActionListener(e -> {
+            if (e.getActionCommand().equals(JFileChooser.APPROVE_SELECTION)) {
+                File selected = embeddedChooser.getSelectedFile();
+                profileSaveDir = selected.toPath();
+                pathField.setText(profileSaveDir.toString());
+            }
+            // Always hide after action
+            embeddedChooser.setVisible(false);
+            toggleChooserButton.setText("Show File Chooser");
+            panel.revalidate();
+            panel.repaint();
+        });
+
+        panel.add(label);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(inputPanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(embeddedChooser);
+
+        return panel;
+    }
+
+    private JPanel buildSQMDirectoryPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel label = new JLabel("Select a directory where data synced from the rpi will be saved:");
+        JTextField pathField = new JTextField(SQMSaveDir.toString(), 30);
+        pathField.setEditable(false);
+
+        JButton toggleChooserButton = new JButton("Show File Chooser");
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.X_AXIS));
+        inputPanel.add(pathField);
+        inputPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        inputPanel.add(toggleChooserButton);
+
+        // Create the embedded file chooser
+        JFileChooser embeddedChooser = new JFileChooser();
+        embeddedChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        embeddedChooser.setPreferredSize(new Dimension(500, 275));  // smaller height
+        embeddedChooser.setVisible(false);  // initially hidden
+
+        // Toggle visibility of file chooser
+        toggleChooserButton.addActionListener(e -> {
+            boolean isVisible = embeddedChooser.isVisible();
+            embeddedChooser.setVisible(!isVisible);
+            toggleChooserButton.setText(isVisible ? "Show File Chooser" : "Hide File Chooser");
+            panel.revalidate();
+            panel.repaint();
+        });
+
+        // Handle selection or cancel
+        embeddedChooser.addActionListener(e -> {
+            if (e.getActionCommand().equals(JFileChooser.APPROVE_SELECTION)) {
+                File selected = embeddedChooser.getSelectedFile();
+                SQMSaveDir = selected.toPath();
+                pathField.setText(SQMSaveDir.toString());
+            }
+            // Always hide after action
+            embeddedChooser.setVisible(false);
+            toggleChooserButton.setText("Show File Chooser");
+            panel.revalidate();
+            panel.repaint();
+        });
+
+        panel.add(label);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(inputPanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(embeddedChooser);
+
+        return panel;
+    }
+
+
+
 
     private JPanel buildSSH(){
         JPanel panel = new JPanel(new BorderLayout());
@@ -755,10 +886,62 @@ public class SetupWizard extends JFrame {
                 new StringSelection(text), null
         );
     }
+    private void saveHostPathsToConfig() {
+        try {
+            Path hostConfigPath = Paths.get("host_config.properties");
+
+            // Load existing properties if the file already exists
+            Properties props = new Properties();
+            if (Files.exists(hostConfigPath)) {
+                try (FileReader reader = new FileReader(hostConfigPath.toFile())) {
+                    props.load(reader);
+                }
+            }
+
+            // Update or add the new path entries
+            props.setProperty("profile_save_path", profileSaveDir.toString());
+            props.setProperty("sqm_data_path", SQMSaveDir.toString());
+
+            // Write back to the file
+            try (FileWriter writer = new FileWriter(hostConfigPath.toFile())) {
+                props.store(writer, "Host Configuration Paths");
+            }
+
+            System.out.println("[Setup] Host paths saved to config: " + hostConfigPath);
+            updatePathPy(SQMSaveDir.toString());
+
+        } catch (IOException e) {
+            System.err.println("[Setup] Failed to save host config paths: " + e.getMessage());
+        }
+    }
+    public void updatePathPy(String newPath) {
+        try {
+            File file = new File("../ssh/configs_ssh.py");
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            StringBuilder content = new StringBuilder();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().startsWith("host_data_path ="))
+                    line = "host_data_path = \"" + newPath + "\"";
+
+                content.append(line).append("\n");
+            }
+            reader.close();
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write(content.toString());
+            writer.close();
+
+        } catch (IOException e) {
+            util.append("[Error] configs.py update failed: " + e.getMessage());
+        }
+    }
+
 
     private void saveProfilesAndExit() {
         try {
-            Files.createDirectories(Paths.get("profiles"));
+            Files.createDirectories(profileSaveDir);
             for (RPiProfile p : profiles) {
                 String name = p.nameField.getText().trim();
                 String addr = p.addrField.getText().trim();
@@ -766,16 +949,18 @@ public class SetupWizard extends JFrame {
                     Properties props = new Properties();
                     props.setProperty("rpi_name", name);
                     props.setProperty("rpi_addr", addr);
-                    props.store(new FileWriter("profiles/" + name + "_profile.properties"), "RPi Profile");
+                    props.store(new FileWriter(profileSaveDir.resolve(name + "_profile.properties").toFile()), "RPi Profile");
                 }
             }
+            saveHostPathsToConfig();
             Files.deleteIfExists(progressFile);
-            JOptionPane.showMessageDialog(this, "Profiles saved. Wizard complete.");
+            JOptionPane.showMessageDialog(this, "Profiles saved to:\n" + profileSaveDir.toString() + "\nWizard complete.");
             dispose();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Error saving profiles: " + e.getMessage());
         }
     }
+
 
     static class RPiProfile {
         JTextField nameField, addrField;

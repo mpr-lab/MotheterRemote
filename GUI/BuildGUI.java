@@ -7,13 +7,17 @@ import java.nio.file.*;
 import java.util.*;
 
 public class BuildGUI extends JFrame {
-    private final JTextArea console = new JTextArea();
+    private static final JTextArea console = new JTextArea();
     private static JComboBox<String> profileDropdown = new JComboBox<>();
     private final JButton confirmProfileButton = new JButton("Confirm");
 
+    private static boolean setup = false;
+
+
+//    private static Path PROFILE_DIR = util.getProfileSaveDirFromConfig();
+
     public BuildGUI() {
         super("MotheterRemote");
-
         Utility util = new Utility(console);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -38,6 +42,7 @@ public class BuildGUI extends JFrame {
     }
 
     private JPanel buildProfileSelector(Utility util) {
+        Path PROFILE_DIR = util.getProfileSaveDirFromConfig();
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         JLabel label = new JLabel("Select RPi Profile:");
@@ -50,7 +55,7 @@ public class BuildGUI extends JFrame {
         confirmProfileButton.addActionListener(e -> {
             String selected = (String) profileDropdown.getSelectedItem();
             if (selected != null) {
-                File profileFile = new File("profiles", selected + "_profile.properties");
+                File profileFile = new File(PROFILE_DIR.toString(), selected + "_profile.properties");
                 Properties props = new Properties();
                 try (FileReader reader = new FileReader(profileFile)) {
                     props.load(reader);
@@ -73,8 +78,9 @@ public class BuildGUI extends JFrame {
     }
 
     public static void refreshProfileList() {
+        Utility util = new Utility();
         profileDropdown.removeAllItems();
-        File profileDir = new File("profiles");
+        File profileDir = new File(util.getProfileSaveDirFromConfig().toString());
         String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
         if (profileNames != null) {
             for (String name : profileNames) {
@@ -123,8 +129,8 @@ public class BuildGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        Path profilesDir = Paths.get("profiles");
-        if (Files.notExists(profilesDir)) {
+        Path setupDir = Paths.get("host_config.properties");
+        if (Files.notExists(setupDir)) {
             SwingUtilities.invokeLater(SetupWizard::new);
         } else {
             SwingUtilities.invokeLater(() -> {
@@ -133,4 +139,15 @@ public class BuildGUI extends JFrame {
             });
         }
     }
+//    public static void main(String[] args) {
+//        if (!setup) {
+//            SwingUtilities.invokeLater(SetupWizard::new);
+//            setup = true;
+//        } else {
+//            SwingUtilities.invokeLater(() -> {
+//                BuildGUI gui = new BuildGUI();
+//                gui.setVisible(true);
+//            });
+//        }
+//    }
 }

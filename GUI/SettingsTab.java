@@ -76,7 +76,7 @@ public class SettingsTab extends JPanel {
 
     private void loadAllProfiles() {
         profileListModel.clear();
-        File profileDir = new File("profiles");
+        File profileDir = new File(util.getProfileSaveDirFromConfig().toString());
         if (!profileDir.exists()) return;
 
         String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));

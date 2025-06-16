@@ -401,3 +401,59 @@ combined RPiCommandCenter and SensorCommandCenter to be on one single tab, did n
 * radio instructions
 * display information about status and about rsync
 * data tab fix
+
+
+
+
+
+project-root/
+│
+├── src/
+│   └── main/
+│       ├── java/               ← Java GUI source
+│       │   └── GUI/
+│       │       ├── profiles/
+│       │       │   ├── host_config.properties
+│       │       │   └── pi_profile.properties
+│       │       │
+│       │       ├── BuildGUI.java
+│       │       ├── RpiCommandTab.java
+│       │       ├── SettingsTab.java
+│       │       ├── DataTab.java
+│       │       ├── DataTab.java
+│       │       ├── HelpTab.java
+│       │       ├── SetupWizard.java
+│       │       └── Utility.java
+│       │
+│       └── resources/          ← Python scripts, profiles/, configs.py
+│           ├── modem/
+│           │   ├── test.py
+│           │   └── ssh.sh
+│           │
+│           ├── Py3SQM/
+│           │
+│           ├── ssh/
+│           │   ├── auto_setup.py
+│           │   ├── configs_ssh.py
+│           │   ├── first_time_setup.py
+│           │   ├── host_ssh.py
+│           │   ├── lora_child_ssh.py
+│           │   ├── lora_parent_ssh.py
+│           │   ├── rpi_ssh.py
+│           │   ├── sensor_ssh.py
+│           │   ├── sensor_stream.py
+│           │   ├── ui_commands.py
+│           │   ├── radio_runner.sh
+│           │   ├── rpi_runner.sh
+│           │   └── sensor_runner.sh
+│           │
+│           └── scripts/
+│               ├── runradio.sh
+│               ├── runrpi.sh
+│               ├── runsensor.sh
+│               └── cronjobs.txt
+│
+│
+├── pom.xml                    ← Add Maven build settings and plugins here
+├── setup/                     ← Optional: bundled Python files / installer scripts
+└── target/                    ← Output .jar/.exe

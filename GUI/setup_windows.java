@@ -1,5 +1,3 @@
-import jdk.jshell.execution.Util;
-
 import javax.swing.*;
 import java.awt.*;
 public class setup_windows {
@@ -22,12 +20,12 @@ public class setup_windows {
         step1.add(new JLabel("Step 1: Check if SSH is installed"));
         step1.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextArea copyI1 = util.buildTextArea(step1, 45);
+        JTextArea copyI1 = util.buildTextArea(step1, 50);
         copyI1.setText("Open up a new terminal. First, check whether or not you have ssh installed. This looks different on different operating systems. Your operating system is "+ detectedOS + ". If that does not seem right....");
         String sshCmd = "ssh";
         JPanel checkSSHRow = util.buildCopyRow(sshCmd, 30);
 
-        JTextArea proceedI1 = util.buildTextArea(step1, 90);
+        JTextArea proceedI1 = util.buildTextArea(step1, 50);
         proceedI1.setText("For windows users, there should be a line printed in the output of the terminal after running the first command that begins with 'usage: ssh' followed by a list of commands if SSH is active. If this is the case, then move onto [STEP 2]. If not, move on to [STEP 1a].");
 
         step1.add(copyI1);
@@ -43,7 +41,7 @@ public class setup_windows {
         step1a.add(new JLabel("Step 1a: Download SSH"));
         step1a.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextArea download = util.buildTextArea(step1, 200);
+        JTextArea download = util.buildTextArea(step1, 210);
         download.setText("""
                         If SSH is installed, it will display help information about the command, including its usage and available options. If the terminal returns: "SSH not recognized", then this means SSH is not installed or enabled on your system. Follow these steps to download ssh:
                                   
@@ -104,13 +102,13 @@ public class setup_windows {
         step2.add(new JLabel("Step 2: SSH Key"));
         step2.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextArea copyI2 = util.buildTextArea(step2, 60);
+        JTextArea copyI2 = util.buildTextArea(step2, 50);
         copyI2.setText("Now that SSH is downloaded, you must establish yourself as a known host for the RPi. This will allow you to connect remotely to the RPi without having to enter a password. First, let's check to see if you already have an SSH key. Run the following command in your terminal:");
 
         String checkCmd = "dir .ssh";
         JPanel checkKeySSHRow = util.buildCopyRow(checkCmd, 30);
 
-        JTextArea proceedI2 = util.buildTextArea(step2, 30);
+        JTextArea proceedI2 = util.buildTextArea(step2, 35);
         proceedI2.setText("If there is a file called id_ed_25519, then you already have an SSH key. Proceed to [STEP 3]. If you do not have a file called id_ed_25519, proceed to [STEP 2a].");
 
         step2.add(copyI2);
@@ -126,7 +124,7 @@ public class setup_windows {
         step2a.add(new JLabel("Step 2a: Generate a SSH Key"));
         step2a.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        JTextArea copyI2a = util.buildTextArea(step2, 30);
+        JTextArea copyI2a = util.buildTextArea(step2, 35);
         copyI2a.setText("If the SSH key does not exist yet, we must generate one to be copied to the RPi. Run the following command into your terminal:");
 
         String generateCmd = "ssh-keygen -t ed25519";
@@ -135,11 +133,32 @@ public class setup_windows {
         step2a.add(copyI2a);
         step2a.add(Box.createRigidArea(new Dimension(0, 10)));
         step2a.add(genSSHRow);
-        step2a.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2a.add(Box.createRigidArea(new Dimension(0, 30)));
+
+        // STEP 1b: VERIFY SSH DOWNLOAD
+        JPanel step2b = new JPanel();
+        step2b.setLayout(new BoxLayout(step2b, BoxLayout.Y_AXIS));
+        step2b.add(new JLabel("Step 2b: Verify that SSH key was generated"));
+        step2b.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JTextArea copyI2b = util.buildTextArea(step2b, 35);
+        copyI2b.setText("Now that you have an SSH key, verify whether or not you have ssh installed. Run the following command again:");
+        JPanel checkbSSHRow = util.buildCopyRow(checkCmd, 30);
+
+        JTextArea proceedI2b = util.buildTextArea(step2b, 35);
+        proceedI2b.setText("Now, there should be a file called id_ed_25519. Proceed to [STEP 3].");
+
+        step2b.add(copyI2b);
+        step2b.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2b.add(checkbSSHRow);
+        step2b.add(Box.createRigidArea(new Dimension(0, 10)));
+        step2b.add(proceedI2b);
+        step2b.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Add to Panel
         inner.add(step2);
         inner.add(step2a);
+        inner.add(step2b);
 
         JScrollPane scroll = new JScrollPane(inner);
         scroll.setBorder(null);
@@ -162,7 +181,7 @@ public class setup_windows {
         step3.add(Box.createRigidArea(new Dimension(0, 10)));
 
 
-        JTextArea copyI3 = util.buildTextArea(step3, 30);
+        JTextArea copyI3 = util.buildTextArea(step3, 35);
         copyI3.setText("Next, we must copy the key that you just generated over to the RPi. In the terminal, run the following command:");
 
         String copyCmd = "$pubKey = Get-Content \"\\.ssh\\id_ed25519.pub\" -Raw";
@@ -171,8 +190,9 @@ public class setup_windows {
         String copy2Cmd = "ssh <rpi_name>@<rpi_addr> \"mkdir -p ~/.ssh; echo '$pubKey' >> ~/.ssh/authorized_keys; chmod 600 ~/.ssh/authorized_keys; chmod 700 ~/.ssh\"";
         JPanel copy2SSHRow = util.buildCopyRow(copy2Cmd, 60);
 
-        JTextArea changeI3 = util.buildTextArea(step3, 30);
+        JTextArea changeI3 = util.buildTextArea(step3, 35);
         changeI3.setText("Make sure to change <rpi_name> and <rpi_addr> with the correct information. You may need to input the RPi's password on this step.");
+
 
         step3.add(copyI3);
         step3.add(Box.createRigidArea(new Dimension(0, 10)));

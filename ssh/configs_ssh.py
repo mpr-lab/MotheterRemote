@@ -9,7 +9,7 @@ connection_type = "wifi_tailscale"
 has_radio = False
 
 """Info about the host computer. This should be a computer with a static IP."""
-host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
+host_data_path = "/home/buddy/SQMdata"
 
 # import auto_setup
 
