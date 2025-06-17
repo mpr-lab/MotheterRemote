@@ -9,7 +9,7 @@ connection_type = "wifi_tailscale"
 has_radio = False
 
 """Info about the host computer. This should be a computer with a static IP."""
-host_data_path = "/home/buddy/SQMdata"
+host_data_path = "C:\Users\buddy\Desktop\SQMData"
 
 # import auto_setup
 

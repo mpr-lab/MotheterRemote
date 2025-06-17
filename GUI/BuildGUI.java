@@ -103,7 +103,7 @@ public class BuildGUI extends JFrame {
 
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
-        JButton toggleButton = new JButton("Minimize");
+        JButton toggleButton = new JButton("Show Console");
         toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
 
         btnRow.add(toggleButton);
