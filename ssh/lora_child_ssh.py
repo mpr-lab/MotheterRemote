@@ -164,7 +164,7 @@ class Ser:
             m = EOL.join(msg)  # if list, collate into string
         else:
             m = msg
-        print(f"Sending over radio: {m}", flush=True, file=sys.stderr)
+        print(f"Sending over radio: {m}", flush=True, file=sys.stdout)
         self.s.write((m + EOF).encode(utf8))
 
     def _send_loop(self) -> None:
@@ -237,9 +237,10 @@ class Ser:
                     to_return.append(fullPath)
             return to_return
 
-        l = _all_file_list(acc_data_path)
-        l2 = _all_file_list("/var/tmp/ssh_debug")
-        l.extend(l2)
+        l = ["/var/tmp/ssh_debug", "~/sqmdata", "/var/tmp/sqm_macleish"]
+        # l = _all_file_list(acc_data_path)
+        # l2 = _all_file_list("/var/tmp/ssh_debug")
+        # l.extend(l2)
         a: list[str] = []
         a.append("rsync files")  # prepend header for parent processing
         for file in l:
