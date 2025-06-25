@@ -32,6 +32,7 @@ class Radio:
 
     def __init__(self):
         self.data: list[str] = []
+        self.to_get = []
         self.s = serial.Serial(ADDR, BAUD, timeout=None)
         self.l = threading.Thread(target=self._listen)  # listener in background
         self.l.daemon = True
@@ -113,15 +114,17 @@ class Radio:
         """Called when child RPi returns rsync data"""
 
         if "rsync files" in m:  # got child RPi's file list
-            self._compare_files(m)
+            self.compare_files(m)
 
         elif m.startswith("[rsync files"):  # different format, just in case
-            self._compare_files(m)
+            self.compare_files(m)
 
         else:  # must be file/data to store
             s = m.replace("rsync", "")  # remove trigger
             split = s.index("\n")  # get where first line ends
             name = rpi_data_path + s[:split].strip()  # get name
+            if name in self.to_get:
+                self.to_get.remove(name)
             s = s[split + 1 :]  # separate rest of fie
             print(f"Saving file at {name}", flush=True, file=sys.stderr)
             with open(name, "w+") as file:
@@ -137,7 +140,7 @@ class Radio:
         s = f"rsync {filename}"
         self._send(s)
 
-    def _compare_files(self, m: str) -> None:
+    def compare_files(self, m: str) -> None:
         """List which files to get from child. If parent (this RPi) doesn't have a file, or has an outdated version, send a request to the child to return the file.
 
         Args:
@@ -160,6 +163,8 @@ class Radio:
             j = i.split(";")
             child.update({j[0].strip(): float(j[1].strip())})
 
+        self.to_get: list[str] = []
+
         for c in child.keys():
             p_date = parent.get(c)
             c_date = child.get(c)
@@ -167,9 +172,11 @@ class Radio:
                 continue
             elif p_date == None:  # no match in parent dict
                 print(f"No match for file {c}", flush=True, file=sys.stderr)
+                self.to_get.append(c)
                 self._ask_child_for_file(c)  # send request
             elif p_date <= c_date:  # if child file more recent
                 print(f"More recent version of {c} found", flush=True, file=sys.stderr)
+                self.to_get.append(c)
                 self._ask_child_for_file(c)  # send request
 
     def _get_file_list(self) -> dict[str, int]:

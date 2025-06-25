@@ -138,7 +138,7 @@ SUBSYSTEM=="tty", ATTRS{idProduct}=="6001", ATTRS{idVendor}=="0403", SYMLINK+="t
 SUBSYSTEM=="tty", ATTRS{idProduct}=="55d3", ATTRS{idVendor}=="1a86", SYMLINK+="ttyUSB_LORA"
 ```
 
-If you have multiple versions of the same device, you'll need to differentiate them using another attribute; `serial` is usually a good choice. Run the command `udevadm info --name=/dev/<tty_port> --attribute-walk | serial` for both devices (or run it without `| serial` to pick your own attribute). Write down the `serial` value for each (the longest or most complicated one), and use them as attributes in the udev rules:
+If you have multiple versions of the same device, you'll need to differentiate them using another attribute; `serial` is usually a good choice. Run the command `udevadm info --name=/dev/<tty_port> --attribute-walk | grep serial` for both devices (or run it without `| grep serial` to pick your own attribute). Write down the `serial` value for each (the longest or most complicated one), and use them as attributes in the udev rules:
 
 ```bash
 SUBSYSTEM=="tty", ATTRS{idProduct}=="55d3", ATTRS{idVendor}=="1a86", ATTRS{ID_SERIAL_SHORT}=="578E023173", SYMLINK+="ttyUSB_LORA0"

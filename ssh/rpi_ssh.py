@@ -44,9 +44,15 @@ def rsync(output: lora_parent_ssh.Radio):
     print("ATTEMPTING RADIO RSYNC", file=sys.stdout)
     print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
     output.rpi_to_client("rsync")
-    print("Waiting to ensure rsync completes", file=sys.stderr)
-    time.sleep(5)
-    print("Rsync should be done by now.", file=sys.stderr)
+    time.sleep(5)  # wait for response
+
+    if len(output.to_get) > 0:
+        print(
+            f"rsync did not import the following files over radio: {output.to_get}",
+            file=sys.stderr,
+        )
+        print("Try running rsync again, or checking the debug logs.", file=sys.stderr)
+
     return
 
 
