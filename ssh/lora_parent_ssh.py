@@ -161,7 +161,7 @@ class Radio:
         child: dict[str, float] = {}  # format child list as dict
         for i in c_list:
             j = i.split(";")
-            child.update({j[0].strip(): float(j[1].strip())})
+            child.update({j[0].strip(): float(j[1].strip().strip("'"))})
 
         self.to_get: list[str] = []
 
