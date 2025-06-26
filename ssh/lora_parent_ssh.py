@@ -216,7 +216,13 @@ class Radio:
 
             return to_return
 
-        l = _all_file_list(rpi_data_path)
+        paths = ["/var/tmp/ssh_debug", "~/sqmdata", "/var/tmp/sqm_macleish"]
+        l: list[str] = []
+        for p in paths:
+            l.extend(_all_file_list(p))
+
+        # l = _all_file_list(rpi_data_path)
+
         d: dict[str, int] = {}
         for file in l:
             # filter for dat/txt files
