@@ -200,7 +200,9 @@ class Ser:
                 b.extend(EOF.encode(utf8))  # EOF to finish
                 print(f"File to send: {b.decode()}", flush=True, file=sys.stdout)
 
-            self.s.write(b)  # send bytearray
+            print("SENDING FILE OVER RSYNC", flush=True, file=sys.stdout)
+            # self.s.write(b)  # send bytearray
+            self._send(b.decode(utf8))
 
     def _get_file_list(self) -> str:
         """Gets string list of all .dat files in the data directory on this RPi, with the corresponding date of modification.
