@@ -63,7 +63,7 @@ class Ser:
         print(
             f"Radio listener running in {threading.current_thread().name}",
             flush=True,
-            file=sys.stderr,
+            file=sys.stdout,
         )
         while True:
             try:
@@ -114,7 +114,7 @@ class Ser:
         # print(f"message prefix {message_prefix}", flush=True, file=sys.stderr)
 
         if message_prefix == None:  # if not there, ignore
-            print("return", flush=True, file=sys.stderr)
+            print("message prefix none", flush=True, file=sys.stderr)
             return ""
 
         # loop through received, un-responded messages
@@ -143,7 +143,7 @@ class Ser:
         print(
             f"Listener loop running in {threading.current_thread().name}",
             flush=True,
-            file=sys.stderr,
+            file=sys.stdout,
         )
         while True:
             time.sleep(mid_s)
@@ -179,17 +179,17 @@ class Ser:
         Args:
             s (str): request to handle
         """
-        print("Handling rsync", flush=True, file=sys.stderr)
+        print("Handling rsync", flush=True, file=sys.stdout)
         if "list" in s:  # file list requested
-            print("Sending file list", flush=True, file=sys.stderr)
+            print("Sending file list", flush=True, file=sys.stdout)
             self._send(self._get_file_list())
         else:  # must be asking for specific file
             name = s.replace("rsync ", "").strip()  # rest of request is path
             if not os.path.isfile(name):  # if wrong, ignore
-                print(f"Path {name} not found", flush=True, file=sys.stderr)
+                print(f"Path {name} not found", flush=True, file=sys.stdout)
                 return
 
-            print(f"Reading file {name}", flush=True, file=sys.stderr)
+            print(f"Reading file {name}", flush=True, file=sys.stdout)
             short = name.rfind("/")  # find where name starts at right of path
             short_name = name[short + 1 :]  # get name
             b = bytearray(f"rsync {short_name} {EOL}", utf8)  # prepend file name
@@ -198,7 +198,7 @@ class Ser:
                 text = file.read()  # get text from file as bytes
                 b.extend(text)  # append to bytearray
                 b.extend(EOF.encode(utf8))  # EOF to finish
-                print(f"File to send: {b.decode()}", flush=True, file=sys.stderr)
+                print(f"File to send: {b.decode()}", flush=True, file=sys.stdout)
 
             self.s.write(b)  # send bytearray
 
@@ -225,7 +225,7 @@ class Ser:
                 print(
                     f"Cannot find directory {path}, returning",
                     flush=True,
-                    file=sys.stderr,
+                    file=sys.stdout,
                 )
                 return []  # something went wrong, stop recursing
 
@@ -256,10 +256,10 @@ class Ser:
                 s = f"{file};{ctime}"  # entry with name and time
                 a.append(s)
         c = str(a)  # convert array to string
-        print(f"TO SEND: {c}", flush=True, file=sys.stderr)
+        print(f"TO SEND: {c}", flush=True, file=sys.stdout)
         return c
 
 
 if __name__ == "__main__":
-    print("\n\n", flush=True, file=sys.stderr)
+    print("\n\n", flush=True, file=sys.stdout)
     s = Ser()
