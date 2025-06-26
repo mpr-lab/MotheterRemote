@@ -27,17 +27,24 @@ def _device_search() -> None:
         output.start_continuous_read()
         return
     except Exception as e:
-        print(str(e), file=sys.stderr)
-        # print(f"SQM-LU or SQM-LE sensor not found, trying radio...", file=sys.stderr)
+        print(str(e), flush=True, file=sys.stderr)
+        # print(f"SQM-LU or SQM-LE sensor not found, trying radio...", flush=True, file=sys.stderr)
 
     try:
         output = lora_parent_ssh.Radio()
         return
     except Exception as e:
-        print(str(e))
-        # print(f"No radio found at port {configs_ssh.R_ADDR}", file=sys.stderr)
+        print(
+            str(e),
+            flush=True,
+        )
+        # print(f"No radio found at port {configs_ssh.R_ADDR}", flush=True, file=sys.stderr)
 
-    print("No radio or sensor found. Please check connection!", file=sys.stderr)
+    print(
+        "No radio or sensor found. Please check connection!",
+        flush=True,
+        file=sys.stderr,
+    )
 
 
 def rsync():
@@ -45,27 +52,32 @@ def rsync():
     if not isinstance(output, lora_parent_ssh.Radio):
         return
 
-    print("ATTEMPTING RADIO RSYNC", file=sys.stdout)
-    print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
+    print("ATTEMPTING RADIO RSYNC", flush=True, file=sys.stdout)
+    print("ATTEMPTING RADIO RSYNC", flush=True, file=sys.stderr)
     output.rpi_to_client("rsync")
     time.sleep(10)  # wait for response
 
     rcvd = output.client_to_rpi()
-    print(f"RECEIVED:\n{rcvd}", file=sys.stderr)
+    print(f"RECEIVED:\n{rcvd}", flush=True, file=sys.stderr)
 
     if len(output.to_get) > 0:
         print(
             f"rsync did not import the following files over radio: {output.to_get}",
+            flush=True,
             file=sys.stderr,
         )
-        print("Try running rsync again, or checking the debug logs.", file=sys.stderr)
+        print(
+            "Try running rsync again, or checking the debug logs.",
+            flush=True,
+            file=sys.stderr,
+        )
 
     return
 
 
 def main():
-    print("\n\nNEW_ENTRY\n", file=sys.stdout)
-    print("\n\nNEW_ENTRY\n", file=sys.stderr)
+    print("\n\nNEW_ENTRY\n", flush=True, file=sys.stdout)
+    print("\n\nNEW_ENTRY\n", flush=True, file=sys.stderr)
     parser = argparse.ArgumentParser(
         prog="rpi_ssh.py",
         description="Processes and responds to ssh commands from host computer",
@@ -82,18 +94,19 @@ def main():
     command = args.get("command")
 
     if command == None:
-        print("AOK", file=sys.stdout)
+        print("AOK", flush=True, file=sys.stdout)
         return
 
     if not isinstance(command, str):
         print(
             f"Command is not a string. command: {command}, type: {type(command)}",
+            flush=True,
             file=sys.stdout,
         )
         return
 
     if "status" in command:
-        print("AOK", file=sys.stdout)
+        print("AOK", flush=True, file=sys.stdout)
         return
 
     try:
@@ -101,14 +114,17 @@ def main():
         global output
 
         if output == None:
-            print("Could not connect to device.", file=sys.stdout)
+            print("Could not connect to device.", flush=True, file=sys.stdout)
             if configs_ssh.has_radio:
                 print(
-                    f"Device should be radio at {configs_ssh.R_ADDR}", file=sys.stdout
+                    f"Device should be radio at {configs_ssh.R_ADDR}",
+                    flush=True,
+                    file=sys.stdout,
                 )
             else:
                 print(
                     f"Device should be {configs_ssh.device_type} sensor at {configs_ssh.device_addr}",
+                    flush=True,
                     file=sys.stdout,
                 )
             return
@@ -120,10 +136,10 @@ def main():
             output.rpi_to_client(command)
 
         except Exception as e:
-            print(f"Communication failed!\n{e}", file=sys.stdout)
+            print(f"Communication failed!\n{e}", flush=True, file=sys.stdout)
 
     except Exception as e:
-        print(f"Could not connect to device:\n{e}", file=sys.stdout)
+        print(f"Could not connect to device:\n{e}", flush=True, file=sys.stdout)
 
 
 if __name__ == "__main__":

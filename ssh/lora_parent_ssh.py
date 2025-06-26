@@ -43,7 +43,7 @@ class Radio:
         try:
             self.l.start()
         except RuntimeError:
-            print("Listener already running", file=sys.stdout)
+            print("Listener already running", flush=True, file=sys.stdout)
 
     def _listen(self) -> None:
         """Radio listener that runs continuously"""
@@ -93,10 +93,10 @@ class Radio:
             m (str): message to send
         """
         if m == "rsync":  # filter out rsync requests
-            print("Got rsync request.", file=sys.stderr)
+            print("Got rsync request.", flush=True, file=sys.stderr)
             self._send("rsync list")  # ask child for list of dat files
             return
-        print(f"Sending to radio: {m}", file=sys.stdout)
+        print(f"Sending to radio: {m}", flush=True, file=sys.stdout)
         self._send(m)
 
     def client_to_rpi(self) -> str:
@@ -107,7 +107,7 @@ class Radio:
         """
         msg_arr = self.return_collected()  # get data from buffer
         if len(msg_arr) != 0:  # if there's data to send
-            print(f"Received over radio: {msg_arr}", file=sys.stdout)
+            print(f"Received over radio: {msg_arr}", flush=True, file=sys.stdout)
         return EOL.join(msg_arr)  # return to be sent
 
     def _rsync_from_radio(self, m: str) -> None:
@@ -120,16 +120,16 @@ class Radio:
             self.compare_files(m)
 
         else:  # must be file/data to store
-            print(f"RECEIVED RSYNC FILE\n{m}\n", file=sys.stderr)
+            print(f"RECEIVED RSYNC FILE\n{m}\n", flush=True, file=sys.stderr)
             s = m.replace("rsync ", "")  # remove trigger
             split = s.index("\n")  # get where first line ends
             name = rpi_data_path + s[:split].strip()  # get name
-            print(f"name: {name}", file=sys.stderr)
+            print(f"name: {name}", flush=True, file=sys.stderr)
             if name in self.to_get:
                 self.to_get.remove(name)
 
             s = s[split + 1 :]  # separate rest of fie
-            print(f"Saving file at {name}", file=sys.stderr)
+            print(f"Saving file at {name}", flush=True, file=sys.stderr)
             with open(name, "w+") as file:
                 file.write(s)
 
@@ -139,7 +139,7 @@ class Radio:
         Args:
             s (str): file name
         """
-        print(f"Asking for file {filename}", file=sys.stderr)
+        print(f"Asking for file {filename}", flush=True, file=sys.stderr)
         s = f"rsync {filename}"
         self._send(s)
 
@@ -175,15 +175,15 @@ class Radio:
             if c_date == None:  # something must have broken somewhere
                 continue
             elif p_date == None:  # no match in parent dict
-                print(f"No match for file {c}", file=sys.stderr)
+                print(f"No match for file {c}", flush=True, file=sys.stderr)
                 self.to_get.append(c)
                 self._ask_child_for_file(c)  # send request
             elif p_date <= c_date:  # if child file more recent
-                print(f"More recent version of {c} found", file=sys.stderr)
+                print(f"More recent version of {c} found", flush=True, file=sys.stderr)
                 self.to_get.append(c)
                 self._ask_child_for_file(c)  # send request
 
-            print(f"TO GET: {self.to_get}", file=sys.stdout)
+            print(f"TO GET: {self.to_get}", flush=True, file=sys.stdout)
 
     def _get_file_list(self) -> dict[str, int]:
         """Gets dict of all .dat files in the data directory on this RPi, with the corresponding date of modification
@@ -207,6 +207,7 @@ class Radio:
             except:
                 print(
                     f"Cannot find directory {path}, returning",
+                    flush=True,
                     file=sys.stderr,
                 )
                 return []  # something went wrong, stop recursing
@@ -238,6 +239,6 @@ class Radio:
 
 
 if __name__ == "__main__":
-    print("\n\n", file=sys.stdout)
+    print("\n\n", flush=True, file=sys.stdout)
     s = Radio()
     s.send_loop()
