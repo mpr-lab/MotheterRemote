@@ -123,7 +123,7 @@ class Radio:
             s = m.replace("rsync", "")  # remove trigger
             split = s.index("\n")  # get where first line ends
             name = rpi_data_path + s[:split].strip()  # get name
-            print(f"name: {name}")
+            print(f"name: {name}", file=sys.stderr)
             if name in self.to_get:
                 self.to_get.remove(name)
 
