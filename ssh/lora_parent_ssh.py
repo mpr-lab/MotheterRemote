@@ -166,6 +166,7 @@ class Radio:
         self.to_get: list[str] = []
 
         for c in child.keys():
+
             p_date = parent.get(c)
             c_date = child.get(c)
             if c_date == None:  # something must have broken somewhere
@@ -178,6 +179,8 @@ class Radio:
                 print(f"More recent version of {c} found", file=sys.stderr)
                 self.to_get.append(c)
                 self._ask_child_for_file(c)  # send request
+
+            print(f"TO GET: {self.to_get}", file=sys.stdout)
 
     def _get_file_list(self) -> dict[str, int]:
         """Gets dict of all .dat files in the data directory on this RPi, with the corresponding date of modification

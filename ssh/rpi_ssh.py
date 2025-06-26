@@ -40,11 +40,15 @@ def _device_search() -> None:
     print("No radio or sensor found. Please check connection!", file=sys.stderr)
 
 
-def rsync(output: lora_parent_ssh.Radio):
+def rsync():
+    global output
+    if not isinstance(output, lora_parent_ssh.Radio):
+        return
+
     print("ATTEMPTING RADIO RSYNC", file=sys.stdout)
     print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
     output.rpi_to_client("rsync")
-    time.sleep(5)  # wait for response
+    time.sleep(10)  # wait for response
 
     rcvd = output.client_to_rpi()
     print(f"RECEIVED:\n{rcvd}", file=sys.stderr)
@@ -111,7 +115,7 @@ def main():
 
         try:
             if "rsync" in command and isinstance(output, lora_parent_ssh.Radio):
-                rsync(output)
+                rsync()
                 return
             output.rpi_to_client(command)
 
