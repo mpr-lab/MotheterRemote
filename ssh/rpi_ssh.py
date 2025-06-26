@@ -28,14 +28,14 @@ def _device_search() -> None:
         return
     except Exception as e:
         print(str(e), file=sys.stderr)
-        print(f"SQM-LU or SQM-LE sensor not found, trying radio...", file=sys.stderr)
+        # print(f"SQM-LU or SQM-LE sensor not found, trying radio...", file=sys.stderr)
 
     try:
         output = lora_parent_ssh.Radio()
         return
     except Exception as e:
         print(str(e))
-        print(f"No radio found at port {configs_ssh.R_ADDR}", file=sys.stderr)
+        # print(f"No radio found at port {configs_ssh.R_ADDR}", file=sys.stderr)
 
     print("No radio or sensor found. Please check connection!", file=sys.stderr)
 
@@ -45,6 +45,9 @@ def rsync(output: lora_parent_ssh.Radio):
     print("ATTEMPTING RADIO RSYNC", file=sys.stderr)
     output.rpi_to_client("rsync")
     time.sleep(5)  # wait for response
+
+    rcvd = output.client_to_rpi()
+    print(f"RECEIVED:\n{rcvd}", file=sys.stderr)
 
     if len(output.to_get) > 0:
         print(
@@ -57,8 +60,8 @@ def rsync(output: lora_parent_ssh.Radio):
 
 
 def main():
-    print("NEW_ENTRY", file=sys.stdout)
-    print("NEW_ENTRY", file=sys.stderr)
+    print("\n\nNEW_ENTRY\n", file=sys.stdout)
+    print("\n\nNEW_ENTRY\n", file=sys.stderr)
     parser = argparse.ArgumentParser(
         prog="rpi_ssh.py",
         description="Processes and responds to ssh commands from host computer",
@@ -81,7 +84,7 @@ def main():
     if not isinstance(command, str):
         print(
             f"Command is not a string. command: {command}, type: {type(command)}",
-            file=sys.stderr,
+            file=sys.stdout,
         )
         return
 
@@ -94,15 +97,15 @@ def main():
         global output
 
         if output == None:
-            print("Could not connect to device.", file=sys.stderr)
+            print("Could not connect to device.", file=sys.stdout)
             if configs_ssh.has_radio:
                 print(
-                    f"Device should be radio at {configs_ssh.R_ADDR}", file=sys.stderr
+                    f"Device should be radio at {configs_ssh.R_ADDR}", file=sys.stdout
                 )
             else:
                 print(
                     f"Device should be {configs_ssh.device_type} sensor at {configs_ssh.device_addr}",
-                    file=sys.stderr,
+                    file=sys.stdout,
                 )
             return
 
@@ -113,10 +116,10 @@ def main():
             output.rpi_to_client(command)
 
         except Exception as e:
-            print(f"Communication failed!\n{e}", file=sys.stderr)
+            print(f"Communication failed!\n{e}", file=sys.stdout)
 
     except Exception as e:
-        print(f"Could not connect to device:\n{e}", file=sys.stderr)
+        print(f"Could not connect to device:\n{e}", file=sys.stdout)
 
 
 if __name__ == "__main__":

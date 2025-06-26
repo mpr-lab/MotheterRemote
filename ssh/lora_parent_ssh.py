@@ -43,7 +43,7 @@ class Radio:
         try:
             self.l.start()
         except RuntimeError:
-            print("Listener already running", flush=True, file=sys.stderr)
+            print("Listener already running", flush=True, file=sys.stdout)
 
     def _listen(self) -> None:
         """Radio listener that runs continuously"""
