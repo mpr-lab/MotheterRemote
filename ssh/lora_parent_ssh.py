@@ -120,7 +120,8 @@ class Radio:
             self.compare_files(m)
 
         else:  # must be file/data to store
-            s = m.replace("rsync", "")  # remove trigger
+            print(f"RECEIVED RSYNC FILE\n{m}\n", file=sys.stderr)
+            s = m.replace("rsync ", "")  # remove trigger
             split = s.index("\n")  # get where first line ends
             name = rpi_data_path + s[:split].strip()  # get name
             print(f"name: {name}", file=sys.stderr)
