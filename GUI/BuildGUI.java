@@ -1,21 +1,21 @@
+// Refactored BuildGUI.java with Auto-Refreshing Profile List via Static Reference
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.lang.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
+import java.util.*;
 
 public class BuildGUI extends JFrame {
-    private final JTextArea console = new JTextArea();
-    private final JComboBox<String> profileDropdown = new JComboBox<>();
+    private static final JTextArea console = new JTextArea();
+    private static JComboBox<String> profileDropdown = new JComboBox<>();
     private final JButton confirmProfileButton = new JButton("Confirm");
 
-    BuildGUI() {
-        super("MotheterRemote");
+    private static boolean setup = false;
 
+
+    public BuildGUI() {
+        super("MotheterRemote");
         Utility util = new Utility(console);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -26,10 +26,10 @@ public class BuildGUI extends JFrame {
         add(topPanel, BorderLayout.NORTH);
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("RPi Command Center", new RPiCommandTab(console));
-        tabs.addTab("Sensor Command Center", new SensorCommandTab(console));
-        tabs.addTab("Data Sync", new DataTab(console));
-        tabs.addTab("Settings", new SettingsTab(console));
+        tabs.addTab("Command Center", new RPiCommandTab(util));
+//        tabs.addTab("Sensor Command Center", new SensorCommandTab(util));
+        tabs.addTab("Data Sync", new DataTab(util));
+        tabs.addTab("Settings", new SettingsTab(util));
         tabs.addTab("?", new HelpTab());
         add(tabs, BorderLayout.CENTER);
 
@@ -40,19 +40,20 @@ public class BuildGUI extends JFrame {
     }
 
     private JPanel buildProfileSelector(Utility util) {
+        Path PROFILE_DIR = util.getProfileSaveDirFromConfig();
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        File profileDir = new File("profiles");
-        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
-        if (profileNames != null) {
-            for (String name : profileNames) {
-                profileDropdown.addItem(name.replace("_profile.properties", ""));
-            }
-        }
+
+        JLabel label = new JLabel("Select RPi Profile:");
+        JButton refreshButton = new JButton("⟳");
+        refreshButton.setToolTipText("Refresh Profile List");
+        refreshButton.addActionListener(e -> refreshProfileList());
+
+        loadProfileList();
 
         confirmProfileButton.addActionListener(e -> {
             String selected = (String) profileDropdown.getSelectedItem();
             if (selected != null) {
-                File profileFile = new File("profiles", selected + "_profile.properties");
+                File profileFile = new File(PROFILE_DIR.toString(), selected + "_profile.properties");
                 Properties props = new Properties();
                 try (FileReader reader = new FileReader(profileFile)) {
                     props.load(reader);
@@ -66,10 +67,28 @@ public class BuildGUI extends JFrame {
             }
         });
 
-        panel.add(new JLabel("Select RPi Profile:"));
+        panel.add(label);
         panel.add(profileDropdown);
         panel.add(confirmProfileButton);
+        panel.add(refreshButton);
+
         return panel;
+    }
+
+    public static void refreshProfileList() {
+        Utility util = new Utility();
+        profileDropdown.removeAllItems();
+        File profileDir = new File(util.getProfileSaveDirFromConfig().toString());
+        String[] profileNames = profileDir.list((dir, name) -> name.endsWith("_profile.properties"));
+        if (profileNames != null) {
+            for (String name : profileNames) {
+                profileDropdown.addItem(name.replace("_profile.properties", ""));
+            }
+        }
+    }
+
+    private void loadProfileList() {
+        refreshProfileList();
     }
 
     private JPanel buildConsolePanel() {
@@ -82,11 +101,13 @@ public class BuildGUI extends JFrame {
 
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
-        JButton toggleButton = new JButton("Minimize");
+        JButton toggleButton = new JButton("Show Console");
         toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
 
         btnRow.add(toggleButton);
         btnRow.add(clear);
+
+        scroll.setVisible(false);
 
         JPanel p = new JPanel(new BorderLayout());
         p.add(btnRow, BorderLayout.NORTH);
@@ -105,28 +126,9 @@ public class BuildGUI extends JFrame {
         }
     }
 
-    private static String[] getRPIDetailsFromConfigs() {
-        try {
-            List<String> lines = Files.readAllLines(Paths.get("../comms-GUI/configs.py"));
-            String name = null, addr = null;
-            for (String line : lines) {
-                if (line.startsWith("rpi_name")) {
-                    name = line.split("=")[1].trim().replaceAll("['\"]", "");
-                } else if (line.startsWith("rpi_addr")) {
-                    addr = line.split("=")[1].trim().replaceAll("['\"]", "");
-                }
-            }
-            return (name != null && addr != null) ? new String[]{addr, name} : null;
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error reading configs.py: " + e.getMessage());
-            return null;
-        }
-    }
-
-
     public static void main(String[] args) {
-        Path profilesDir = Paths.get("profiles");
-        if (Files.notExists(profilesDir)) {
+        Path setupDir = Paths.get("host_config.properties");
+        if (Files.notExists(setupDir)) {
             SwingUtilities.invokeLater(SetupWizard::new);
         } else {
             SwingUtilities.invokeLater(() -> {
@@ -135,4 +137,5 @@ public class BuildGUI extends JFrame {
             });
         }
     }
+
 }

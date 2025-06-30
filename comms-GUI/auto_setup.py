@@ -141,3 +141,15 @@ host_addr = host_addr if 'host_addr' in locals() else 'unknown_host'
 
 # FINAL OUTPUT
 print(f"{host_name},{host_addr}")
+
+# Determine OS platform label for Java
+if system == "Windows":
+    os_type = "windows"
+elif system == "Darwin":
+    os_type = "mac"
+elif system == "Linux":
+    os_type = "linux"
+else:
+    os_type = "unknown"
+
+print(f"OS={os_type}")

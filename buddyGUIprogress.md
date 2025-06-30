@@ -1,19 +1,170 @@
 # buddy's GUI development notes
 //    ps -ef | grep python
 
+## project structure:
+```
+project-root/
+│
+├── app-win/
+│
+├── app-mac/
+│
+├── app-lin/
+│
+├── src/
+│   └── main/
+│       ├── java/               ← Java GUI source
+│       │   └── GUI/
+│       │       ├── profiles/   ← saved to file location chosen by user, default in this folder
+│       │       │   └── pi_profile.properties
+│       │       │
+│       │       ├── BuildGUI.java
+│       │       ├── RpiCommandTab.java
+│       │       ├── SettingsTab.java
+│       │       ├── DataTab.java
+│       │       ├── DataTab.java
+│       │       ├── HelpTab.java
+│       │       ├── SetupWizard.java
+│       │       ├── Utility.java
+│       │       │
+│       │       └── host_config.properties
+│       │
+│       └── resources/
+│           ├── python/         ← bundled embedded python
+│           │
+│           └── python-scripts/ ← Python scripts, profiles/, configs.py
+│               ├── modem/
+│               │   ├── test.py
+│               │   └── ssh.sh
+│               │
+│               ├── Py3SQM/
+│               │
+│               ├── ssh/
+│               │   ├── auto_setup.py
+│               │   ├── configs_ssh.py
+│               │   ├── first_time_setup.py
+│               │   ├── host_ssh.py
+│               │   ├── lora_child_ssh.py
+│               │   ├── lora_parent_ssh.py
+│               │   ├── rpi_ssh.py
+│               │   ├── sensor_ssh.py
+│               │   ├── sensor_stream.py
+│               │   ├── ui_commands.py
+│               │   ├── radio_runner.sh
+│               │   ├── rpi_runner.sh
+│               │   └── sensor_runner.sh
+│               │
+│               └── scripts/
+│                   ├── runradio.sh
+│                   ├── runrpi.sh
+│                   ├── runsensor.sh
+│                   └── cronjobs.txt
+│
+├── jre/                       ← Bundled JRE (Java Runtime Environment)
+│
+│
+├── pom.xml                    ← Maven build settings and plugins here
+└── target/                    ← Output .jar/.exe
+```
+### `BuildGUI.java`
+Contains the constructor for the full GUI
+* calls each of `RPiCommandTab.java`, `SensorCommandTab.java`, `DataTab.java`, etc. to build the tabs of the GUI
+* uses JTabbed Pane to separate each of the tabs
+* builds one global console where backend information is displayed
+* includes methods to minimize and show the console
 
+### `RPiCommandTab.java`
+Manage core RPi processes like starting/stopping the listener, checking status, and syncing files with the host, and sensor processes like requesting readings, calibration, etc.
+* contains 3 main parts: the built-in commands, the manual command field, and the input field. 
+  * there are 4 built in commands located at the top of the RPi Command Center Tab to communicate directly with the RPi and a dropdown menu for specific commands to control the sensor.
+  * the manual command field located at the bottom of the RPi Command Tab allows you to type in a command.
+  * the input field becomes active for commands that require user input: if command requires user input, the input panel will prompt the user to supply more information
+  
+**parameters**:
+* utility &rarr; one common utility method that is built in GUI.java
+    * two main panels: command panel and feedback panel
+  
+**return**
+
+
+### `DataTab.java`
+Contains the constructor for the Data Tab
+* **parameters**:
+    * utility &rarr; one common utility method that is built in GUI.java
+* using file chooser to allow user to navigate through their files to see where sqm data is synced to
+* opens the user's file explorer to allow them to actually see the data
+* **return**
+
+### `SettingsTab.java`
+Contains the constructor for the Settings Tab
+* **parameters**:
+    * utility &rarr; one common utility method that is built in GUI.java
+* **other methods**
+    * `loadAllProfiles()`
+    * `loadProfile(String profileName)`
+    * `saveProfile()`
+    * `addProfile()`
+    * `deleteProfile()`
+* **return**
+### `HelpTab.java`
+This tab goes more in depth on each of the GUI tabs and how to use it.
+* dropdown menu to access pages on more specific parts of the help center:
+    * General
+    * Rpi Command
+    * Data Sync
+    * Settings
+    * SSH Help
+
+**parameters**:
+* utility &rarr; one common utility method that is built in GUI.java
+
+**returns**
+
+### `Utility.java`
+Contains the utility methods used across all GUI tabs
+* `sendCommand(String cmd)`
+    * takes in command string and sends that to the python backend
+* `append(String txt)`
+    *
+* `updateConfigsPy(String RpiName, String RpiAddr)`
+    *
+* `wrapWithRightPanel(JPanel main, JPanel side)`
+    *
+* `startPythonBackend()`
+    *
+* `copyToClipboard(String text)`
+    *
+* Getters:
+    * `getProfileSaveDirFromConfig()`
+        *
+    * `getSQMSaveDirFromConfig()`
+        *
+    * `getDetectedOSType()`
+        *
+* Builders:
+    * `buildTextArea(JPanel panel, int height)`
+        *
+    * `buildCopyRow(String command, int height)`
+        *
+
+### `SetupWizard.java`
+### `setup_linux.java`
+### `setup_windows.java`
+### `setup_mac.java`
+
+---
 
 ## why java?
-### Cross-Platform Compatibility
-Runs on Windows, macOS, and Linux without needing to rewrite the UI code.
+### cross-platform compatibility
+runs on Windows, macOS, and Linux without needing to rewrite the UI code.
 
-Ideal when the GUI needs to be used from different machines or OSes to control the Raspberry Pi.
+ideal when the GUI needs to be used from different machines or OSes to control the Raspberry Pi.
 
 ### strong UI toolkit with swing
-Swing provides a rich set of widgets (buttons, tabs, text areas, dialogs, etc.) that are sufficient for the needs of:
-* Command buttons 
-* Real-time logs 
-* File listing and settings forms
+swing provides a rich set of widgets (buttons, tabs, text areas, dialogs, etc.) that are sufficient for the needs of:
+* command buttons 
+* real-time logs 
+* file listing and settings forms
 
 
 ### maintainable and modular
@@ -23,6 +174,32 @@ GUI logic is separated from backend logic (handled in Python), allowing easier d
 java is commonly taught and widely used, so it's easier for other developers to maintain or extend.
 It avoids forcing the user to install and configure a web server, browser-based interface, and is taught in Smith's CS curriculum so avoids having to learn a new language.
 
+## packaging with maven
+
+
+
+
+
+
+
+
+
+
+
+
+
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+_
 ---
 ## rough prototype
 implemented a GUI that runs the python backend silently --> had buttons for each command and printed text from the terminal into a text are
@@ -66,7 +243,7 @@ I figured that having a UI button that 1 doesn't work, and 2 just runs in the te
 * the `help` command was replaced with tooltips, going to change help button to be its own tab that explains how to use the GUI rather than listing all the commands
 
 ##### Sensor Command Center
-* handles everything that the `ui` command did now with an graphical interface rather than in the terminal
+* handles everything that the `ui` command did now with a graphical interface rather than in the terminal
 * drop down menu to change the category of which command you want to run (based on the structure in `ui_commands.py`)
 * a separate "screen" for each option in the dropdown with buttons to run commands in their respective categories
 * uses helper functions to actually run the commands
@@ -129,47 +306,94 @@ just so this exists somewhere:
 Restructured the GUI: each tab is its own java file:
 ### `GUI.java`
 Contains the constructor for the full GUI
+* calls each of `RPiCommandTab.java`, `SensorCommandTab.java`, `DataTab.java`, etc. to build the tabs of the GUI
+* uses JTabbed Pane to separate each of the tabs
+* builds one global console where backend information is displayed
+* includes methods to minimize and show the console
 
 ### `RPiCommandTab.java`
 Contains the constructor for the RPi Command Center Tab
+* **parameters**:
+  * utility &rarr; one common utility method that is built in GUI.java
+* two main panels: command panel and feedback panel
+* **return**
 
 ### `SensorCommandTab.java`
 Contains the constructor for the Sensor Command Center Tab
+* **parameters**:
+    * utility &rarr; one common utility method that is built in GUI.java
+* two main panels: command and input panels
+* command panel contains all the sensor commands sorted by category through a dropdown menu. if command requires user input, the input panel will prompt the user to supply more information
+* **Other methods**
+  * all methods to build input prompt panels
+* **return**
 
 ### `DataTab.java`
 Contains the constructor for the Data Tab
+* **parameters**:
+    * utility &rarr; one common utility method that is built in GUI.java
+* using file chooser to allow user to navigate through their files to see where sqm data is synced to
+* opens the user's file explorer to allow them to actually see the data
+* **return**
 
 ### `SettingsTab.java`
 Contains the constructor for the Settings Tab
-
+* **parameters**:
+    * utility &rarr; one common utility method that is built in GUI.java
+* **other methods**
+  * `loadAllProfiles()`
+  * `loadProfile(String profileName)`
+  * `saveProfile()`
+  * `addProfile()`
+  * `deleteProfile()`
+* **return**
 ### `HelpTab.java`
 Contains the constructor for the Help Tab
+* **parameters**:
+    * utility &rarr; one common utility method that is built in GUI.java
 
 ### `Utility.java`
 Contains the utility methods used across all GUI tabs
+* `sendCommand(String cmd)`
+    * takes in command string and sends that to the python backend
+* `append(String txt)`
+    * 
+* `updateConfigsPy(String RpiName, String RpiAddr)`
+    * 
+* `wrapWithRightPanel(JPanel main, JPanel side)`
+    * 
+* `startPythonBackend()` 
+    * 
+* `copyToClipboard(String text)`
+    * 
+* Getters:
+    * `getProfileSaveDirFromConfig()`
+        * 
+    * `getSQMSaveDirFromConfig()`
+        * 
+    * `getDetectedOSType()`
+        * 
+* Builders:
+    * `buildTextArea(JPanel panel, int height)`
+        * 
+    * `buildCopyRow(String command, int height)`
+        * 
 
 ---
 ## prototype 6
-### Setup Wizard
+### setup wizard
 
-### RPi Profiles
+### RPi profiles
 
----
-## ?
-how to make status update regularly
-
-how to package the gui into an executable
-
-
-
-
+### socket &rarr; SSH based backend
 
 ---
-## Packaging
-* [JSmooth](https://jsmooth.sourceforge.net/)
-* [Jar2exe](https://www.jar2exe.com/)
-
-
+## prototype 7
+### Packaging and Distribution
+* **Maven**
+* **JPackage**
+* **Launch4J**
+* **Isso**
 
 
 
@@ -335,7 +559,7 @@ _**TODO**_ - - - - - - - -
 
 ---
 ### 6/4/2025
-Restructed everything
+Restructured everything (this took a while)
 
 ---
 ### 6/5/2025
@@ -348,5 +572,118 @@ I was sick... started trying to build out setup wizard
 
 ---
 ### 6/8/2025
-Setup wizard
+Setup wizard main framework
 packaging
+
+---
+### 6/9/2025
+more to setup wizard, added save and load progress, making new changes compatible with GUI:
+* multiple rpi profiles, can switch between them with a dropdown menu
+* can add/delete profiles from settings tab
+
+Did a lot of work the help tab:
+* general instructions pretty much done
+* rpi instructions pretty much done
+* sensor in progress
+* data in progress
+* settings instructions done
+
+---
+### 6/10/2025
+added hide/show console button and made it so that the console starts minimized
+
+added a toast popup at the bottom of the GUI that confirms to the user if a command was sent
+* separate colors for state of command? (red &rarr; error, green &rarr; success)
+ 
+Coded out auto ssh setup that automatically generate a new ssh key if the user doesn't have it already then copies it to the raspberry pi using `sshpass`. If prompted for the password, a popup window will appear where user can type in their password
+
+\
+\
+\
+_**TODO**_ - - - - - - - -
+* continue workshopping help center
+* finish tailscale and radio instructions
+* display information about status and about rsync
+
+---
+### 6/11/2025
+got rid of connection page: that can all be configured automatically with `auto_setup.py`
+* added functionaliy to autosetup, the setup wizrd gives different instructions based on the operating system that the host computer is using
+* need to have a fallback just incase auto setup is incorrect: maybe a separate button that shows all instructions?
+
+auto ssh function poses secuirity threat, switched to step-by-step instructions for ssh. updated ssh instructions to have each step be on a page. Wrote tailscale instructions and figured out logic for inserting cardpanels only when button is selected
+
+combined RPiCommandCenter and SensorCommandCenter to be on one single tab, did not make sense for them to be separated because you need would need to switch screens to access rsync and such buttons which would become annoying when trying fetch data.
+* thinking about maybe adding a function that automatically sends rsync after like 10 seconds when user runs any sensor command 
+* need to update the help tab to accommodate this change
+
+\
+\
+\
+  _**TODO**_ - - - - - - - -
+* continue work help center
+* radio instructions
+* display information about status and about rsync
+* data tab fix
+<<<<<<< HEAD
+
+
+
+
+
+project-root/
+│
+├── src/
+│   └── main/
+│       ├── java/               ← Java GUI source
+│       │   └── GUI/
+│       │       ├── profiles/
+│       │       │   ├── host_config.properties
+│       │       │   └── pi_profile.properties
+│       │       │
+│       │       ├── BuildGUI.java
+│       │       ├── RpiCommandTab.java
+│       │       ├── SettingsTab.java
+│       │       ├── DataTab.java
+│       │       ├── DataTab.java
+│       │       ├── HelpTab.java
+│       │       ├── SetupWizard.java
+│       │       └── Utility.java
+│       │
+│       └── resources/          ← Python scripts, profiles/, configs.py
+│           ├── modem/
+│           │   ├── test.py
+│           │   └── ssh.sh
+│           │
+│           ├── Py3SQM/
+│           │
+│           ├── ssh/
+│           │   ├── auto_setup.py
+│           │   ├── configs_ssh.py
+│           │   ├── first_time_setup.py
+│           │   ├── host_ssh.py
+│           │   ├── lora_child_ssh.py
+│           │   ├── lora_parent_ssh.py
+│           │   ├── rpi_ssh.py
+│           │   ├── sensor_ssh.py
+│           │   ├── sensor_stream.py
+│           │   ├── ui_commands.py
+│           │   ├── radio_runner.sh
+│           │   ├── rpi_runner.sh
+│           │   └── sensor_runner.sh
+│           │
+│           └── scripts/
+│               ├── runradio.sh
+│               ├── runrpi.sh
+│               ├── runsensor.sh
+│               └── cronjobs.txt
+│
+│
+├── pom.xml                    ← Add Maven build settings and plugins here
+├── setup/                     ← Optional: bundled Python files / installer scripts
+└── target/                    ← Output .jar/.exe
+
+
+
+jpackage --type dmg --name MotheterRemote --input app --main-jar GUIProject-1.0-SNAPSHOT.jar --main-class GUI.MainClass --dest output --app-version 1.0 --vendor "mpr-lab"--verbose
+
