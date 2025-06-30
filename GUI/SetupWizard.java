@@ -284,7 +284,7 @@ public class SetupWizard extends JFrame {
 
     private JPanel buildDisclaimerPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing... NEED JAVA 24javac --release 21 ...\n");
+        JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing... NEED JAVA 21, PYTHON3.10 ...\n");
         disclaimer.setWrapStyleWord(true);
         disclaimer.setLineWrap(true);
         disclaimer.setEditable(false);

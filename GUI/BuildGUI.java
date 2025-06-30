@@ -14,8 +14,6 @@ public class BuildGUI extends JFrame {
     private static boolean setup = false;
 
 
-//    private static Path PROFILE_DIR = util.getProfileSaveDirFromConfig();
-
     public BuildGUI() {
         super("MotheterRemote");
         Utility util = new Utility(console);
@@ -103,7 +101,7 @@ public class BuildGUI extends JFrame {
 
         JButton clear = new JButton("Clear log");
         clear.addActionListener(e -> console.setText(""));
-        JButton toggleButton = new JButton("Minimize");
+        JButton toggleButton = new JButton("Show Console");
         toggleButton.addActionListener(e -> toggleConsoleVisibility(scroll, toggleButton));
 
         btnRow.add(toggleButton);
@@ -139,15 +137,5 @@ public class BuildGUI extends JFrame {
             });
         }
     }
-//    public static void main(String[] args) {
-//        if (!setup) {
-//            SwingUtilities.invokeLater(SetupWizard::new);
-//            setup = true;
-//        } else {
-//            SwingUtilities.invokeLater(() -> {
-//                BuildGUI gui = new BuildGUI();
-//                gui.setVisible(true);
-//            });
-//        }
-//    }
+
 }
