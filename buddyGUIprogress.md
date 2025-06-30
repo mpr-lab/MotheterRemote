@@ -457,3 +457,7 @@ project-root/
 ├── pom.xml                    ← Add Maven build settings and plugins here
 ├── setup/                     ← Optional: bundled Python files / installer scripts
 └── target/                    ← Output .jar/.exe
+
+
+
+jpackage --type dmg --name MotheterRemote --input app --main-jar GUIProject-1.0-SNAPSHOT.jar --main-class GUI.MainClass --dest output --app-version 1.0 --vendor "mpr-lab"--verbose
