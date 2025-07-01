@@ -10,7 +10,7 @@ import configs_ssh
 import sys
 
 # where to store data
-rpi_data_path = "/var/tmp"  # configs_ssh.rpi_data_path
+rpi_data_path = "/var/tmp/"  # configs_ssh.rpi_data_path
 
 # radio connection
 ADDR = configs_ssh.R_ADDR
