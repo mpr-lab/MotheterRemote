@@ -2,17 +2,21 @@
 
 echo "Running rpi_runner.sh"
 
+rpi_dir = "~/sqmdata"
+debug_dir = $rpi_dir/ssh_debug
+repo_dir = "~"
+
 # make log file directory, if it doesn't exist
-if [[ ! -e /var/tmp/ssh_debug ]]; then
-    mkdir -p /var/tmp/ssh_debug
+if [[ ! -e $debug_dir ]]; then
+    mkdir -p $debug_dir
 fi
 
 # make log files, if they don't exist
-if [[ ! -e /var/tmp/ssh_debug/rpi_out.txt ]]; then
-    touch /var/tmp/ssh_debug/rpi_out.txt
+if [[ ! -e $debug_dir/rpi_out.txt ]]; then
+    touch $debug_dir/rpi_out.txt
 fi
-if [[ ! -e /var/tmp/ssh_debug/rpi_err.txt ]]; then
-    touch /var/tmp/ssh_debug/rpi_err.txt
+if [[ ! -e $debug_dir/rpi_err.txt ]]; then
+    touch $debug_dir/rpi_err.txt
 fi
 
 all_procs=$(ps -ef)
@@ -27,12 +31,12 @@ elif test $num_inst == 0; then # grep didn't find program
     dt="$(date '+%d/%m/%Y %H:%M:%S');"
 
     # put dates in log files
-    echo $dt >> /var/tmp/ssh_debug/rpi_out.txt
-    echo $dt >> /var/tmp/ssh_debug/rpi_err.txt
+    echo $dt >> $debug_dir/rpi_out.txt
+    echo $dt >> $debug_dir/rpi_err.txt
 
     # $1 is first argument when script is called
     # run python file with first arg
-    exec python3 ~/MotheterRemote/ssh/rpi_ssh.py $1 2>> /var/tmp/ssh_debug/rpi_err.txt 1>>/var/tmp/ssh_debug/rpi_out.txt &
+    exec python3 $repo_dir/MotheterRemote/ssh/rpi_ssh.py $1 2>> $debug_dir/rpi_err.txt 1>>$debug_dir/rpi_out.txt &
 elif test $num_inst > 1; then
     echo "More than one instance of rpi_ssh.py is running!"
 else # something else went wrong

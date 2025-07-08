@@ -1,10 +1,11 @@
 #!/bin/bash
 
-rpi_dir="~/sqmdata"
-debug_dir="${rpi_dir}/ssh_debug"
-repo_dir="~"
-
 echo "Running radio_runner.sh"
+
+acc_rpi_dir = "~/sqmdata"
+debug_dir = $acc_rpi_dir/ssh_debug
+repo_dir = "~"
+
 
 # make log file directory, if it doesn't exist
 if [[ ! -e $debug_dir ]]; then
@@ -18,8 +19,6 @@ fi
 if [[ ! -e /var/tmp/ssh_debug/radio_err.txt ]]; then
     touch $debug_dir/radio_err.txt
 fi
-
-
 
 
 
