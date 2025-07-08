@@ -240,7 +240,7 @@ class Ser:
             return to_return
 
         l: list[str] = []
-        paths = ["/var/tmp/ssh_debug", "~/sqmdata", "/var/tmp/sqm_macleish"]
+        paths = ["/var/tmp/ssh_debug", "/var/tmp/sqmdata", "/var/tmp/sqm_macleish"]
         for i in paths:
             l.extend(_all_file_list(i))
         # l = _all_file_list(acc_data_path)

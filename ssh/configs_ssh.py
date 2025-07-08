@@ -9,7 +9,7 @@ connection_type = "wifi_tailscale"
 has_radio = True
 
 """Info about the host computer. This should be a computer with a static IP."""
-host_data_path = "~/SQMdata"  # where to store collected data (not in repo)
+host_data_path = "~/host_sqmdata"  # where to store collected data (not in repo)
 
 # import auto_setup
 
@@ -22,7 +22,7 @@ rpi_name = "pi"
 rpi_repo = "~/MotheterRemote"  # path to this repo directory
 # rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
 # rpi_addr = "10.10.32.91"  # ip or ddns address
-rpi_data_path = "sqmdata"  # where sensor stores its data (NOT in repo)
+rpi_data_path = "~/rpi_sqmdata"  # where sensor stores its data (NOT in repo)
 rpi_addr = "pi"
 
 
@@ -33,7 +33,7 @@ R_BAUD = 115200  # baud rate
 
 """Info about accessory RPi, if it exists"""
 acc_repo = "~/MotheterRemote/comms"  # path to this repo directory
-acc_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
+acc_data_path = "~/acc_sqmdata"  # where sensor stores its data (NOT in repo)
 acc_lora_port = "/dev/ttyUSB_LORA"  # accessory RPi's LoRa port
 
 
