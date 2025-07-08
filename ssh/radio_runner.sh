@@ -2,9 +2,9 @@
 
 echo "Running radio_runner.sh"
 
-acc_rpi_dir = "~/sqmdata"
-debug_dir = $acc_rpi_dir/ssh_debug
-repo_dir = "~"
+acc_rpi_dir="~/sqmdata"
+debug_dir=$acc_rpi_dir/ssh_debug
+repo_dir="~"
 
 
 # make log file directory, if it doesn't exist

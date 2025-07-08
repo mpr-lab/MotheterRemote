@@ -2,9 +2,9 @@
 
 echo "Running rpi_runner.sh"
 
-rpi_dir = "~/sqmdata"
-debug_dir = $rpi_dir/ssh_debug
-repo_dir = "~"
+rpi_dir="~/sqmdata"
+debug_dir=$rpi_dir/ssh_debug
+repo_dir="~"
 
 # make log file directory, if it doesn't exist
 if [[ ! -e $debug_dir ]]; then
