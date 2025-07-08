@@ -10,7 +10,7 @@ import configs_ssh
 import sys
 
 # where to store data
-rpi_data_path = "/var/tmp/"  # configs_ssh.rpi_data_path
+rpi_data_path = configs_ssh.rpi_data_path
 
 # radio connection
 ADDR = configs_ssh.R_ADDR
@@ -222,12 +222,12 @@ class Radio:
 
             return to_return
 
-        paths = ["/var/tmp/ssh_debug", "~/sqmdata", "/var/tmp/sqm_macleish"]
+        # paths = ["/var/tmp/ssh_debug", "~/sqmdata", "/var/tmp/sqm_macleish"]
         l: list[str] = []
-        for p in paths:
-            l.extend(_all_file_list(p))
+        # for p in paths:
+        # l.extend(_all_file_list(p))
 
-        # l = _all_file_list(rpi_data_path)
+        l = _all_file_list(rpi_data_path)
 
         d: dict[str, int] = {}
         for file in l:

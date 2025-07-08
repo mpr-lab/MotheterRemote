@@ -239,11 +239,11 @@ class Ser:
                     to_return.append(fullPath)
             return to_return
 
-        l: list[str] = []
-        paths = ["/var/tmp/ssh_debug", "/var/tmp/sqmdata", "/var/tmp/sqm_macleish"]
-        for i in paths:
-            l.extend(_all_file_list(i))
-        # l = _all_file_list(acc_data_path)
+        # l: list[str] = []
+        # paths = ["ssh_debug", "/var/tmp/sqmdata", "/var/tmp/sqm_macleish"]
+        # for i in paths:
+        #     l.extend(_all_file_list(i))
+        l = _all_file_list(acc_data_path)
         # l2 = _all_file_list("/var/tmp/ssh_debug")
         # l.extend(l2)
         a: list[str] = []
