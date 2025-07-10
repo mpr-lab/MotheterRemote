@@ -84,6 +84,16 @@ class Ser:
                 print(e, flush=True, file=sys.stderr)
 
     def _get_pair(self, resp: str) -> str:
+        """This only runs when considering whether to send a recording from the sensor. We don't want to stream the data, just store it. If someone asks for a specific reading, the request type gets added to a backlog. When the corresponding recording is made, this function checks whether it was requested or not. If yes, it gets sent. If not, returns empty string. Backlogged requests are deleted after a minute.
+
+        This only gets called to process sensor output. It isn't used for other potential radio messages (i.e. rsync).
+
+        Args:
+            resp (str): the recording from the sensor
+
+        Returns:
+            str: what to send over radio; empty string won't end up getting sent
+        """
         # sensor response prefix, corresponding message prefix
         pairs: dict[str, str] = {
             "r,": "rx",
@@ -106,7 +116,6 @@ class Ser:
             "LC": "LCx",
             "Lc": "LCx",
             "La": "Lax",
-            "rsync": "rsync",
         }
 
         response_prefix = resp[0:2]
@@ -219,7 +228,7 @@ class Ser:
                 path (str, optional): current path to search. Defaults to current working directory.
 
             Returns:
-                list[str]: all .dat files in current directory
+                list[str]: all .dat and .txt files in current directory
             """
             to_return: list[str] = []
             try:
@@ -236,25 +245,23 @@ class Ser:
                 fullPath = os.path.join(path, entry)
                 if os.path.isdir(fullPath):  # if directory, recurse on it
                     to_return.extend(_all_file_list(fullPath))
-                if fullPath.endswith(".dat"):  # if .dat file, add to list
-                    to_return.append(fullPath)
+                if fullPath.endswith(".dat") or fullPath.endswith(".txt"):
+                    to_return.append(fullPath)  # if .dat or .txt file, add to list
             return to_return
 
         # l: list[str] = []
         # paths = ["ssh_debug", "/var/tmp/sqmdata", "/var/tmp/sqm_macleish"]
         # for i in paths:
         #     l.extend(_all_file_list(i))
-        l = _all_file_list(acc_data_path)
         # l2 = _all_file_list("/var/tmp/ssh_debug")
         # l.extend(l2)
+
+        l = _all_file_list(acc_data_path)
         a: list[str] = []
         a.append("rsync files")  # prepend header for parent processing
         for file in l:
-            if file.endswith(".dat"):  # filter for dat files
-                ctime = os.path.getmtime(file)  # seconds since 1970
-                s = f"{file};{ctime}"  # entry with name and time
-                a.append(s)
-            if file.endswith(".txt"):  # filter for txt files
+            # filter for dat/txt files
+            if file.endswith(".dat") or file.endswith(".txt"):
                 ctime = os.path.getmtime(file)  # seconds since 1970
                 s = f"{file};{ctime}"  # entry with name and time
                 a.append(s)
