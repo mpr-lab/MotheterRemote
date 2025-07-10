@@ -124,7 +124,11 @@ class Ser:
         # print(f"message prefix {message_prefix}", flush=True, file=sys.stderr)
 
         if message_prefix == None:  # if not there, ignore
-            print("message prefix none", flush=True, file=sys.stderr)
+            print(
+                f"no request pending for type {response_prefix}",
+                flush=True,
+                file=sys.stderr,
+            )
             return ""
 
         # loop through received, un-responded messages
