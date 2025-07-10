@@ -2,7 +2,7 @@
 
 echo "Running radio_runner.sh"
 
-acc_rpi_dir="~/sqmdata"
+acc_rpi_dir="$HOME/sqmdata"
 debug_dir="$acc_rpi_dir/ssh_debug"
 repo_dir="$HOME"
 

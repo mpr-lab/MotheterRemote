@@ -2,7 +2,7 @@
 
 echo "Running sensor_runner.sh"
 
-rpi_dir="~/sqmdata"
+rpi_dir="$HOME/sqmdata"
 debug_dir="$rpi_dir/ssh_debug"
 repo_dir="$HOME"
 
