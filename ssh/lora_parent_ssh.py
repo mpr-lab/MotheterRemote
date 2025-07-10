@@ -223,11 +223,11 @@ class Radio:
             return to_return
 
         # paths = ["/var/tmp/ssh_debug", "~/sqmdata", "/var/tmp/sqm_macleish"]
-        l: list[str] = []
         # for p in paths:
         # l.extend(_all_file_list(p))
 
-        l = _all_file_list(rpi_data_path)
+        l: list[str] = _all_file_list(rpi_data_path)
+        print(l, flush=True, file=sys.stderr)
 
         d: dict[str, int] = {}
         for file in l:

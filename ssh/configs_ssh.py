@@ -10,20 +10,15 @@ has_radio = True
 
 """Info about the host computer. This should be a computer with a static IP."""
 host_data_path = "~/sqmdata"  # where to store collected data (not in repo)
-
-# import auto_setup
-
 host_name = "skyeworster"  # host server's username, auto-filled
 host_addr = "Executor"  # ip or ddns for host computer, auto-filled
 
-"""Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one
-attached to the sensor device."""
+
+"""Info about main RPi. Careful: this is the RPi that the server will talk to, which may or may not be the one attached to the sensor device."""
 rpi_name = "pi"
 rpi_repo = "~/MotheterRemote"  # path to this repo directory
-# rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
-# rpi_addr = "10.10.32.91"  # ip or ddns address
 rpi_data_path = "~/sqmdata"  # where sensor stores its data (NOT in repo)
-rpi_addr = "pi"
+rpi_addr = "pi"  # ip or ddns address
 
 
 """main RPi's radio connection, if applicable"""
