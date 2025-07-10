@@ -4,7 +4,7 @@ echo "Running sensor_runner.sh"
 
 rpi_dir="~/sqmdata"
 debug_dir="$rpi_dir/ssh_debug"
-repo_dir="~"
+repo_dir="$HOME"
 
 # make log file directory, if it doesn't exist
 if [[ ! -e $debug_dir ]]; then
@@ -12,16 +12,16 @@ if [[ ! -e $debug_dir ]]; then
 fi
 
 # make log files, if they don't exist
-if [[ ! -e $debug_dir/sensor_out.txt ]]; then
+if [[ ! -e "$debug_dir/sensor_out.txt" ]]; then
     touch $debug_dir/sensor_out.txt
 fi
-if [[ ! -e $debug_dir/sensor_err.txt ]]; then
+if [[ ! -e "$debug_dir/sensor_err.txt" ]]; then
     touch $debug_dir/sensor_err.txt
 fi
-if [[ ! -e $debug_dir/pysqm_out.txt ]]; then
+if [[ ! -e "$debug_dir/pysqm_out.txt" ]]; then
     touch $debug_dir/pysqm_out.txt
 fi
-if [[ ! -e $debug_dir/pysqm_err.txt ]]; then
+if [[ ! -e "$debug_dir/pysqm_err.txt" ]]; then
     touch $debug_dir/pysqm_err.txt
 fi
 
@@ -41,7 +41,7 @@ elif test $num_inst == 0; then # grep didn't find program
     echo $dt >> $debug_dir/sensor_err.txt
 
     # run python program in background (don't wait for it to finish, just let shell die)
-    /usr/bin/python3 $repo_dir/MotheterRemote/ssh/sensor_stream.py 2>> $debug_dir/sensor_err.txt 1>>$debug_dir/sensor_out.txt &
+    /usr/bin/python3 $repo_dir/MotheterRemote/ssh/sensor_stream.py 2>>$debug_dir/sensor_err.txt 1>>$debug_dir/sensor_out.txt &
 elif test $num_inst > 1; then
     echo "More than one instance of sensor_streaming.py is running!"
 else # something else went wrong
@@ -60,8 +60,8 @@ elif test $num_inst == 0; then # grep didn't find program
     echo $dt >> $debug_dir/pysqm_err.txt
 
     # run python program in background (don't wait for it to finish, just let shell die)
-    cd $repo_dir/MotheterRemote/Py3SQM
-    /usr/bin/python3 -m pysqm 2>> $debug_dir/pysqm_err.txt 1>>$debug_dir/pysqm_out.txt &
+    cd "$repo_dir/MotheterRemote/Py3SQM"
+    /usr/bin/python3 -m pysqm 2>>$debug_dir/pysqm_err.txt 1>>$debug_dir/pysqm_out.txt &
 elif test $num_inst > 1; then
     echo "More than one instance of pysqm is running!"
 else # something else went wrong
