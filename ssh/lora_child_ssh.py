@@ -106,6 +106,7 @@ class Ser:
             "LC": "LCx",
             "Lc": "LCx",
             "La": "Lax",
+            "rsync": "rsync",
         }
 
         response_prefix = resp[0:2]
