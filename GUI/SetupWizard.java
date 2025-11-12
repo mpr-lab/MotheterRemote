@@ -1,9 +1,11 @@
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
+
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 
 public class SetupWizard extends JFrame {
@@ -25,17 +27,19 @@ public class SetupWizard extends JFrame {
     private final Path progressFile = Paths.get(".setup_progress.properties");
     private String detectedOS = "";
     Utility util = new Utility();
+    int WIDTH = 500;
+    int HEIGHT = 650;
 
     private final java.util.List<JPanel> wizardSteps = new ArrayList<>();
     private final Set<String> addedPanels = new HashSet<>(); // prevent duplicate inserts
 
     private int numCards = 12;
-    private final File SETUP_PATH = new File("../ssh/auto_setup.py");
+    private final File SETUP_PATH = new File("python-scripts/ssh/auto_setup.py");
 
     public SetupWizard() {
         super("Initial Setup Wizard");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(600, 650);
+        setSize(WIDTH, HEIGHT);
         setLocationRelativeTo(null);
         autoDetectSystem();
         detectedOS = util.getDetectedOSType();
@@ -273,41 +277,58 @@ public class SetupWizard extends JFrame {
             System.err.println("[Setup] Failed to load progress: " + e.getMessage());
         }
     }
+    Border spaceBorder = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+    Border lineBorder = BorderFactory.createLineBorder(Color.BLACK, 1);
 
+    private Border createTitle(String title){
+        TitledBorder titleBorder = BorderFactory.createTitledBorder(title);
+        titleBorder.setTitleJustification(TitledBorder.CENTER);
+        Border compoundBorder = BorderFactory.createCompoundBorder(titleBorder, spaceBorder);
+        return compoundBorder;
+    }
+
+    private void unbold(JLabel text){
+        Font currentFont = text.getFont();
+        Font plainFont = currentFont.deriveFont(Font.PLAIN);
+        text.setFont(plainFont);
+    }
 
     private JPanel buildDisclaimerPanel() {
+        // JPanel panel = new JPanel(new BorderLayout());
         JPanel panel = new JPanel(new BorderLayout());
-        JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing... NEED JAVA 24javac --release 21 ...\n");
-        disclaimer.setWrapStyleWord(true);
-        disclaimer.setLineWrap(true);
-        disclaimer.setEditable(false);
-        panel.add(new JScrollPane(disclaimer), BorderLayout.CENTER);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+        inner.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inner.setMaximumSize(new Dimension(WIDTH - 20, HEIGHT - 20));
+        JLabel disclaimer = new JLabel("<html>IMPORTANT: Please read this disclaimer fully before continuing... NEED JAVA 24javac --release 21 ...\n<html>");
+        // JTextArea disclaimer = new JTextArea("IMPORTANT: Please read this disclaimer fully before continuing... NEED JAVA 24javac --release 21 ...\n");
+        // disclaimer.setWrapStyleWord(true);
+        // disclaimer.setLineWrap(true);
+        // disclaimer.setEditable(false);
+        // panel.add(new JScrollPane(disclaimer), BorderLayout.CENTER);
+        inner.add(disclaimer);
 
         JCheckBox acceptBox = new JCheckBox("I have read the above.");
         acceptBox.addItemListener(e -> disclaimerAccepted = acceptBox.isSelected());
+        panel.add(inner, BorderLayout.CENTER);
         panel.add(acceptBox, BorderLayout.SOUTH);
         return panel;
     }
 
     private final JCheckBox yTailscale = new JCheckBox("yes");
+
     private JPanel buildTailscale() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // NORTH
-        JPanel north = new JPanel();
-        north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
-        north.add(new JLabel("TAILSCALE"));
-        north.add(Box.createVerticalStrut(10));
+        panel.setBorder(createTitle("TAILSCALE"));
 
         // INNER
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
-        JTextArea info = util.buildTextArea(panel);
-        info.setText("""
-            Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device. Tailscale is only required for cellular connections but may be useful in WiFi setups as well, because it lets you maintain a static IP address.
-            """);
 
+        JLabel info = new JLabel("<html>Tailscale is a VPN service that essentially creates a virtual LAN. Devices that are logged in on a network are given IP addresses and can be accessed by any other networked device. Tailscale is only required for cellular connections but may be useful in WiFi setups as well, because it lets you maintain a static IP address.<html>");
+        unbold(info);
         inner.add(info);
 
         // SOUTH
@@ -320,48 +341,41 @@ public class SetupWizard extends JFrame {
         south.add(yTailscale);
 
         // ADDING ELEMENTS TO FULL PANEL
-        panel.add(north, BorderLayout.NORTH);
         panel.add(inner, BorderLayout.CENTER);
         panel.add(south, BorderLayout.SOUTH);
         return panel;
     }
 
+
+    String htmlStart = "<html>";
+    String htmlEnd = "<html>";
     private JPanel buildTailscaleSetup(){
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JPanel north = new JPanel();
-        north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
-        north.add(new JLabel("~ TAILSCALE SETUP ~"));
-        north.add(Box.createVerticalStrut(10));
+        panel.setBorder(createTitle("TAILSCALE SETUP"));
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
-        inner.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inner.setBorder(BorderFactory.createCompoundBorder(lineBorder, spaceBorder));
 
         // STEP 1:
         JPanel step1 = new JPanel();
         step1.setLayout(new BoxLayout(step1, BoxLayout.Y_AXIS));
-        step1.add(new JLabel("Step 1: Create a Tailscale Account"));
-        step1.add(Box.createVerticalStrut(10));
-
-        JTextArea I1 = util.buildTextArea(step1);
-        I1.setText("Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan.");
+        step1.setBorder(createTitle("Step 1: Create a Tailscale Account"));
+        JLabel I1 = new JLabel(htmlStart + "Log in to Tailscale with a GitHub account; this can be a personal or organization account. Other users can be added later via email or an invite link, but only three users are allowed on a free plan." + htmlEnd);
+        unbold(I1);
         step1.add(I1);
-        step1.add(Box.createVerticalStrut(10));
 
         // STEP 1:
         JPanel step2 = new JPanel();
         step2.setLayout(new BoxLayout(step2, BoxLayout.Y_AXIS));
-        step2.add(new JLabel("Step 2: Download Tailscale on your computer"));
-        step2.add(Box.createVerticalStrut(10));
+        step2.setBorder(createTitle("Step 2: Download Tailscale on your computer"));
 
-        JTextArea I2a = util.buildTextArea(step1);
-        I2a.setText("On your computer, open up a browser, go to the Tailscale download page and get the app. The link can be found below:");
+        JLabel I2a = new JLabel(htmlStart + "On your computer, open up a browser, go to the Tailscale download page and get the app. The link can be found below:" + htmlEnd);
+        unbold(I2a);
         String link = "https://tailscale.com/download";
         JPanel tailscaleDwnld = buildCopyRow(link);
-        JTextArea I2b = util.buildTextArea(step1);
-        I2b.setText("Up to one hundred devices can be added for free, so don't worry about having too many devices online.");
+        JLabel I2b = new JLabel(htmlStart + "Up to one hundred devices can be added for free, so don't worry about having too many devices online." + htmlEnd);
+        unbold(I2b);
 
         step2.add(I2a);
         step2.add(Box.createVerticalStrut(10));
@@ -369,76 +383,12 @@ public class SetupWizard extends JFrame {
         step2.add(Box.createVerticalStrut(10));
         step2.add(I2b);
         step2.add(Box.createVerticalStrut(20));
-//
-//        // STEP 3:
-//        JPanel step3 = new JPanel();
-//        step3.setLayout(new BoxLayout(step3, BoxLayout.Y_AXIS));
-//        step3.add(new JLabel("Step 3: Set up Tailscale on your RPi"));
-//        step3.add(Box.createVerticalStrut(10));
-//
-//        JTextArea I3 = util.buildTextArea(step1, 50);
-//        I3.setText("Now, you must set up Tailscale on your Raspberry Pi. Make sure to follow this step for each RPi module you are using. Your RPi also probably runs Raspbian Bullseye, (If you don't know what Raspbian Bullseye is, then most likely the raspberry pi is using it by default), if this is the case, run the following commands in your terminal on your RPi:");
-//
-//        String copy1Cmd = "sudo apt-get install apt-transport-https";
-//        JPanel RB_1_SSHRow = util.buildCopyRow(copy1Cmd, 30);
-//
-//        String copy2Cmd = "curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg > /dev/null\n";
-//        JPanel RB_2_SSHRow = util.buildCopyRow(copy2Cmd, 60);
-//
-//        String copy3Cmd = "curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list\n";
-//        JPanel RB_3_SSHRow = util.buildCopyRow(copy3Cmd, 60);
-//
-//        String copy4Cmd = "sudo apt-get update";
-//        JPanel RB_4_SSHRow = util.buildCopyRow(copy4Cmd, 30);
-//
-//        String copy5Cmd = "sudo apt-get install tailscale";
-//        JPanel RB_5_SSHRow = util.buildCopyRow(copy5Cmd, 30);
-//
-//        JTextArea E3 = util.buildTextArea(step1, 30);
-//        E3.setText("These commands install a transport plugin, adds Tailscale's package signing key and repository, and finally, installs tailscale.");
-//
-//        step3.add(I3);
-//        step3.add(Box.createVerticalStrut(10));
-//        step3.add(RB_1_SSHRow);
-//        step3.add(Box.createVerticalStrut(10));
-//        step3.add(RB_2_SSHRow);
-//        step3.add(Box.createVerticalStrut(10));
-//        step3.add(RB_3_SSHRow);
-//        step3.add(Box.createVerticalStrut(10));
-//        step3.add(RB_4_SSHRow);
-//        step3.add(Box.createVerticalStrut(10));
-//        step3.add(RB_5_SSHRow);
-//        step3.add(Box.createVerticalStrut(10));
-//        step3.add(E3);
-//        step3.add(Box.createVerticalStrut(20));
-//
-//        // STEP 3:
-//        JPanel step4 = new JPanel();
-//        step4.setLayout(new BoxLayout(step4, BoxLayout.Y_AXIS));
-//        step4.add(new JLabel("Step 4: Connect your Machine to your Tailscale Network:"));
-//        step4.add(Box.createVerticalStrut(10));
-//
-//        JTextArea I4 = util.buildTextArea(step1, 80);
-//        I4.setText("The last step in setting up Tailscale requires you to  connect your machine to your Tailscale network and authenticate in your browser. Running the following command will generate a link which will allow you to log in in your browser. You can go to this link from another device, if you don't want to deal with using a web browser on a headless Pi.");
-//
-//        String linkCmd = "sudo tailscale up";
-//        JPanel linkSSHRow = util.buildCopyRow(linkCmd, 30);
-//
-//        step4.add(I4);
-//        step4.add(Box.createVerticalStrut(10));
-//        step4.add(linkSSHRow);
-//        step4.add(Box.createVerticalStrut(10));
 
         // add to panel
         inner.add(step1);
         inner.add(step2);
-//        inner.add(step3);
-//        inner.add(step4);
-
-        JScrollPane scroll = new JScrollPane(inner);
-
-        panel.add(north, BorderLayout.NORTH);
-        panel.add(scroll, BorderLayout.CENTER);
+        
+        panel.add(inner, BorderLayout.CENTER);
 
         return panel;
     }
@@ -493,74 +443,60 @@ public class SetupWizard extends JFrame {
 
     private JPanel  buildRPiSetupPanel(){
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JPanel north = new JPanel();
-        north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
-        north.add(new JLabel("SET UP YOUR RASPBERRY PIs"));
-        north.add(Box.createVerticalStrut(10));
-
-//        JTextArea rpiIntro = util.buildTextArea(north, 75);
-//        rpiIntro.setText("""
-//                You will now set up your raspberry pis.
-//                """);
-//        north.add(rpiIntro);
-//        north.add(Box.createVerticalStrut(10));
+        panel.setBorder(createTitle("RASPBERRY PI SETUP"));     
+        JLabel rpiIntro = new JLabel(htmlStart + "In order to get this system working, you must now set up your raspberry Pi devices. Follow the given instructions below:" + htmlEnd);
+        unbold(rpiIntro);
+        panel.add(rpiIntro);
 
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
-        inner.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inner.setBorder(BorderFactory.createCompoundBorder(lineBorder, spaceBorder));
 
         // STEP 1: INSTALL CUSTOM IMAGE
         JPanel step1 = new JPanel();
         step1.setLayout(new BoxLayout(step1, BoxLayout.Y_AXIS));
-        step1.add(new JLabel("Step 1: Download the Custom MPR-Remote RPi image"));
-        step1.add(Box.createVerticalStrut(10));
+        step1.setBorder(createTitle("Step 1: Download the Custom MPR-Remote RPi image"));
 
-        JTextArea copyI1 = util.buildTextArea(step1);
-        copyI1.setText("To setup your raspberry pi, you will need to download the MPR-Remote custom RPi image to an SD card. Navigate to the MPR bio-gui repository on Github, located at this link:");
+        JLabel copyI1 = new JLabel(htmlStart + "To setup your raspberry pi, you will need to download the MPR-Remote custom RPi image to an SD card. Navigate to the MPR bio-gui repository on Github, located at this link:" + htmlEnd);
+        unbold(copyI1);
         String gitLink = "https://github.com/mpr-lab/bio-gui";
         JPanel githubRow = util.buildCopyRow(gitLink);
 
-        JTextArea proceedI1 = util.buildTextArea(step1);
-        proceedI1.setText("Here, you will need to find the releases page, which is often located on the right. Go to the latest release and download the file called 'MPR-Remote.img'. This file contains a new Raspberry Pi Operating system, and all the necessary packages and project files to make your RPi run the MPR-Remote");
+        JLabel proceedI1 = new JLabel(htmlStart + "Here, you will need to find the releases page, which is often located on the right. Go to the latest release and download the file called 'MPR-Remote.img'. This file contains a new Raspberry Pi Operating system, and all the necessary packages and project files to make your RPi run the MPR-Remote" + htmlEnd);
+        unbold(proceedI1);
 
         step1.add(copyI1);
         step1.add(Box.createVerticalStrut(10));
         step1.add(githubRow);
         step1.add(Box.createVerticalStrut(10));
         step1.add(proceedI1);
-        step1.add(Box.createVerticalStrut(20));
 
         // STEP 2: INSTALL CUSTOM IMAGE
         JPanel step2 = new JPanel();
         step2.setLayout(new BoxLayout(step2, BoxLayout.Y_AXIS));
-        step2.add(new JLabel("Step 2: Install Custom Image to RPi"));
-        step2.add(Box.createVerticalStrut(10));
+        step2.setBorder(createTitle("Step 2: Install Custom Image to RPi"));
 
-        JTextArea copyI2 = util.buildTextArea(step2);
-        copyI2.setText("Now, you must burn the custom Image onto a new microSD card. We recommend using the official Raspberry Pi Imager app which can be downloaded at this link:");
+        JLabel copyI2 = new JLabel(htmlStart + "Now, you must burn the custom Image onto a new microSD card. We recommend using the official Raspberry Pi Imager app which can be downloaded at this link:" + htmlEnd);
+        unbold(copyI2);
         String imagerLink = "https://www.raspberrypi.com/software/";
         JPanel imagerRow = util.buildCopyRow(imagerLink);
 
-        JTextArea proceedI2 = util.buildTextArea(step2);
-        proceedI2.setText(
-        """
-        Once you have downloaded the Raspberry Pi Imager, boot it up. Insert a blank microSD card into your laptop (it doesn't necessarily need to be blank, but if it is not then all of it's contents will we wiped from it).
-        
-        Under 'Raspberry Pi Device', select 'Raspberry Pi 4'.
-        
-        Next, under 'Operating System' select 'Use Custom', which should be the last option. This will prompt you to provide a '.img' file. Navigate to the location where you installed the MPR-Remote custom image ('MPR-Remote.img') and select it.
-        
-        Finally, choose the storage device, it should match the microSD card you inserted into your computer. Click yes and allow the RPi Imager to install all the files onto your microSD card.
-        """);
+        JLabel proceedI2 = new JLabel(htmlStart + """
+                Once you have downloaded the Raspberry Pi Imager, boot it up. Insert a blank microSD card into your laptop (it doesn't necessarily need to be blank, but if it is not then all of it's contents will we wiped from it).<br>
+                
+                Under 'Raspberry Pi Device', select 'Raspberry Pi 4'.<br>
+                
+                Next, under 'Operating System' select 'Use Custom', which should be the last option. This will prompt you to provide a '.img' file. Navigate to the location where you installed the MPR-Remote custom image ('MPR-Remote.img') and select it.<br>
+                
+                Finally, choose the storage device, it should match the microSD card you inserted into your computer. Click yes and allow the RPi Imager to install all the files onto your microSD card.<br>
+                """ + htmlEnd);
+        unbold(proceedI2);
 
         step2.add(copyI2);
         step2.add(Box.createVerticalStrut(10));
         step2.add(imagerRow);
         step2.add(Box.createVerticalStrut(10));
         step2.add(proceedI2);
-        step2.add(Box.createVerticalStrut(20));
 
         // STEP 3: RASPBERRY PI
         JPanel step3 = new JPanel();
@@ -604,11 +540,8 @@ public class SetupWizard extends JFrame {
         inner.add(step1);
         inner.add(step2);
         inner.add(step3);
-        JScrollPane scroll = new JScrollPane(inner);
-        scroll.getViewport().setViewPosition(new Point(0, 0));
 
-        panel.add(north, BorderLayout.NORTH);
-        panel.add(scroll, BorderLayout.CENTER);
+        panel.add(inner, BorderLayout.CENTER);
         return panel;
     }
 
@@ -828,6 +761,7 @@ public class SetupWizard extends JFrame {
         inner.add(Box.createVerticalStrut(10));
         JScrollPane scroll = new JScrollPane(inner);
         scroll.getViewport().setViewPosition(new Point(0, 0));
+        scroll.repaint();
 
         panel.add(new JLabel("SSH SETUP"), BorderLayout.NORTH);
         panel.add(scroll, BorderLayout.CENTER);
@@ -892,6 +826,7 @@ public class SetupWizard extends JFrame {
         JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
         inner.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inner.setMaximumSize(new Dimension(WIDTH - 20, HEIGHT - 20));
 
         // STEP 4: VERIFY SSH CONNECTION
         JPanel step4 = new JPanel();
@@ -899,9 +834,8 @@ public class SetupWizard extends JFrame {
         step4.add(new JLabel("Step 4: Verify SSH Connection"));
         step4.add(Box.createVerticalStrut(10));
 
-
-        JTextArea copyI4 = util.buildTextArea(step4);
-        copyI4.setText("Finally, check to make sure that the SSH connection is working properly. In the terminal, run the following command:");
+        JLabel copyI4 = new JLabel("<html><p>Finally, check to make sure that the SSH connection is working properly. In the terminal, run the following command:<p><html>");
+        // copyI4.setFont(new Font("Arial", Font.PLAIN, 12));
 
         String verifyCmd = "ssh <rpi_name>@<rpi_addr>";
         JPanel verifySSHRow = buildCopyRow(verifyCmd);
@@ -930,10 +864,12 @@ public class SetupWizard extends JFrame {
         inner.add(step4);
         inner.add(step5);
 
-        JScrollPane scroll = new JScrollPane(inner);
-        scroll.getViewport().setViewPosition(new Point(0, 0));
+        // JScrollPane scroll = new JScrollPane(inner);
+        // scroll.getViewport().setViewPosition(new Point(0, 0));
+        // scroll.repaint();
 
-        panel.add(scroll);
+        // panel.add(scroll);
+        panel.add(inner);
         return panel;
     }
 
@@ -1011,7 +947,7 @@ public class SetupWizard extends JFrame {
                 pythonPath = newPath;
             }
 
-            File file = new File("../ssh/configs_ssh.py");
+            File file = new File("python-scripts/ssh/configs_ssh.py");
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder content = new StringBuilder();
 
@@ -1067,6 +1003,7 @@ public class SetupWizard extends JFrame {
     }
 
     public static void main(String[] args) {
+        UIManager.put("defaultFont", new Font("Arial", Font.PLAIN, 12));
         SwingUtilities.invokeLater(SetupWizard::new);
     }
 }
