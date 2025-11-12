@@ -28,6 +28,7 @@ public class SettingsTab extends JPanel {
         });
         JScrollPane listScroll = new JScrollPane(profileList);
         leftPanel.add(listScroll, BorderLayout.CENTER);
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel topLeft = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel rpis = new JLabel("Raspberry Pi Profiles:");
@@ -36,8 +37,13 @@ public class SettingsTab extends JPanel {
         JButton addButton = new JButton("+");
         addButton.setToolTipText("Add new profile");
         addButton.addActionListener(e -> addProfile());
-        JPanel bottomLeft = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        bottomLeft.add(addButton);
+        JButton sshButton = new JButton("?");
+        sshButton.addActionListener(e -> {
+            SwingUtilities.invokeLater(() -> new SSHInstructions(util).setVisible(true));
+        });
+        JPanel bottomLeft = new JPanel(new BorderLayout());
+        bottomLeft.add(addButton, BorderLayout.WEST);
+        bottomLeft.add(sshButton, BorderLayout.EAST);
         leftPanel.add(topLeft, BorderLayout.NORTH);
         leftPanel.add(bottomLeft, BorderLayout.SOUTH);
 
@@ -146,6 +152,18 @@ public class SettingsTab extends JPanel {
                 profileList.setSelectedValue(newProfileName, true);
                 util.append("[Settings] New profile added: " + newProfileName);
                 BuildGUI.refreshProfileList();
+
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(new JLabel("Profile saved. To use SSH, you must set up key sharing."), BorderLayout.NORTH);
+
+                JButton sshButton = new JButton("Click for instructions on SSH");
+                sshButton.addActionListener(e -> {
+                    SwingUtilities.invokeLater(() -> new SSHInstructions(util).setVisible(true));
+                });
+
+                panel.add(sshButton, BorderLayout.SOUTH);
+                JOptionPane.showMessageDialog(this, panel, "SSH Setup Required", JOptionPane.INFORMATION_MESSAGE);
+
 
             } catch (IOException ex) {
                 util.append("[Error] Failed to add profile: " + ex.getMessage());

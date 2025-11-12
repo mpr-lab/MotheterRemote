@@ -315,7 +315,8 @@ public class Utility {
         row.add(copyBtn);
 
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Short.MAX_VALUE, cmdField.getPreferredSize().height));
+//        row.setMaximumSize(new Dimension(Short.MAX_VALUE, cmdField.getPreferredSize().height));
+        row.setMaximumSize(new Dimension(preferredWidth, cmdField.getPreferredSize().height));
         return row;
     }
 

@@ -192,4 +192,56 @@ public class setup_linux {
         panel.add(scroll);
         return panel;
     }
+
+    JPanel buildSSH_Step4(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inner = new JPanel();
+        inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
+        inner.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // STEP 4: VERIFY SSH CONNECTION
+        JPanel step4 = new JPanel();
+        step4.setLayout(new BoxLayout(step4, BoxLayout.Y_AXIS));
+        step4.add(new JLabel("Step 4: Verify SSH Connection"));
+        step4.add(Box.createVerticalStrut(10));
+
+
+        JTextArea copyI4 = util.buildTextArea(step4);
+        copyI4.setText("Finally, check to make sure that the SSH connection is working properly. In the terminal, run the following command:");
+
+        String verifyCmd = "ssh <rpi_name>@<rpi_addr>";
+        JPanel verifySSHRow = util.buildCopyRow(verifyCmd);
+
+        JTextArea changeI4 = util.buildTextArea(step4);
+        changeI4.setText("Make sure to change <rpi_name> and <rpi_addr> with the correct information. If you setup the ssh connection correctly, you should be able to access the RPi without having to input a password.");
+
+        step4.add(copyI4);
+        step4.add(Box.createVerticalStrut(10));
+        step4.add(verifySSHRow);
+        step4.add(Box.createVerticalStrut(10));
+        step4.add(changeI4);
+        step4.add(Box.createVerticalStrut(20));
+
+        // STEP 4: VERIFY SSH CONNECTION
+        JPanel step5 = new JPanel();
+        step5.setLayout(new BoxLayout(step5, BoxLayout.Y_AXIS));
+        step5.add(new JLabel("Step 5: Verify SSH Connection"));
+        step5.add(Box.createVerticalStrut(10));
+
+
+        JTextArea I5 = util.buildTextArea(step5);
+        I5.setText("You have successfully set up the SSH connection for your RPi. Remember to repeat steps 1-4 of the SSH setup for each raspberry pi you have.");
+
+        // Add to Panel
+        inner.add(step4);
+        inner.add(step5);
+
+        JScrollPane scroll = new JScrollPane(inner);
+        scroll.getViewport().setViewPosition(new Point(0, 0));
+
+        panel.add(scroll);
+        return panel;
+    }
 }
